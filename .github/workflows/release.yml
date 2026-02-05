@@ -29,6 +29,8 @@ jobs:
             <servers>
               <server>
                 <id>bloomreach-maven2</id>
+                <username>${BR_MAVEN_USERNAME}</username>
+                <password>${BR_MAVEN_PASSWORD}</password>
               </server>
               <server>
                 <id>bloomreach-maven2-forge</id>
