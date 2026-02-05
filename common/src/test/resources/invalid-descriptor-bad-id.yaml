@@ -1,0 +1,25 @@
+id: Invalid_ID_With_Caps
+name: Bad ID Add-on
+version: 1.0.0
+description: An add-on with an invalid ID pattern
+
+repository:
+  url: https://github.com/example/bad-id
+
+publisher:
+  name: Test
+  type: community
+
+category: other
+pluginTier: forge-addon
+
+compatibility:
+  brxm:
+    min: "16.6.5"
+
+artifacts:
+  - type: maven-lib
+    maven:
+      groupId: com.example
+      artifactId: bad-id
+      version: 1.0.0

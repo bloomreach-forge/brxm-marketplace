@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document PUBLIC "-//Apache Software Foundation//DTD XDOC 1.0//EN"
+  "http://maven.apache.org/dtd/xdoc_1_0.dtd">
+<document>
+  <properties>
+    <title>REST API</title>
+  </properties>
+  <body>
+
+    <section name="REST API Reference">
+
+      <subsection name="Base URL">
+        <p>
+          All endpoints are relative to: <code>/cms/ws/marketplace</code>
+        </p>
+      </subsection>
+
+      <subsection name="Addon Endpoints">
+        <table>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/addons</code></td>
+            <td>List all addons</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/addons/{id}</code></td>
+            <td>Get addon by ID</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/addons?q={query}</code></td>
+            <td>Search addons</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/addons?category={cat}</code></td>
+            <td>Filter by category</td>
+          </tr>
+        </table>
+
+        <h4>List Addons</h4>
+        <source><![CDATA[
+GET /ws/marketplace/addons
+
+Response:
+[
+  {
+    "id": "ip-filter",
+    "name": "IP Filter",
+    "description": "IP-based access control",
+    "vendor": "Bloomreach",
+    "category": "security",
+    "version": "7.0.0",
+    ...
+  }
+]
+        ]]></source>
+
+        <h4>Get Addon</h4>
+        <source><![CDATA[
+GET /ws/marketplace/addons/ip-filter
+
+Response:
+{
+  "id": "ip-filter",
+  "name": "IP Filter",
+  "description": "IP-based access control for brXM",
+  "vendor": "Bloomreach",
+  "category": "security",
+  "documentationUrl": "https://bloomreach-forge.github.io/ip-filter",
+  "license": "Apache-2.0",
+  "compatibility": {
+    "minBrxmVersion": "16.0.0"
+  },
+  "artifacts": [...],
+  "installationSteps": [...]
+}
+        ]]></source>
+
+        <h4>Search Addons</h4>
+        <source><![CDATA[
+GET /ws/marketplace/addons?q=security
+
+Response: Array of matching addons
+        ]]></source>
+      </subsection>
+
+      <subsection name="Source Endpoints">
+        <table>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/sources</code></td>
+            <td>List all sources</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/sources/{id}</code></td>
+            <td>Get source by ID</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/sources</code></td>
+            <td>Add new source</td>
+          </tr>
+          <tr>
+            <td>PUT</td>
+            <td><code>/sources/{id}</code></td>
+            <td>Update source</td>
+          </tr>
+          <tr>
+            <td>DELETE</td>
+            <td><code>/sources/{id}</code></td>
+            <td>Delete source</td>
+          </tr>
+        </table>
+
+        <h4>Add Source</h4>
+        <source><![CDATA[
+POST /ws/marketplace/sources
+Content-Type: application/json
+
+{
+  "id": "partner-addons",
+  "name": "Partner Addons",
+  "url": "https://partner.example.com/addons-index.json",
+  "enabled": true,
+  "priority": 100
+}
+
+Response: 201 Created
+{
+  "id": "partner-addons",
+  "name": "Partner Addons",
+  ...
+}
+        ]]></source>
+      </subsection>
+
+      <subsection name="Installation Endpoints">
+        <table>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/addons/{id}/install</code></td>
+            <td>Install addon dependencies into project POM files</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/addons/{id}/install?upgrade=true</code></td>
+            <td>Upgrade addon to latest version</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/addons/{id}/uninstall</code></td>
+            <td>Remove addon dependencies from project POM files</td>
+          </tr>
+        </table>
+
+        <p>
+          <strong>Note:</strong> Addon IDs are validated to prevent path traversal. IDs containing
+          <code>..</code>, <code>/</code>, or <code>\</code> will be rejected with a 400 Bad Request.
+        </p>
+
+        <h4>Install Addon</h4>
+        <source><![CDATA[
+POST /ws/marketplace/addons/ip-filter/install
+
+Response:
+{
+  "status": "completed",
+  "changes": [
+    {
+      "file": "cms/pom.xml",
+      "action": "added_dependency",
+      "coordinates": "org.bloomreach.forge.ipfilter:bloomreach-ipfilter-cms:7.0.0"
+    },
+    {
+      "file": "pom.xml",
+      "action": "added_property",
+      "property": "bloomreach.forge.ipfilter.version",
+      "value": "7.0.0"
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
+        ]]></source>
+
+        <h4>InstallationResult Schema</h4>
+        <source><![CDATA[
+{
+  "status": "completed|failed",
+  "changes": [
+    {
+      "file": "pom.xml",
+      "action": "added_dependency|added_property|removed_dependency|removed_property",
+      "coordinates": "groupId:artifactId:version",
+      "property": "property.name",
+      "value": "property.value"
+    }
+  ],
+  "errors": [
+    {
+      "code": "ALREADY_INSTALLED",
+      "message": "Dependency already exists in cms/pom.xml"
+    }
+  ],
+  "warnings": [
+    "Some artifacts could not be removed"
+  ]
+}
+        ]]></source>
+
+        <h4>Installation Error Codes</h4>
+        <table>
+          <tr>
+            <th>Code</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>ADDON_NOT_FOUND</td>
+            <td>Addon ID not found in registry</td>
+          </tr>
+          <tr>
+            <td>PROJECT_BASEDIR_NOT_SET</td>
+            <td>Server configuration issue - project base directory not configured</td>
+          </tr>
+          <tr>
+            <td>MISSING_TARGET</td>
+            <td>Addon has no installable artifacts</td>
+          </tr>
+          <tr>
+            <td>TARGET_POM_NOT_FOUND</td>
+            <td>Required POM file not found (e.g., cms/pom.xml)</td>
+          </tr>
+          <tr>
+            <td>NO_DEPENDENCIES_SECTION</td>
+            <td>POM file missing dependencies element</td>
+          </tr>
+          <tr>
+            <td>ALREADY_INSTALLED</td>
+            <td>Addon already installed</td>
+          </tr>
+          <tr>
+            <td>NOT_INSTALLED</td>
+            <td>Addon not installed (for upgrade/uninstall)</td>
+          </tr>
+          <tr>
+            <td>PROPERTY_CONFLICT</td>
+            <td>Version property already exists with different value</td>
+          </tr>
+          <tr>
+            <td>IO_ERROR</td>
+            <td>Failed to write POM files</td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Management Endpoints">
+        <table>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/refresh</code></td>
+            <td>Refresh addon cache from all sources</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/health</code></td>
+            <td>Health check endpoint</td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Error Responses">
+        <p>
+          Errors are returned with appropriate HTTP status codes:
+        </p>
+        <source><![CDATA[
+{
+  "error": "Not Found",
+  "message": "Addon not found: unknown-addon",
+  "status": 404
+}
+        ]]></source>
+        <table>
+          <tr>
+            <th>Status</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td>400</td>
+            <td>Bad Request - Invalid input</td>
+          </tr>
+          <tr>
+            <td>404</td>
+            <td>Not Found - Addon or source not found</td>
+          </tr>
+          <tr>
+            <td>409</td>
+            <td>Conflict - Source ID already exists</td>
+          </tr>
+          <tr>
+            <td>500</td>
+            <td>Internal Server Error</td>
+          </tr>
+        </table>
+      </subsection>
+
+    </section>
+
+  </body>
+</document>

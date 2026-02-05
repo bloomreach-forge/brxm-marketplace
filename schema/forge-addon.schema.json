@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bloomreach-forge.github.io/brxm-marketplace/schema/forge-addon.schema.json",
+  "title": "Forge Add-on Descriptor",
+  "description": "Schema for forge-addon.yaml files that describe Bloomreach Forge add-ons",
+  "type": "object",
+  "required": ["id", "name", "version", "description", "repository", "publisher", "category", "pluginTier", "compatibility", "artifacts"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique identifier for the add-on (lowercase, alphanumeric, hyphens allowed)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Human-readable name of the add-on"
+    },
+    "version": {
+      "type": "string",
+      "description": "Current version of the add-on (semver recommended)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Brief description of what the add-on does"
+    },
+    "repository": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the source repository"
+        },
+        "branch": {
+          "type": "string",
+          "default": "main",
+          "description": "Default branch name"
+        }
+      }
+    },
+    "publisher": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Publisher name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["bloomreach", "ps", "partner", "community", "internal"],
+          "description": "Publisher type for trust badging"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Publisher website"
+        }
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "content-management",
+        "developer-tools",
+        "integration",
+        "search",
+        "personalization",
+        "analytics",
+        "security",
+        "media",
+        "workflow",
+        "seo",
+        "other"
+      ],
+      "description": "Primary category for the add-on"
+    },
+    "pluginTier": {
+      "type": "string",
+      "enum": ["forge-addon", "service-plugin"],
+      "description": "Plugin classification tier"
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["brxm"],
+      "properties": {
+        "brxm": {
+          "type": "object",
+          "required": ["min"],
+          "properties": {
+            "min": {
+              "type": "string",
+              "description": "Minimum compatible brXM version"
+            },
+            "max": {
+              "type": "string",
+              "description": "Maximum compatible brXM version (optional)"
+            }
+          }
+        },
+        "java": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "string",
+              "description": "Minimum Java version"
+            }
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["maven-lib", "hcm-module"],
+            "description": "Artifact type"
+          },
+          "maven": {
+            "type": "object",
+            "properties": {
+              "groupId": {
+                "type": "string"
+              },
+              "artifactId": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string",
+                "enum": ["cms", "site", "platform"],
+                "description": "Target module for dependency installation"
+              },
+              "versionProperty": {
+                "type": "string",
+                "description": "Property name for version (enables ${prop} syntax in POM)"
+              }
+            },
+            "required": ["groupId", "artifactId", "version", "target"]
+          },
+          "hcm": {
+            "type": "object",
+            "properties": {
+              "modulePath": {
+                "type": "string",
+                "description": "Path to HCM module in repository"
+              },
+              "packageUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to downloadable HCM package"
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "type": { "const": "maven-lib" } }
+            },
+            "then": {
+              "required": ["maven"]
+            }
+          }
+        ]
+      }
+    },
+    "installCapabilities": {
+      "type": "object",
+      "properties": {
+        "configAutoInstall": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether HCM config can be auto-installed"
+        },
+        "codeRequired": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether code dependencies are required"
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required JCR permissions"
+        },
+        "networkAccess": {
+          "type": "boolean",
+          "description": "Whether add-on requires external network access"
+        }
+      }
+    },
+    "documentation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "url"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["readme", "site", "javadoc", "api", "tutorial"]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["incubating", "active", "maintenance", "deprecated", "archived"],
+          "description": "Current lifecycle status"
+        },
+        "maintainers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deprecatedBy": {
+          "type": "string",
+          "description": "ID of replacement add-on if deprecated"
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["unreviewed", "in-review", "approved", "rejected"]
+        },
+        "level": {
+          "type": "string",
+          "enum": ["basic", "security", "full"]
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Usage metrics (populated by indexer)",
+      "properties": {
+        "downloads": {
+          "type": "integer"
+        },
+        "stars": {
+          "type": "integer"
+        }
+      }
+    },
+    "x": {
+      "type": "object",
+      "description": "Extension point for custom metadata"
+    }
+  }
+}

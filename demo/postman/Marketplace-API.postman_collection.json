@@ -1,0 +1,540 @@
+{
+  "info": {
+    "name": "brXM Marketplace API",
+    "description": "API collection for testing the Bloomreach Forge Marketplace endpoints (Essentials)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "admin",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "admin",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/essentials/rest/marketplace"
+    }
+  ],
+  "item": [
+    {
+      "name": "List Addons",
+      "item": [
+        {
+          "name": "List All Addons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"]
+            },
+            "description": "Returns all registered addons"
+          }
+        },
+        {
+          "name": "Filter by Category - Security",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=security",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "security"
+                }
+              ]
+            },
+            "description": "Filter addons by category. Valid values: content-management, developer-tools, integration, search, personalization, analytics, security, media, workflow, seo, other"
+          }
+        },
+        {
+          "name": "Filter by Category - Integration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=integration",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "integration"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category - SEO",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=seo",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "seo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category - Developer Tools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=developer-tools",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "developer-tools"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category - Content Management",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=content-management",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "content-management"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category - Media",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=media",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "media"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category - Workflow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=workflow",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "workflow"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by brXM Version - 16.0.0",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?brxmVersion=16.0.0",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "brxmVersion",
+                  "value": "16.0.0"
+                }
+              ]
+            },
+            "description": "Filter addons compatible with specified brXM version"
+          }
+        },
+        {
+          "name": "Filter by brXM Version - 15.0.0",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?brxmVersion=15.0.0",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "brxmVersion",
+                  "value": "15.0.0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Combined Filters - Category + Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=security&brxmVersion=16.0.0",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "security"
+                },
+                {
+                  "key": "brxmVersion",
+                  "value": "16.0.0"
+                }
+              ]
+            },
+            "description": "Multiple filters can be combined - all conditions must match"
+          }
+        },
+        {
+          "name": "Invalid Filter - Returns Empty",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons?category=invalid-category",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "invalid-category"
+                }
+              ]
+            },
+            "description": "Invalid filter values return empty array (not an error)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search Addons",
+      "item": [
+        {
+          "name": "Search by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/search?q=filter",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "filter"
+                }
+              ]
+            },
+            "description": "Search addons by name or description (case-insensitive)"
+          }
+        },
+        {
+          "name": "Search by Description",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/search?q=security",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "security"
+                }
+              ]
+            },
+            "description": "Search matches against addon descriptions too"
+          }
+        },
+        {
+          "name": "Search - Empty Query",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/search?q=",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Empty query returns empty array"
+          }
+        },
+        {
+          "name": "Search - No Match",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/search?q=nonexistent",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "nonexistent"
+                }
+              ]
+            },
+            "description": "Returns empty array when no addons match"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Addon by ID",
+      "item": [
+        {
+          "name": "Get ip-filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/ip-filter",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "ip-filter"]
+            },
+            "description": "Get the IP Filter addon"
+          }
+        },
+        {
+          "name": "Get url-rewriter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/url-rewriter",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "url-rewriter"]
+            },
+            "description": "Get the URL Rewriter addon"
+          }
+        },
+        {
+          "name": "Get external-document-picker",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/external-document-picker",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "external-document-picker"]
+            },
+            "description": "Get the External Document Picker addon"
+          }
+        },
+        {
+          "name": "Get brut",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/brut",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "brut"]
+            },
+            "description": "Get the BRUT testing framework addon"
+          }
+        },
+        {
+          "name": "Get content-export-import",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/content-export-import",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "content-export-import"]
+            },
+            "description": "Get the Content Export/Import addon"
+          }
+        },
+        {
+          "name": "Get gallery-magick",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/gallery-magick",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "gallery-magick"]
+            },
+            "description": "Get the Gallery Magick Image Processing addon"
+          }
+        },
+        {
+          "name": "Get hst-spring-security",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/hst-spring-security",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "hst-spring-security"]
+            },
+            "description": "Get the HST Spring Security addon"
+          }
+        },
+        {
+          "name": "Get jcr-pojo-binding",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/jcr-pojo-binding",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "jcr-pojo-binding"]
+            },
+            "description": "Get the JCR POJO Binding addon"
+          }
+        },
+        {
+          "name": "Get page-flow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/page-flow",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "page-flow"]
+            },
+            "description": "Get the Page Flow addon"
+          }
+        },
+        {
+          "name": "Get reset-password",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "reset-password"]
+            },
+            "description": "Get the Reset Password addon"
+          }
+        },
+        {
+          "name": "Get selection-field",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/selection-field",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "selection-field"]
+            },
+            "description": "Get the Selection Field addon"
+          }
+        },
+        {
+          "name": "Get settings-management",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/settings-management",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "settings-management"]
+            },
+            "description": "Get the Settings Management addon"
+          }
+        },
+        {
+          "name": "Get webarchiving",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/webarchiving",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "webarchiving"]
+            },
+            "description": "Get the Web Archiving addon"
+          }
+        },
+        {
+          "name": "Get Addon - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addons/nonexistent-addon",
+              "host": ["{{baseUrl}}"],
+              "path": ["addons", "nonexistent-addon"]
+            },
+            "description": "Returns 404 when addon is not found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Refresh Manifest",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["refresh"]
+            },
+            "description": "Trigger a refresh of the addon manifest from the configured source"
+          }
+        }
+      ]
+    }
+  ]
+}

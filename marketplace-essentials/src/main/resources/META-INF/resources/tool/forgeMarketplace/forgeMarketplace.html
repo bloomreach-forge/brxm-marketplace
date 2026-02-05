@@ -1,0 +1,489 @@
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<link rel="stylesheet" href="/essentials/tool/forgeMarketplace/forgeMarketplace.css">
+
+<div ng-controller="forgeMarketplaceCtrl" class="marketplace-root">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h1>Forge Marketplace</h1>
+    <div class="top-bar-actions">
+      <input type="text"
+             class="search-input"
+             placeholder="Search add-ons..."
+             ng-model="filter.query"
+             ng-change="search()">
+      <select class="filter-select" ng-model="filter.category" ng-change="filterAddons()">
+        <option value="">All Categories</option>
+        <option ng-repeat="cat in availableCategories" ng-value="cat.value">{{cat.label}}</option>
+      </select>
+      <button class="btn-icon" ng-click="refreshAddons(true)" title="Refresh add-ons and rescan project">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+          <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+        </svg>
+      </button>
+      <span class="result-badge" ng-if="!loading">{{resultCounts.total}} add-ons<span ng-if="filter.query || filter.category || quickFilter !== 'all'"> &bull; {{resultCounts.filtered}} match</span></span>
+    </div>
+  </div>
+
+  <!-- Project Info Bar -->
+  <div class="project-info-bar" ng-if="!loading && hasProjectContext()">
+    <div class="project-info-item">
+      <span class="project-info-label">Project brXM:</span>
+      <span class="project-info-value">{{projectContext.brxmVersion}}</span>
+    </div>
+    <div class="project-info-item" ng-if="projectContext.javaVersion">
+      <span class="project-info-label">Java:</span>
+      <span class="project-info-value">{{projectContext.javaVersion}}</span>
+    </div>
+    <div class="project-info-item">
+      <span class="project-info-label">Installed:</span>
+      <span class="project-info-value">{{getInstalledCount()}} add-ons</span>
+    </div>
+    <div class="project-info-item" ng-if="getUpdatableCount() > 0">
+      <span class="project-info-value update-available">{{getUpdatableCount()}} updates available</span>
+    </div>
+  </div>
+  <div class="project-info-bar project-info-warning" ng-if="!loading && !projectContextLoading && !hasProjectContext()">
+    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+    </svg>
+    <span>Project not detected. Run Essentials in development mode to scan installed add-ons.</span>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Loading State -->
+    <div class="state-container" ng-if="loading" style="width: 100%;">
+      <div class="spinner"></div>
+      <h3>Loading add-ons</h3>
+      <p>Fetching from Forge registry...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="state-container" ng-if="error && !loading" style="width: 100%;">
+      <svg width="48" height="48" fill="#ef4444" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+      </svg>
+      <h3>Unable to load add-ons</h3>
+      <p>{{error}}</p>
+      <button class="btn btn-primary" ng-click="refreshAddons(true)" style="margin-top: 16px;">Try Again</button>
+    </div>
+
+    <!-- List Panel -->
+    <div class="list-panel" ng-if="!loading && !error">
+      <div class="filter-chips">
+        <button class="filter-chip" ng-class="{'active': quickFilter==='all'}" ng-click="setQuickFilter('all')">All</button>
+        <button class="filter-chip" ng-class="{'active': quickFilter==='installed'}" ng-click="setQuickFilter('installed')">
+          Installed<span ng-if="hasProjectContext() && getInstalledCount() > 0" class="chip-count">{{getInstalledCount()}}</span>
+        </button>
+        <button class="filter-chip" ng-class="{'active': quickFilter==='updatable', 'has-updates': getUpdatableCount() > 0}" ng-click="setQuickFilter('updatable')">
+          Updatable<span ng-if="getUpdatableCount() > 0" class="chip-count">{{getUpdatableCount()}}</span>
+        </button>
+        <button class="filter-chip" ng-class="{'active': quickFilter==='compatible'}" ng-click="setQuickFilter('compatible')">Compatible</button>
+      </div>
+      <div class="list-header-row">
+        <span class="count">{{resultCounts.filtered}} of {{resultCounts.total}}</span>
+        <select class="sort-select" ng-model="sortBy" ng-change="setSortBy(sortBy)">
+          <option value="recommended">Recommended</option>
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="recent">Recently Updated</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <div class="list-scroll">
+        <!-- Empty State -->
+        <div class="state-container" ng-if="addons.length === 0" style="padding: 60px 20px;">
+          <h3 ng-if="quickFilter === 'installed' && !hasProjectContext()">Project not detected</h3>
+          <p ng-if="quickFilter === 'installed' && !hasProjectContext()">Run Essentials in development mode to detect installed add-ons</p>
+
+          <h3 ng-if="quickFilter === 'installed' && hasProjectContext()">No add-ons installed</h3>
+          <p ng-if="quickFilter === 'installed' && hasProjectContext()">Browse the marketplace to find add-ons for your project</p>
+
+          <h3 ng-if="quickFilter === 'updatable' && !hasProjectContext()">Project not detected</h3>
+          <p ng-if="quickFilter === 'updatable' && !hasProjectContext()">Run Essentials in development mode to check for updates</p>
+
+          <h3 ng-if="quickFilter === 'updatable' && hasProjectContext()">All up to date</h3>
+          <p ng-if="quickFilter === 'updatable' && hasProjectContext()">Your installed add-ons are at the latest versions</p>
+
+          <h3 ng-if="quickFilter === 'compatible' && !hasProjectContext()">Project not detected</h3>
+          <p ng-if="quickFilter === 'compatible' && !hasProjectContext()">Run Essentials in development mode to check compatibility</p>
+
+          <h3 ng-if="quickFilter === 'compatible' && hasProjectContext()">No compatible add-ons</h3>
+          <p ng-if="quickFilter === 'compatible' && hasProjectContext()">No add-ons are compatible with brXM {{projectContext.brxmVersion}}</p>
+
+          <h3 ng-if="quickFilter === 'all' && filter.query">No add-ons found</h3>
+          <p ng-if="quickFilter === 'all' && filter.query">No results for "{{filter.query}}"</p>
+
+          <h3 ng-if="quickFilter === 'all' && !filter.query && filter.category">No add-ons found</h3>
+          <p ng-if="quickFilter === 'all' && !filter.query && filter.category">No add-ons in this category</p>
+
+          <h3 ng-if="quickFilter === 'all' && !filter.query && !filter.category">No add-ons available</h3>
+          <p ng-if="quickFilter === 'all' && !filter.query && !filter.category">Try refreshing the marketplace</p>
+        </div>
+
+        <!-- Addon List -->
+        <div class="addon-item"
+             ng-repeat="addon in addons track by addon.id"
+             ng-click="selectAddon(addon)"
+             ng-keydown="handleKeyDown($event, addon, $index)"
+             ng-class="{'selected': selectedAddon && selectedAddon.id === addon.id}"
+             tabindex="0"
+             role="button"
+             aria-label="{{addon.name}}">
+          <div class="addon-icon" ng-class="getCategoryClass(addon.category)">
+            {{addon.name.charAt(0)}}
+          </div>
+          <div class="addon-info">
+            <h3>{{addon.name}}</h3>
+            <p>{{addon.description}}</p>
+            <div class="addon-meta">
+              <span class="tag tag-version" ng-if="addon.version">v{{addon.version}}</span>
+              <span class="tag tag-category" ng-if="addon.category">{{formatCategory(addon.category)}}</span>
+            </div>
+            <div class="addon-badges">
+              <span class="badge" ng-class="getInstallStatus(addon).class" ng-if="getInstallStatus(addon).label">{{getInstallStatus(addon).label}}</span>
+              <span class="badge" ng-class="getCompatibilityStatus(addon).class" ng-if="getCompatibilityStatus(addon).label">{{getCompatibilityStatus(addon).label}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" ng-if="!loading && !error">
+      <!-- Empty State -->
+      <div class="detail-empty" ng-if="!selectedAddon">
+        <svg fill="currentColor" viewBox="0 0 16 16">
+          <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+          <path d="M4.5 12.5A.5.5 0 0 1 5 12h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 10h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm1.639-3.708 1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047l1.888.974V8.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V8s1.54-1.274 1.639-1.208zM6.25 6a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/>
+        </svg>
+        <h3>Select an add-on</h3>
+        <p>Choose an add-on from the list to view details</p>
+      </div>
+
+      <!-- Addon Details -->
+      <div class="detail-content" ng-if="selectedAddon">
+      <div class="detail-header">
+        <div class="detail-header-top">
+          <div class="detail-icon" ng-class="getCategoryClass(selectedAddon.category)">
+            {{selectedAddon.name.charAt(0)}}
+          </div>
+          <div class="detail-title">
+            <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 600; color: #1a1f36;">
+              {{selectedAddon.name}}
+              <span class="lifecycle-badge" ng-class="getLifecycleClass(selectedAddon.lifecycle.status)" ng-if="selectedAddon.lifecycle && selectedAddon.lifecycle.status">
+                {{selectedAddon.lifecycle.status}}
+              </span>
+            </h1>
+            <div class="subtitle" ng-if="selectedAddon.publisher">
+              By {{selectedAddon.publisher.name}}
+            </div>
+            <div class="detail-tags">
+              <span class="tag tag-version" ng-if="selectedAddon.version">v{{selectedAddon.version}}</span>
+              <span class="tag tag-category" ng-if="selectedAddon.category">{{formatCategory(selectedAddon.category)}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <!-- Install Button -->
+          <button class="btn btn-primary"
+                  ng-if="canInstall(selectedAddon)"
+                  ng-click="installAddon(selectedAddon)"
+                  ng-disabled="installing">
+            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            <span ng-if="installing" class="btn-spinner"></span>
+            {{installing ? 'Installing...' : 'Install'}}
+          </button>
+
+          <!-- Update Button -->
+          <button class="btn btn-update"
+                  ng-if="canUpdate(selectedAddon)"
+                  ng-click="updateAddon(selectedAddon)"
+                  ng-disabled="installing">
+            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            <span ng-if="installing" class="btn-spinner"></span>
+            {{installing ? 'Updating...' : 'Update to v' + selectedAddon.version}}
+          </button>
+
+          <!-- Installed Badge (only when up to date) -->
+          <span class="badge-installed-action" ng-if="isInstalled(selectedAddon) && !hasUpdate(selectedAddon)">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+            Installed
+          </span>
+
+          <!-- Uninstall Button -->
+          <button class="btn btn-danger"
+                  ng-if="canUninstall(selectedAddon)"
+                  ng-click="confirmUninstall(selectedAddon)"
+                  ng-disabled="installing">
+            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+            </svg>
+            <span ng-if="installing" class="btn-spinner"></span>
+            Uninstall
+          </button>
+
+          <a class="btn btn-primary" ng-if="getGitHubPagesUrl(selectedAddon) && !canInstall(selectedAddon) && !isInstalled(selectedAddon)" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.5h14V4a1 1 0 0 0-1-1H2zm13 2.5H1V12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5z"/>
+            </svg>
+            Documentation
+          </a>
+          <a class="btn btn-secondary" ng-if="getGitHubPagesUrl(selectedAddon) && (canInstall(selectedAddon) || isInstalled(selectedAddon))" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.5h14V4a1 1 0 0 0-1-1H2zm13 2.5H1V12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5z"/>
+            </svg>
+            Documentation
+          </a>
+          <a class="btn btn-secondary" ng-if="selectedAddon.repository" href="{{selectedAddon.repository.url}}" target="_blank">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            View Source
+          </a>
+        </div>
+
+        <!-- Installation Feedback -->
+        <div class="install-feedback" ng-if="installResult || installError">
+          <!-- Success -->
+          <div class="install-success" ng-if="installResult && installResult.status === 'completed'">
+            <div class="feedback-header">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+              </svg>
+              <span>Installation Complete</span>
+              <button class="close-btn" ng-click="clearInstallFeedback()">&times;</button>
+            </div>
+            <ul class="changes-list">
+              <li ng-repeat="change in installResult.changes">
+                <code>{{change.file}}</code>:
+                <span ng-if="change.action === 'added_dependency'">
+                  Added dependency <code>{{change.coordinates}}</code>
+                </span>
+                <span ng-if="change.action === 'added_property'">
+                  Added property <code>{{change.property}}={{change.value}}</code>
+                </span>
+                <span ng-if="change.action === 'updated_property'">
+                  Updated <code>{{change.property}}</code>: {{change.oldValue}} → {{change.value}}
+                </span>
+                <span ng-if="change.action === 'removed_dependency'">
+                  Removed dependency <code>{{change.coordinates}}</code>
+                </span>
+                <span ng-if="change.action === 'removed_property'">
+                  Removed property <code>{{change.property}}</code>
+                </span>
+              </li>
+            </ul>
+            <p class="rebuild-notice">Rebuild your project to apply changes.</p>
+          </div>
+
+          <!-- Error -->
+          <div class="install-error" ng-if="installError">
+            <div class="feedback-header">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+              </svg>
+              <span>Installation Failed</span>
+              <button class="close-btn" ng-click="clearInstallFeedback()">&times;</button>
+            </div>
+            <ul class="error-list">
+              <li ng-repeat="err in installError.errors">
+                <strong ng-if="err.code">{{err.code}}</strong><span ng-if="err.code">: </span>{{err.message}}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compatibility Strip -->
+      <div class="compat-strip" ng-if="selectedAddon.compatibility">
+        <div class="compat-item" ng-if="selectedAddon.compatibility.brxm">
+          <label>brXM Range</label>
+          <div class="value">{{selectedAddon.compatibility.brxm.min}} — {{selectedAddon.compatibility.brxm.max}}</div>
+        </div>
+        <div class="compat-item">
+          <label>Your Project</label>
+          <div class="value" ng-if="hasProjectContext()" ng-class="{'compat-ok': getCompatibilityStatus(selectedAddon).status === 'compatible', 'compat-fail': getCompatibilityStatus(selectedAddon).status === 'incompatible'}">
+            {{projectContext.brxmVersion}} {{getCompatibilityStatus(selectedAddon).status === 'compatible' ? '✓' : (getCompatibilityStatus(selectedAddon).status === 'incompatible' ? '✗' : '')}}
+          </div>
+          <div class="value" ng-if="!hasProjectContext()" style="color: #9ca3af;">Not detected</div>
+        </div>
+        <div class="compat-item" ng-if="selectedAddon.compatibility.java">
+          <label>Java</label>
+          <div class="value">{{selectedAddon.compatibility.java.min}}+</div>
+        </div>
+        <div class="compat-item" ng-if="selectedAddon.lifecycle && selectedAddon.lifecycle.status">
+          <label>Status</label>
+          <div class="value" style="text-transform: capitalize;">{{selectedAddon.lifecycle.status}}</div>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <!-- About -->
+        <div class="detail-section">
+          <h4>About</h4>
+          <p>{{selectedAddon.description}}</p>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="detail-section">
+          <h4>Details</h4>
+          <div class="info-grid">
+            <div class="info-card" ng-if="selectedAddon.compatibility && selectedAddon.compatibility.brxm">
+              <label>brXM Compatibility</label>
+              <div class="value">{{selectedAddon.compatibility.brxm.min}} — {{selectedAddon.compatibility.brxm.max}}</div>
+            </div>
+            <div class="info-card" ng-if="selectedAddon.compatibility && selectedAddon.compatibility.java">
+              <label>Java Version</label>
+              <div class="value">{{selectedAddon.compatibility.java.min}}+</div>
+            </div>
+            <div class="info-card" ng-if="selectedAddon.pluginTier">
+              <label>Plugin Tier</label>
+              <div class="value">{{selectedAddon.pluginTier}}</div>
+            </div>
+            <div class="info-card" ng-if="selectedAddon.lifecycle && selectedAddon.lifecycle.status">
+              <label>Status</label>
+              <div class="value" style="text-transform: capitalize;">{{selectedAddon.lifecycle.status}}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Installation -->
+        <div class="detail-section" ng-if="selectedAddon.artifacts && selectedAddon.artifacts.length > 0">
+          <h4>Installation</h4>
+
+          <!-- Version Compare (if installed) -->
+          <div class="version-compare" ng-if="isInstalled(selectedAddon)">
+            <span class="installed">Installed: v{{getInstalledVersion(selectedAddon)}}</span>
+            <span class="arrow" ng-if="hasUpdate(selectedAddon)">→</span>
+            <span class="latest" ng-if="hasUpdate(selectedAddon)">Latest: v{{selectedAddon.version}}</span>
+            <span class="latest" ng-if="!hasUpdate(selectedAddon)" style="color: #166534;">Up to date</span>
+          </div>
+
+          <!-- CMS Module Artifacts -->
+          <div class="install-module-group" ng-if="getArtifactsByTarget(selectedAddon).cms.length > 0">
+            <div class="install-module-group-header">CMS Module</div>
+            <div ng-repeat="artifact in getArtifactsByTarget(selectedAddon).cms" ng-if="artifact.maven">
+              <div class="code-snippet">
+                <div class="code-snippet__header">
+                  <span class="code-snippet__label">{{artifact.maven.artifactId}}</span>
+                  <button class="code-snippet__copy" type="button"
+                          ng-click="copyToClipboard(artifact, $event)">Copy</button>
+                </div>
+                <div class="code-snippet__body">
+                  <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
+    <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
+    <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Site Module Artifacts -->
+          <div class="install-module-group" ng-if="getArtifactsByTarget(selectedAddon).site.length > 0">
+            <div class="install-module-group-header">Site Module</div>
+            <div ng-repeat="artifact in getArtifactsByTarget(selectedAddon).site" ng-if="artifact.maven">
+              <div class="code-snippet">
+                <div class="code-snippet__header">
+                  <span class="code-snippet__label">{{artifact.maven.artifactId}}</span>
+                  <button class="code-snippet__copy" type="button"
+                          ng-click="copyToClipboard(artifact, $event)">Copy</button>
+                </div>
+                <div class="code-snippet__body">
+                  <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
+    <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
+    <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Artifacts -->
+          <div class="install-module-group" ng-if="getArtifactsByTarget(selectedAddon).other.length > 0">
+            <div class="install-module-group-header" ng-if="getArtifactsByTarget(selectedAddon).cms.length > 0 || getArtifactsByTarget(selectedAddon).site.length > 0">Other</div>
+            <div ng-repeat="artifact in getArtifactsByTarget(selectedAddon).other" ng-if="artifact.maven">
+              <div class="code-snippet">
+                <div class="code-snippet__header">
+                  <span class="code-snippet__label">{{artifact.maven.artifactId}}</span>
+                  <button class="code-snippet__copy" type="button"
+                          ng-click="copyToClipboard(artifact, $event)">Copy</button>
+                </div>
+                <div class="code-snippet__body">
+                  <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
+    <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
+    <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta Links -->
+          <div class="meta-links" ng-if="selectedAddon.repository">
+            <a class="meta-link" ng-href="{{getIssuesUrl(selectedAddon)}}" target="_blank">Report an issue</a>
+            <a class="meta-link" ng-href="{{getReleasesUrl(selectedAddon)}}" target="_blank">Release notes</a>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Uninstall Confirmation Dialog -->
+  <div class="confirm-overlay" ng-if="showUninstallConfirm">
+    <div class="confirm-dialog">
+      <div class="confirm-dialog-header">
+        <h4>Uninstall {{addonToUninstall.name}}?</h4>
+      </div>
+      <div class="confirm-dialog-body">
+        <div class="confirm-warning">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+          <span>This will remove the Maven dependency from your project. If your code uses classes from this addon, you must manually remove those usages or the project will not compile.</span>
+        </div>
+      </div>
+      <div class="confirm-dialog-footer">
+        <button class="btn btn-secondary" ng-click="cancelUninstall()">Cancel</button>
+        <button class="btn btn-danger" ng-click="proceedUninstall()">Uninstall</button>
+      </div>
+    </div>
+  </div>
+</div>

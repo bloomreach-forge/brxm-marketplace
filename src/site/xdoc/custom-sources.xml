@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document PUBLIC "-//Apache Software Foundation//DTD XDOC 1.0//EN"
+  "http://maven.apache.org/dtd/xdoc_1_0.dtd">
+<document>
+  <properties>
+    <title>Custom Sources</title>
+  </properties>
+  <body>
+
+    <section name="Adding Custom Sources">
+
+      <subsection name="Overview">
+        <p>
+          The Marketplace supports multiple addon sources. By default, it includes the
+          official Bloomreach Forge source. You can add additional sources for:
+        </p>
+        <ul>
+          <li>Partner addon catalogs</li>
+          <li>Internal/private addon repositories</li>
+          <li>Customer-specific addon collections</li>
+        </ul>
+      </subsection>
+
+      <subsection name="Creating a Manifest File">
+        <p>
+          A manifest file is a JSON array of addon descriptors:
+        </p>
+        <source><![CDATA[
+{
+  "schemaVersion": "1.0",
+  "generated": "2025-01-15T10:30:00Z",
+  "addons": [
+    {
+      "schemaVersion": "1.0",
+      "id": "partner-addon-1",
+      "name": "Partner Addon 1",
+      "description": "Description here",
+      "vendor": "Partner Company",
+      "category": "integration",
+      "license": "Commercial",
+      "compatibility": {
+        "minBrxmVersion": "16.0.0"
+      },
+      "artifacts": [
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "com.partner",
+            "artifactId": "partner-addon-1",
+            "version": "2.0.0"
+          },
+          "targets": ["cms"]
+        }
+      ],
+      "installationSteps": [
+        {
+          "type": "maven",
+          "description": "Add dependency",
+          "xml": "<dependency>...</dependency>"
+        }
+      ]
+    }
+  ]
+}
+        ]]></source>
+        <p>
+          Host this file on a web server accessible from the brXM environment.
+        </p>
+      </subsection>
+
+      <subsection name="Adding a Source via REST API">
+        <source><![CDATA[
+curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "partner-addons",
+    "name": "Partner Addons",
+    "url": "https://partner.example.com/addons-index.json",
+    "enabled": true
+  }'
+        ]]></source>
+      </subsection>
+
+      <subsection name="Adding a Source via JCR">
+        <p>
+          Sources can also be configured directly in JCR:
+        </p>
+        <source><![CDATA[
+/hippo:configuration/hippo:modules/marketplace/hippo:moduleconfig/sources/partner-addons
+  - jcr:primaryType: nt:unstructured
+  - id: partner-addons
+  - name: Partner Addons
+  - url: https://partner.example.com/addons-index.json
+  - enabled: true
+  - priority: 100
+        ]]></source>
+      </subsection>
+
+      <subsection name="Source Properties">
+        <table>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><code>id</code></td>
+            <td>String</td>
+            <td>Unique identifier for the source</td>
+          </tr>
+          <tr>
+            <td><code>name</code></td>
+            <td>String</td>
+            <td>Display name</td>
+          </tr>
+          <tr>
+            <td><code>url</code></td>
+            <td>String</td>
+            <td>URL to the manifest JSON file</td>
+          </tr>
+          <tr>
+            <td><code>enabled</code></td>
+            <td>Boolean</td>
+            <td>Whether to include this source (default: true)</td>
+          </tr>
+          <tr>
+            <td><code>priority</code></td>
+            <td>Integer</td>
+            <td>Order priority - lower values first (default: 100)</td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Managing Sources">
+        <h4>List all sources</h4>
+        <source><![CDATA[
+GET /ws/marketplace/sources
+        ]]></source>
+
+        <h4>Get a specific source</h4>
+        <source><![CDATA[
+GET /ws/marketplace/sources/{id}
+        ]]></source>
+
+        <h4>Update a source</h4>
+        <source><![CDATA[
+PUT /ws/marketplace/sources/{id}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "enabled": false
+}
+        ]]></source>
+
+        <h4>Delete a source</h4>
+        <source><![CDATA[
+DELETE /ws/marketplace/sources/{id}
+        ]]></source>
+      </subsection>
+
+      <subsection name="Caching">
+        <p>
+          Manifests are cached with a configurable TTL (default: 1 hour). The cache is
+          automatically refreshed when:
+        </p>
+        <ul>
+          <li>The TTL expires</li>
+          <li>A source is added, updated, or deleted</li>
+          <li>The refresh endpoint is called manually</li>
+        </ul>
+        <source><![CDATA[
+POST /ws/marketplace/refresh
+        ]]></source>
+      </subsection>
+
+    </section>
+
+  </body>
+</document>

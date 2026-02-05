@@ -1,0 +1,83 @@
+name: 'Generate Forge Descriptor'
+description: 'Generates forge-addon.yaml from .forge/addon-config.yaml and pom.xml'
+author: 'Bloomreach Forge'
+
+branding:
+  icon: 'package'
+  color: 'blue'
+
+inputs:
+  config-path:
+    description: 'Path to addon config file'
+    required: false
+    default: '.forge/addon-config.yaml'
+  output-path:
+    description: 'Output path for generated descriptor'
+    required: false
+    default: 'forge-addon.yaml'
+  pom-path:
+    description: 'Path to pom.xml'
+    required: false
+    default: 'pom.xml'
+  readme-path:
+    description: 'Path to README.md'
+    required: false
+    default: 'README.md'
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: '17'
+  generator-version:
+    description: 'Version of descriptor generator to use (tag or "latest")'
+    required: false
+    default: 'latest'
+
+outputs:
+  descriptor-path:
+    description: 'Path to the generated descriptor file'
+    value: ${{ inputs.output-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+
+    - name: Download descriptor generator
+      shell: bash
+      env:
+        GENERATOR_VERSION: ${{ inputs.generator-version }}
+      run: |
+        if [ "$GENERATOR_VERSION" = "latest" ]; then
+          DOWNLOAD_URL="https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar"
+        else
+          DOWNLOAD_URL="https://github.com/bloomreach-forge/brxm-marketplace/releases/download/${GENERATOR_VERSION}/descriptor-generator.jar"
+        fi
+        echo "Downloading descriptor generator from: $DOWNLOAD_URL"
+        curl -sL "$DOWNLOAD_URL" -o /tmp/descriptor-generator.jar
+
+    - name: Generate descriptor
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        java -jar /tmp/descriptor-generator.jar \
+          --config "${{ inputs.config-path }}" \
+          --output "${{ inputs.output-path }}" \
+          --pom "${{ inputs.pom-path }}" \
+          --readme "${{ inputs.readme-path }}" \
+          --repo "${{ github.repository }}" \
+          --verbose
+
+    - name: Verify generated file
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.output-path }}" ]; then
+          echo "Error: Generated descriptor not found at ${{ inputs.output-path }}"
+          exit 1
+        fi
+        echo "Generated descriptor:"
+        cat "${{ inputs.output-path }}"

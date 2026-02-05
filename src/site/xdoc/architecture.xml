@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document PUBLIC "-//Apache Software Foundation//DTD XDOC 1.0//EN"
+  "http://maven.apache.org/dtd/xdoc_1_0.dtd">
+<document>
+  <properties>
+    <title>Architecture</title>
+  </properties>
+  <body>
+
+    <section name="Architecture">
+
+      <subsection name="Module Overview">
+        <p>
+          The Marketplace consists of four modules:
+        </p>
+        <table>
+          <tr>
+            <th>Module</th>
+            <th>Purpose</th>
+          </tr>
+          <tr>
+            <td><code>common</code></td>
+            <td>Shared models, schema validation, utilities</td>
+          </tr>
+          <tr>
+            <td><code>repository</code></td>
+            <td>JCR configuration, REST endpoints, services</td>
+          </tr>
+          <tr>
+            <td><code>marketplace-essentials</code></td>
+            <td>Essentials plugin integration</td>
+          </tr>
+          <tr>
+            <td><code>manifest-generator</code></td>
+            <td>CLI tools for addon developers</td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Multi-Source Architecture">
+        <p>
+          The Marketplace aggregates addons from multiple manifest sources:
+        </p>
+        <source><![CDATA[
+┌─────────────────────────────────────────────────────────────┐
+│                    Essentials UI                            │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  MarketplaceResource                        │
+│                    (REST API)                               │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│               AddonAggregationService                       │
+│         (Combines addons from all sources)                  │
+└─────────────────────────────────────────────────────────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  Forge Source   │ │ Partner Source  │ │ Internal Source │
+│  (GitHub Pages) │ │ (Custom URL)    │ │ (Custom URL)    │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+        ]]></source>
+      </subsection>
+
+      <subsection name="Key Components">
+        <h4>AddonAggregationService</h4>
+        <p>
+          Fetches and combines addon manifests from all enabled sources. Handles:
+        </p>
+        <ul>
+          <li>Parallel fetching from multiple sources</li>
+          <li>Deduplication by addon ID (first source wins by priority)</li>
+          <li>Error handling with retry logic</li>
+          <li>Caching with configurable TTL</li>
+        </ul>
+
+        <h4>ManifestClient</h4>
+        <p>
+          Fetches manifest JSON from HTTP URLs or local files. Features:
+        </p>
+        <ul>
+          <li>Thread-safe caching with atomic refresh</li>
+          <li>Configurable cache TTL</li>
+          <li>Support for both HTTP and file:// URLs</li>
+        </ul>
+
+        <h4>SourceManagementService</h4>
+        <p>
+          Manages addon sources stored in JCR. Provides:
+        </p>
+        <ul>
+          <li>CRUD operations for sources</li>
+          <li>JCR-based persistence</li>
+          <li>Default Forge source auto-creation</li>
+        </ul>
+      </subsection>
+
+      <subsection name="JCR Structure">
+        <source><![CDATA[
+/hippo:configuration/hippo:modules/marketplace/hippo:moduleconfig
+├── sources/
+│   ├── forge/
+│   │   ├── id: forge
+│   │   ├── name: Bloomreach Forge
+│   │   ├── url: https://bloomreach-forge.github.io/brxm-marketplace/addons-index.json
+│   │   ├── enabled: true
+│   │   └── priority: 0
+│   └── partner/
+│       ├── id: partner
+│       ├── name: Partner Addons
+│       ├── url: https://partner.example.com/addons.json
+│       ├── enabled: true
+│       └── priority: 100
+└── settings/
+    └── cacheTtlMinutes: 60
+        ]]></source>
+      </subsection>
+
+      <subsection name="Caching Strategy">
+        <p>
+          Manifests are cached to minimize network requests:
+        </p>
+        <ul>
+          <li><strong>TTL-based expiry</strong> - Cache entries expire after configurable time (default: 1 hour)</li>
+          <li><strong>Atomic refresh</strong> - Uses ConcurrentHashMap.compute() to prevent cache stampede</li>
+          <li><strong>Manual refresh</strong> - POST /ws/marketplace/refresh forces immediate refresh</li>
+        </ul>
+      </subsection>
+
+      <subsection name="Essentials Integration">
+        <p>
+          The <code>marketplace-essentials</code> module integrates with the brXM Essentials framework:
+        </p>
+        <ul>
+          <li>Registers as an Essentials plugin via <code>@EssentialsPlugin</code></li>
+          <li>Provides REST resources for the Essentials dashboard</li>
+          <li>Uses HippoServiceRegistry for service lookup</li>
+        </ul>
+      </subsection>
+
+    </section>
+
+  </body>
+</document>

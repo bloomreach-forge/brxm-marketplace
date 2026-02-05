@@ -1,0 +1,48 @@
+id: test-addon
+name: Test Add-on
+version: 1.0.0
+description: A test add-on for unit testing purposes
+
+repository:
+  url: https://github.com/example/test-addon
+  branch: main
+
+publisher:
+  name: Test Publisher
+  type: community
+  url: https://example.com
+
+category: developer-tools
+pluginTier: forge-addon
+
+compatibility:
+  brxm:
+    min: "16.6.5"
+    max: "17.0.0"
+  java:
+    min: "11"
+
+artifacts:
+  - type: maven-lib
+    maven:
+      groupId: com.example
+      artifactId: test-addon
+      version: 1.0.0
+
+installCapabilities:
+  configAutoInstall: true
+  codeRequired: false
+
+documentation:
+  - type: readme
+    url: https://github.com/example/test-addon#readme
+
+lifecycle:
+  status: active
+  maintainers:
+    - John Doe
+
+review:
+  status: approved
+  level: full
+  reviewedAt: "2025-01-15"

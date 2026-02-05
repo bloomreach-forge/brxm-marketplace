@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<project>
+  <projectNamespace>demo</projectNamespace>
+  <confirmParams>false</confirmParams>
+  <selectedProjectPackage>org.bloomreach.forge.marketplace.demo</selectedProjectPackage>
+  <selectedBeansPackage>org.bloomreach.forge.marketplace.demo.beans</selectedBeansPackage>
+  <selectedComponentsPackage>org.bloomreach.forge.marketplace.demo.components</selectedComponentsPackage>
+  <selectedRestPackage>org.bloomreach.forge.marketplace.demo.rest</selectedRestPackage>
+  <hstRoot>/hst:demo</hstRoot>
+  <webfileBundleName>site</webfileBundleName>
+  <setupDone>false</setupDone>
+  <useSamples>true</useSamples>
+  <extraTemplates>true</extraTemplates>
+</project>

@@ -1,0 +1,65 @@
+# .forge/addon-config.yaml - Minimal configuration for forge-addon.yaml auto-generation
+#
+# AI-METADATA: template, addon-config, forge-marketplace, descriptor-generation
+# PURPOSE: Copy to .forge/addon-config.yaml in your addon repository to enable auto-generation
+# GENERATES: forge-addon.yaml (via GitHub Action or descriptor-generator.jar CLI)
+# DOCS: https://bloomreach-forge.github.io/brxm-marketplace/addon-descriptor.html
+#
+# This file contains only the fields that cannot be auto-derived from pom.xml, README.md,
+# or the GitHub API.
+#
+# Auto-derived fields (do not need to be specified here):
+#   - id:          from pom.xml <artifactId>
+#   - name:        from pom.xml <name> or humanized artifactId
+#   - version:     from pom.xml <version>
+#   - description: from pom.xml <description> or README.md first paragraph
+#   - repository:  from GitHub API
+#   - artifacts:   from pom.xml Maven coordinates
+#   - documentation.readme: generated URL to README.md
+
+# Required - must be specified
+category: other  # Options: content-management, developer-tools, integration, search,
+                 #          personalization, analytics, security, media, workflow, seo, other
+
+pluginTier: forge-addon  # Options: forge-addon, service-plugin
+
+compatibility:
+  brxm:
+    min: "16.0.0"   # Minimum compatible brXM version
+    # max: "17.0.0" # Optional: Maximum compatible version
+
+# Optional - repository branch (defaults to "main")
+# repository:
+#   branch: master
+
+# Optional - documentation links (defaults to README on GitHub)
+# documentation:
+#   - type: site
+#     url: https://bloomreach-forge.github.io/your-addon/
+
+# Optional - publisher info (defaults to GitHub org name + community type)
+# publisher:
+#   name: "Your Organization"
+#   type: community  # Options: bloomreach, ps, partner, community, internal
+#   url: "https://your-org.com"
+
+# Optional - installation instructions (only if addon requires configuration)
+# installation:
+#   target:
+#     - cms  # Options: cms, site, platform
+#   prerequisites:
+#     - "Elasticsearch 7.x running"
+#     - "Redis server available"
+#   configuration:
+#     file: conf/application.yaml
+#     properties:
+#       - name: myaddon.enabled
+#         description: "Enable the addon functionality"
+#         required: false
+#         default: "true"
+#         example: "true"
+#       - name: myaddon.api.key
+#         description: "API key for external service"
+#         required: true
+#         example: "sk-xxxx"
+#   verification: "Check CMS logs for 'MyAddon initialized successfully'"

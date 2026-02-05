@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document PUBLIC "-//Apache Software Foundation//DTD XDOC 1.0//EN"
+  "http://maven.apache.org/dtd/xdoc_1_0.dtd">
+<document>
+  <properties>
+    <title>CLI Tools</title>
+  </properties>
+  <body>
+
+    <section name="CLI Tools">
+
+      <subsection name="Overview">
+        <p>
+          Two CLI tools are available from
+          <a href="https://github.com/bloomreach-forge/brxm-marketplace/releases">GitHub Releases</a>:
+        </p>
+        <ul>
+          <li><strong>descriptor-generator.jar</strong> - For addon developers</li>
+          <li><strong>manifest-generator.jar</strong> - For manifest maintainers</li>
+        </ul>
+      </subsection>
+
+      <subsection name="descriptor-generator">
+        <p>
+          Generates <code>forge-addon.yaml</code> for addon repositories by combining
+          a config file with pom.xml metadata.
+        </p>
+        <source><![CDATA[
+# Download
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+# Usage
+java -jar descriptor-generator.jar [options]
+
+Options:
+  -c, --config <file>    Config file path (default: .forge/addon-config.yaml)
+  -o, --output <file>    Output file path (default: forge-addon.yaml)
+  -p, --pom <file>       POM file path (default: pom.xml)
+  -v, --verbose          Enable verbose output
+  -h, --help             Show help
+        ]]></source>
+
+        <h4>Example</h4>
+        <source><![CDATA[
+java -jar descriptor-generator.jar \
+  --config .forge/addon-config.yaml \
+  --output forge-addon.yaml \
+  --verbose
+        ]]></source>
+      </subsection>
+
+      <subsection name="manifest-generator">
+        <p>
+          Generates <code>addons-index.json</code> by scanning a GitHub organization for
+          repositories containing <code>forge-addon.yaml</code> files.
+        </p>
+        <source><![CDATA[
+# Download
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/manifest-generator.jar
+
+# Usage
+java -jar manifest-generator.jar [options]
+
+Options:
+  -g, --org <name>       GitHub organization to scan (required)
+  -o, --output <file>    Output file path (default: addons-index.json)
+  -t, --token <token>    GitHub token for API access
+  -v, --verbose          Enable verbose output
+  -h, --help             Show help
+        ]]></source>
+
+        <h4>Example</h4>
+        <source><![CDATA[
+java -jar manifest-generator.jar \
+  --org bloomreach-forge \
+  --output addons-index.json \
+  --token $GITHUB_TOKEN \
+  --verbose
+        ]]></source>
+        <p>
+          This tool is primarily used by the Marketplace's GitHub Actions workflow to
+          generate the official Forge addon index.
+        </p>
+      </subsection>
+
+      <subsection name="Downloading Specific Versions">
+        <p>
+          To download a specific version of the tools:
+        </p>
+        <source><![CDATA[
+# Latest
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+# Specific version
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/download/1.0.0/descriptor-generator.jar
+        ]]></source>
+      </subsection>
+
+    </section>
+
+  </body>
+</document>

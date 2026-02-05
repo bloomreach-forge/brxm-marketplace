@@ -1,0 +1,43 @@
+<svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect x="2" y="2" width="72" height="72" rx="16" fill="#07172D"/>
+
+    <!-- Storefront body -->
+    <rect x="20" y="30" width="36" height="30" rx="3" stroke="#FFFFFF" stroke-width="2.5" fill="none"/>
+
+    <!-- Awning base -->
+    <rect x="18" y="20" width="40" height="8" rx="3" fill="#FFFFFF"/>
+
+    <!-- Awning stripes -->
+    <path d="M20 20H25V28C25 29.657 23.657 31 22 31C20.343 31 20 29.657 20 28V20Z" fill="#FFC845"/>
+    <path d="M25 20H30V28C30 29.657 28.657 31 27 31C25.343 31 25 29.657 25 28V20Z" fill="#00B7A7"/>
+    <path d="M30 20H35V28C35 29.657 33.657 31 32 31C30.343 31 30 29.657 30 28V20Z" fill="#FFC845"/>
+    <path d="M35 20H40V28C40 29.657 38.657 31 37 31C35.343 31 35 29.657 35 28V20Z" fill="#00B7A7"/>
+    <path d="M40 20H45V28C45 29.657 43.657 31 42 31C40.343 31 40 29.657 40 28V20Z" fill="#FFC845"/>
+    <path d="M45 20H50V28C50 29.657 48.657 31 47 31C45.343 31 45 29.657 45 28V20Z" fill="#00B7A7"/>
+    <path d="M50 20H55V28C55 29.657 53.657 31 52 31C50.343 31 50 29.657 50 28V20Z" fill="#FFC845"/>
+
+    <!-- App tiles grid -->
+    <!-- Top-left: gear -->
+    <rect x="24" y="34" width="10" height="10" rx="2" fill="#00B7A7"/>
+    <path d="M29 37.2C27.784 37.2 26.8 38.184 26.8 39.4C26.8 40.616 27.784 41.6 29 41.6C30.216 41.6 31.2 40.616 31.2 39.4C31.2 38.184 30.216 37.2 29 37.2Z" stroke="#FFFFFF" stroke-width="1.2"/>
+    <path d="M29 36V37" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M29 41.8V42.8" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M26.6 38.1L27.3 38.6" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M30.7 40.2L31.4 40.7" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M26.6 40.7L27.3 40.2" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M30.7 38.6L31.4 38.1" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Top-right: gauge -->
+    <rect x="42" y="34" width="10" height="10" rx="2" fill="#FFC845"/>
+    <path d="M47 41C45.619 41 44.5 39.881 44.5 38.5C44.5 37.119 45.619 36 47 36C48.381 36 49.5 37.119 49.5 38.5" stroke="#07172D" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M47 38.5L48.4 37.4" stroke="#07172D" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- Bottom-left: folder -->
+    <rect x="24" y="46" width="10" height="10" rx="2" fill="#FFC845"/>
+    <path d="M26 53V48.5H29L30 50H34V53H26Z" stroke="#07172D" stroke-width="1.2" stroke-linejoin="round"/>
+
+    <!-- Bottom-right: puzzle piece -->
+    <rect x="42" y="46" width="10" height="10" rx="2" fill="#00B7A7"/>
+    <path d="M45 53V50.8C45.5 51.1 46.06 51.25 46.6 51.25C47.58 51.25 48.25 50.72 48.25 49.9C48.25 49.08 47.58 48.55 46.6 48.55C46.06 48.55 45.5 48.7 45 49V47H49V49C49.5 48.7 50.06 48.55 50.6 48.55C51.58 48.55 52.25 49.08 52.25 49.9C52.25 50.72 51.58 51.25 50.6 51.25C50.06 51.25 49.5 51.1 49 50.8V53H45Z" fill="#00B7A7" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>

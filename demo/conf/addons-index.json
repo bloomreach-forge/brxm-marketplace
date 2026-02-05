@@ -1,0 +1,190 @@
+{
+  "version": "1.0",
+  "generatedAt": "2025-01-31T12:00:00Z",
+  "source": {
+    "name": "local-test",
+    "url": "file://local"
+  },
+  "addons": [
+    {
+      "id": "ip-filter",
+      "name": "IP Filter Plugin",
+      "version": "4.0.0",
+      "description": "Restrict access to brXM content and channels based on IP address ranges and geolocation rules.",
+      "repository": {
+        "url": "https://github.com/bloomreach-forge/ip-filter",
+        "branch": "main"
+      },
+      "publisher": {
+        "name": "Bloomreach Forge",
+        "type": "community",
+        "url": "https://github.com/bloomreach-forge"
+      },
+      "category": "security",
+      "pluginTier": "forge-addon",
+      "compatibility": {
+        "brxm": { "min": "15.0.0", "max": "16.6.5" },
+        "java": { "min": "11" }
+      },
+      "artifacts": [
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "org.bloomreach.forge.ipfilter",
+            "artifactId": "hippo-ipfilter",
+            "version": "4.0.0",
+            "target": "cms",
+            "versionProperty": "ipfilter.version"
+          }
+        }
+      ],
+      "installCapabilities": {
+        "configAutoInstall": false,
+        "codeRequired": true
+      },
+      "lifecycle": {
+        "status": "active",
+        "maintainers": ["bloomreach-forge"]
+      }
+    },
+    {
+      "id": "url-rewriter",
+      "name": "URL Rewriter",
+      "version": "3.0.2",
+      "description": "Configurable URL rewriting and redirection engine for brXM sites with pattern matching and rule management.",
+      "repository": {
+        "url": "https://github.com/bloomreach-forge/url-rewriter",
+        "branch": "main"
+      },
+      "publisher": {
+        "name": "Bloomreach Forge",
+        "type": "community",
+        "url": "https://github.com/bloomreach-forge"
+      },
+      "category": "seo",
+      "pluginTier": "forge-addon",
+      "compatibility": {
+        "brxm": { "min": "14.0.0", "max": "16.6.5" },
+        "java": { "min": "11" }
+      },
+      "artifacts": [
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "org.bloomreach.forge.urlrewriter",
+            "artifactId": "hippo-urlrewriter-plugin-api",
+            "version": "3.0.2",
+            "target": "platform",
+            "versionProperty": "urlrewriter.version"
+          }
+        },
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "org.bloomreach.forge.urlrewriter",
+            "artifactId": "hippo-urlrewriter-plugin-site",
+            "version": "3.0.2",
+            "target": "site",
+            "versionProperty": "urlrewriter.version"
+          }
+        }
+      ],
+      "installCapabilities": {
+        "configAutoInstall": true,
+        "codeRequired": true
+      },
+      "lifecycle": {
+        "status": "active",
+        "maintainers": ["bloomreach-forge"]
+      }
+    },
+    {
+      "id": "settings-management",
+      "name": "Settings Management",
+      "version": "3.0.0",
+      "description": "Centralized configuration management for brXM with UI-based settings editor and typed access.",
+      "repository": {
+        "url": "https://github.com/bloomreach-forge/settings-management",
+        "branch": "main"
+      },
+      "publisher": {
+        "name": "Bloomreach Forge",
+        "type": "community",
+        "url": "https://github.com/bloomreach-forge"
+      },
+      "category": "developer-tools",
+      "pluginTier": "forge-addon",
+      "compatibility": {
+        "brxm": { "min": "15.0.0", "max": "16.6.5" },
+        "java": { "min": "11" }
+      },
+      "artifacts": [
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "org.bloomreach.forge.settingsmanagement",
+            "artifactId": "settings-management-addon-cms",
+            "version": "3.0.0",
+            "target": "cms",
+            "versionProperty": "settingsmanagement.version"
+          }
+        },
+        {
+          "type": "maven-lib",
+          "maven": {
+            "groupId": "org.bloomreach.forge.settingsmanagement",
+            "artifactId": "settings-management-addon-repository",
+            "version": "3.0.0",
+            "target": "platform",
+            "versionProperty": "settingsmanagement.version"
+          }
+        }
+      ],
+      "installCapabilities": {
+        "configAutoInstall": true,
+        "codeRequired": true
+      },
+      "lifecycle": {
+        "status": "active",
+        "maintainers": ["bloomreach-forge"]
+      }
+    },
+    {
+      "id": "folder-context-menus",
+      "name": "Folder Context Menus",
+      "version": "6.0.0",
+      "description": "Customizable folder context menu actions for brXM CMS with configurable plugins.",
+      "repository": {
+        "url": "https://github.com/bloomreach-forge/folder-context-menus",
+        "branch": "main"
+      },
+      "publisher": {
+        "name": "Bloomreach Forge",
+        "type": "community",
+        "url": "https://github.com/bloomreach-forge"
+      },
+      "category": "developer-tools",
+      "pluginTier": "forge-addon",
+      "compatibility": {
+        "brxm": { "min": "15.0.0", "max": "16.6.5" },
+        "java": { "min": "11" }
+      },
+      "artifacts": [
+        {
+          "type": "hcm-module",
+          "hcm": {
+            "modulePath": "repository-data/application/folder-context-menus"
+          }
+        }
+      ],
+      "installCapabilities": {
+        "configAutoInstall": true,
+        "codeRequired": false
+      },
+      "lifecycle": {
+        "status": "active",
+        "maintainers": ["bloomreach-forge"]
+      }
+    }
+  ]
+}

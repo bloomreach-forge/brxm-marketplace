@@ -1,0 +1,23 @@
+{
+  "id": "forgeMarketplace",
+  "name": "Forge Marketplace",
+  "icon": "/essentials/tool/forgeMarketplace/marketplace-icon.svg",
+  "view": "/essentials/tool/forgeMarketplace/forgeMarketplace.html",
+  "introduction": "Browse and discover Bloomreach Forge add-ons",
+  "description": "The Forge Marketplace provides a central directory for discovering community add-ons that extend Bloomreach Experience Manager. Browse available integrations, utilities, and plugins contributed by the Bloomreach Forge community.",
+  "type": "tool",
+  "hasConfiguration": false,
+  "restClasses": [
+    "org.bloomreach.forge.marketplace.essentials.rest.MarketplaceResource",
+    "org.bloomreach.forge.marketplace.essentials.rest.AddonNotFoundExceptionMapper"
+  ],
+  "vendor": {
+    "name": "Bloomreach Forge",
+    "url": "https://github.com/bloomreach-forge"
+  },
+  "categories": {
+    "application": ["integration"],
+    "type": ["tool"],
+    "license": ["community"]
+  }
+}

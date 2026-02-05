@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2025 Bloomreach
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!DOCTYPE document PUBLIC "-//Apache Software Foundation//DTD XDOC 1.0//EN"
+  "http://maven.apache.org/dtd/xdoc_1_0.dtd">
+<document>
+  <properties>
+    <title>Auto-Generation</title>
+  </properties>
+  <body>
+
+    <section name="Auto-Generation">
+
+      <subsection name="Overview">
+        <p>
+          The easiest way to publish your addon is with automatic descriptor generation.
+          The descriptor-generator CLI tool reads your pom.xml and a minimal config file
+          to generate a complete <code>forge-addon.yaml</code>.
+        </p>
+      </subsection>
+
+      <subsection name="Step 1: Create Config File">
+        <p>
+          Create <code>.forge/addon-config.yaml</code> in your repository:
+        </p>
+        <source><![CDATA[
+id: my-addon
+name: My Addon
+category: integration
+targets: [cms]
+license: Apache-2.0
+
+# Optional overrides (auto-detected from pom.xml if omitted)
+# description: Custom description
+# vendor: My Company
+# documentationUrl: https://docs.example.com
+        ]]></source>
+        <p>
+          Most fields are auto-detected from your <code>pom.xml</code>:
+        </p>
+        <table>
+          <tr>
+            <th>Field</th>
+            <th>Auto-detected from</th>
+          </tr>
+          <tr>
+            <td>description</td>
+            <td>pom.xml <code>&lt;description&gt;</code></td>
+          </tr>
+          <tr>
+            <td>vendor</td>
+            <td>pom.xml <code>&lt;organization&gt;&lt;name&gt;</code></td>
+          </tr>
+          <tr>
+            <td>documentationUrl</td>
+            <td>pom.xml <code>&lt;url&gt;</code></td>
+          </tr>
+          <tr>
+            <td>version</td>
+            <td>pom.xml <code>&lt;version&gt;</code></td>
+          </tr>
+          <tr>
+            <td>groupId/artifactId</td>
+            <td>pom.xml coordinates</td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Step 2: Add GitHub Workflow">
+        <p>
+          Create <code>.github/workflows/forge-descriptor.yml</code>:
+        </p>
+        <source><![CDATA[
+name: Generate Forge Descriptor
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download descriptor generator
+        run: |
+          curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+      - name: Generate descriptor
+        run: |
+          java -jar descriptor-generator.jar \
+            --config .forge/addon-config.yaml \
+            --output forge-addon.yaml
+
+      - name: Commit descriptor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add forge-addon.yaml
+          git diff --staged --quiet || git commit -m "chore: update forge-addon.yaml"
+          git push
+        ]]></source>
+      </subsection>
+
+      <subsection name="Step 3: Release">
+        <p>
+          When you publish a GitHub release, the workflow automatically:
+        </p>
+        <ol>
+          <li>Downloads the descriptor-generator tool</li>
+          <li>Reads your <code>.forge/addon-config.yaml</code> and <code>pom.xml</code></li>
+          <li>Generates <code>forge-addon.yaml</code> with current version</li>
+          <li>Commits the updated descriptor</li>
+        </ol>
+        <p>
+          The Marketplace's nightly scan will pick up your addon automatically.
+        </p>
+      </subsection>
+
+      <subsection name="Manual Generation">
+        <p>
+          You can also run the generator locally:
+        </p>
+        <source><![CDATA[
+# Download the tool
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+# Generate descriptor
+java -jar descriptor-generator.jar \
+  --config .forge/addon-config.yaml \
+  --output forge-addon.yaml \
+  --verbose
+        ]]></source>
+      </subsection>
+
+    </section>
+
+  </body>
+</document>

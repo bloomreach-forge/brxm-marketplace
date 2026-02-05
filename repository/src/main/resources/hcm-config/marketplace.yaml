@@ -1,0 +1,24 @@
+definitions:
+  config:
+    /hippo:configuration/hippo:modules/marketplace:
+      jcr:primaryType: hipposys:module
+      hipposys:className: org.bloomreach.forge.marketplace.repository.jaxrs.MarketplaceDaemonModule
+      /hippo:moduleconfig:
+        jcr:primaryType: nt:unstructured
+        endpoint: /marketplace
+        autoIngest: true
+        # Set to true to expose REST endpoint at /cms/ws/marketplace (default: false)
+        exposeRestEndpoint: false
+        # Legacy manifestUrl - for backward compatibility (deprecated, use sources instead)
+        # Can be overridden with system property: -Dmarketplace.manifestUrl=...
+        manifestUrl: https://bloomreach-forge.github.io/brxm-marketplace/addons-index.json
+        # Multi-source configuration - sources are loaded in priority order (highest first)
+        /sources:
+          jcr:primaryType: nt:unstructured
+          /forge:
+            jcr:primaryType: nt:unstructured
+            name: forge
+            url: https://bloomreach-forge.github.io/brxm-marketplace/addons-index.json
+            enabled: true
+            priority: 100
+            readonly: true

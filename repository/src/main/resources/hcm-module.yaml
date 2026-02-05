@@ -1,0 +1,5 @@
+group: hippo-cms
+project:
+    name: brxm-marketplace
+    after: [hippo-repository, hippo-cms]
+module: brxm-marketplace-repository

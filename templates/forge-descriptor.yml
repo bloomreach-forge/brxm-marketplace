@@ -1,0 +1,57 @@
+# Workflow template for addon repositories to auto-generate forge-addon.yaml
+# Copy this file to .github/workflows/forge-descriptor.yml in your addon repository
+#
+# AI-METADATA: github-workflow, forge-marketplace, descriptor-generation, automation
+# PURPOSE: Automatically regenerates forge-addon.yaml when pom.xml, config, or README changes
+# REQUIRES: .forge/addon-config.yaml in repository root
+# DOCS: https://bloomreach-forge.github.io/brxm-marketplace/addon-descriptor.html
+
+name: Update Forge Descriptor
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'pom.xml'
+      - '.forge/**'
+      - 'README.md'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate forge-addon.yaml
+        uses: bloomreach-forge/brxm-marketplace/.github/actions/generate-descriptor@v1
+        with:
+          config-path: '.forge/addon-config.yaml'
+          output-path: 'forge-addon.yaml'
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet forge-addon.yaml; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: regenerate forge-addon.yaml"
+          file_pattern: forge-addon.yaml
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
