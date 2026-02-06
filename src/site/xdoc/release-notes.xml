@@ -24,6 +24,39 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.2">
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Features</h4>
+        <ul>
+          <li>Multi-artifact addon support: addons can now declare multiple Maven artifacts
+              with distinct deployment targets and scopes in <code>addon-config.yaml</code></li>
+          <li>New <code>ConfigArtifact</code> model for explicit per-artifact configuration
+              (artifactId, target, scope, description)</li>
+          <li>Schema updated with <code>artifacts</code> array including scope and description fields</li>
+          <li>Installation service handles multi-artifact addons</li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+          <li>Descriptor generator produces multi-artifact descriptors from config</li>
+          <li>Updated documentation: addon descriptor spec, auto-generation guide, CLI tools,
+              user docs, and README</li>
+          <li>Updated <code>addon-config.yaml</code> template with multi-artifact examples</li>
+        </ul>
+      </subsection>
+
+      <subsection name="Version 1.0.1">
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Improvements</h4>
+        <ul>
+          <li>Prefer master/main branch over default for manifest generation</li>
+          <li>Remove self-referencing forge-addon.yaml from marketplace project</li>
+          <li>CI workflow and version alignment fixes</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.0">
         <p><strong>Release Date:</strong> TBD</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
