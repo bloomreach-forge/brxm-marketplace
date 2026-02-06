@@ -122,6 +122,8 @@ public class ManifestGenerator implements Callable<Integer> {
         }
     }
 
+    private static final List<String> PRODUCTION_BRANCHES = List.of("master", "main");
+
     private ProcessingResult processRepositories(GitHubService github, List<GitHubService.RepoInfo> repos,
                                                   GeneratorLogger logger) {
         List<Addon> addons = new ArrayList<>();
@@ -131,8 +133,9 @@ public class ManifestGenerator implements Callable<Integer> {
 
         for (GitHubService.RepoInfo repo : repos) {
             scanned++;
+            String branch = resolveProductionBranch(github, repo);
             Optional<String> content = github.fetchFileContent(
-                    organization, repo.name(), repo.defaultBranch(), descriptorFilename);
+                    organization, repo.name(), branch, descriptorFilename);
 
             if (content.isEmpty()) {
                 logger.verbose("  [SKIP] " + repo.name() + " - no descriptor found");
@@ -170,6 +173,19 @@ public class ManifestGenerator implements Callable<Integer> {
             logger.error("  [ERROR] " + repoName + ": " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Resolves the production branch for a repository.
+     * Prefers master/main over the default branch to get release versions instead of snapshots.
+     */
+    private String resolveProductionBranch(GitHubService github, GitHubService.RepoInfo repo) {
+        for (String branch : PRODUCTION_BRANCHES) {
+            if (github.getLatestCommit(organization, repo.name(), branch).isPresent()) {
+                return branch;
+            }
+        }
+        return repo.defaultBranch();
     }
 
     private void logSummary(ProcessingResult result, GeneratorLogger logger) {
