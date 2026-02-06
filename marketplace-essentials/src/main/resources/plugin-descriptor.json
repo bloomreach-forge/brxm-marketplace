@@ -9,6 +9,7 @@
   "hasConfiguration": false,
   "restClasses": [
     "org.bloomreach.forge.marketplace.essentials.rest.MarketplaceResource",
+    "org.bloomreach.forge.marketplace.essentials.rest.SourceResource",
     "org.bloomreach.forge.marketplace.essentials.rest.AddonNotFoundExceptionMapper"
   ],
   "vendor": {

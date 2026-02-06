@@ -92,6 +92,84 @@
     <section><a id="Release_Notes"></a>
 <h1>Release Notes</h1>
 
+      <section><a id="Version_1.0.3"></a>
+<h2>Version 1.0.3</h2>
+        
+<p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <section><section><a id="Improvements"></a>
+<h4>Improvements</h4>
+        
+<ul>
+          
+<li>Auto-register Marketplace REST endpoints via Essentials plugin framework:
+              REST classes are now declared in <code>plugin-descriptor.json</code> and mounted
+              on the dynamic CXF server, eliminating the need for consumers to override
+              <code>applicationContext.xml</code></li>
+          
+<li>Added <code>SourceResource</code> to <code>restClasses</code> in plugin descriptor</li>
+          
+<li>Updated JS frontend to use <code>rest/dynamic/marketplace</code> base path</li>
+          
+<li>Removed manual <code>applicationContext.xml</code> from demo project</li>
+          
+<li>Updated installation and architecture documentation</li>
+        </ul>
+      </section></section></section>
+
+      <section><a id="Version_1.0.2"></a>
+<h2>Version 1.0.2</h2>
+        
+<p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <section><section><a id="Features"></a>
+<h4>Features</h4>
+        
+<ul>
+          
+<li>Multi-artifact addon support: addons can now declare multiple Maven artifacts
+              with distinct deployment targets and scopes in <code>addon-config.yaml</code></li>
+          
+<li>New <code>ConfigArtifact</code> model for explicit per-artifact configuration
+              (artifactId, target, scope, description)</li>
+          
+<li>Schema updated with <code>artifacts</code> array including scope and description fields</li>
+          
+<li>Installation service handles multi-artifact addons</li>
+        </ul>
+
+        </section><section><a id="Improvements_1"></a>
+<h4>Improvements</h4>
+        
+<ul>
+          
+<li>Descriptor generator produces multi-artifact descriptors from config</li>
+          
+<li>Updated documentation: addon descriptor spec, auto-generation guide, CLI tools,
+              user docs, and README</li>
+          
+<li>Updated <code>addon-config.yaml</code> template with multi-artifact examples</li>
+        </ul>
+      </section></section></section>
+
+      <section><a id="Version_1.0.1"></a>
+<h2>Version 1.0.1</h2>
+        
+<p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <section><section><a id="Improvements_2"></a>
+<h4>Improvements</h4>
+        
+<ul>
+          
+<li>Prefer master/main branch over default for manifest generation</li>
+          
+<li>Remove self-referencing forge-addon.yaml from marketplace project</li>
+          
+<li>CI workflow and version alignment fixes</li>
+        </ul>
+      </section></section></section>
+
       <section><a id="Version_1.0.0"></a>
 <h2>Version 1.0.0</h2>
         
@@ -99,7 +177,7 @@
         
 <p><strong>brXM Compatibility:</strong> 16.x</p>
 
-        <section><section><a id="Features"></a>
+        <section><section><a id="Features_1"></a>
 <h4>Features</h4>
         
 <ul>

@@ -30,7 +30,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import org.bloomreach.forge.marketplace.essentials.model.ProjectContext;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -432,6 +435,8 @@ class AddonInstallationServiceTest {
 
         Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null, Map.of("test-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
@@ -481,6 +486,8 @@ class AddonInstallationServiceTest {
 
         Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null, Map.of()));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
@@ -519,6 +526,8 @@ class AddonInstallationServiceTest {
 
         Addon addon = createAddonWithMultipleArtifacts();
         when(addonRegistry.findById("multi-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null, Map.of("multi-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
@@ -617,12 +626,46 @@ class AddonInstallationServiceTest {
 
         Addon addon = createAddonWithMultipleArtifacts();
         when(addonRegistry.findById("multi-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null, Map.of("multi-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
         assertEquals(InstallationResult.Status.completed, result.status());
         assertTrue(result.changes().stream()
                 .anyMatch(c -> "removed_dependency".equals(c.action()) && c.coordinates().contains("cms-artifact")));
+    }
+
+    @Test
+    void uninstall_removesDependencyFromNonTargetPom() throws IOException {
+        setupProjectStructure();
+
+        // Addon targets CMS, but dependency exists in root pom.xml instead
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>1.0.0</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        rootPom = rootPom.replace("</properties>",
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null, Map.of("test-addon", "1.0.0")));
+
+        InstallationResult result = service.uninstall("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+        assertTrue(result.changes().stream()
+                .anyMatch(c -> "removed_dependency".equals(c.action())));
+
+        String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertFalse(updatedRootPom.contains("test-artifact"));
     }
 
     @Test

@@ -92,6 +92,80 @@ class PomDependencyInjectorTest {
     }
 
     @Test
+    void addDependency_preservesExistingIndentation_withFourSpaces() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>existing</groupId>
+                            <artifactId>artifact</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.addDependency(pom, "org.bloomreach.forge", "new-addon", "1.0.0");
+
+        assertTrue(result.contains("        <dependency>"));
+        assertTrue(result.contains("            <groupId>org.bloomreach.forge</groupId>"));
+        assertTrue(result.contains("            <artifactId>new-addon</artifactId>"));
+        assertTrue(result.contains("            <version>1.0.0</version>"));
+        assertTrue(result.contains("        </dependency>"));
+        assertTrue(result.contains("    </dependencies>"));
+    }
+
+    @Test
+    void addDependency_preservesFourSpaceIndentation_emptyDependencies() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.addDependency(pom, "org.bloomreach.forge", "new-addon", "1.0.0");
+
+        assertTrue(result.contains("        <dependency>"));
+        assertTrue(result.contains("            <groupId>org.bloomreach.forge</groupId>"));
+        assertTrue(result.contains("    </dependencies>"));
+    }
+
+    @Test
+    void addProperty_preservesFourSpaceIndentation() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <properties>
+                        <java.version>17</java.version>
+                    </properties>
+                </project>
+                """;
+
+        String result = injector.addProperty(pom, "addon.version", "1.0.0");
+
+        assertTrue(result.contains("        <addon.version>1.0.0</addon.version>"));
+        assertTrue(result.contains("    </properties>"));
+    }
+
+    @Test
+    void addProperty_preservesFourSpaceIndentation_emptyProperties() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <properties>
+                    </properties>
+                </project>
+                """;
+
+        String result = injector.addProperty(pom, "addon.version", "1.0.0");
+
+        assertTrue(result.contains("        <addon.version>1.0.0</addon.version>"));
+        assertTrue(result.contains("    </properties>"));
+    }
+
+    @Test
     void addDependency_withVersionProperty_usesPropertySyntax() {
         String pom = """
                 <?xml version="1.0" encoding="UTF-8"?>

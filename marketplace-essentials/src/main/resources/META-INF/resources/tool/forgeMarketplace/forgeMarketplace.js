@@ -17,7 +17,7 @@
 (function () {
     'use strict';
 
-    var REST_BASE = 'rest/marketplace';
+    var REST_BASE = 'rest/dynamic/marketplace';
 
     var LIFECYCLE_CLASSES = {
         active: 'lifecycle-active',
@@ -517,7 +517,7 @@
 
                 function hasInstallableArtifacts(addon) {
                     return addon.artifacts && addon.artifacts.some(function (a) {
-                        return a.type === 'maven-lib' && a.maven && a.maven.target;
+                        return a.type === 'maven-lib' && a.maven && a.target;
                     });
                 }
 

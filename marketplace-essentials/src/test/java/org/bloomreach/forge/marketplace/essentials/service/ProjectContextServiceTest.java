@@ -270,6 +270,79 @@ class ProjectContextServiceTest {
         assertEquals("11", result.javaVersion());
     }
 
+    @Test
+    void getProjectContext_extractsJavaVersion_fromMavenCompilerRelease() {
+        String rootPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <properties>
+                        <maven.compiler.release>17</maven.compiler.release>
+                    </properties>
+                </project>
+                """;
+
+        when(pomFileReader.read(any(Path.class)))
+                .thenReturn(Optional.of(rootPom))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.empty());
+        when(addonRegistry.findAll()).thenReturn(List.of());
+
+        service.setProjectBasedir("/test/project");
+        ProjectContext result = service.getProjectContext();
+
+        assertEquals("17", result.javaVersion());
+    }
+
+    @Test
+    void getProjectContext_resolvesVersion_fromDependencyManagement() {
+        String rootPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <parent>
+                        <groupId>org.onehippo.cms7</groupId>
+                        <artifactId>hippo-cms7-release</artifactId>
+                        <version>16.0.0</version>
+                    </parent>
+                    <properties>
+                        <brut.version>1.2.3</brut.version>
+                    </properties>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.example</groupId>
+                                <artifactId>brut</artifactId>
+                                <version>${brut.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+        String cmsDependenciesPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <artifactId>brut</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        when(pomFileReader.read(any(Path.class)))
+                .thenReturn(Optional.of(rootPom))
+                .thenReturn(Optional.of(cmsDependenciesPom))
+                .thenReturn(Optional.empty());
+
+        Addon addon = createAddon("brut", "com.example", "brut");
+        when(addonRegistry.findAll()).thenReturn(List.of(addon));
+
+        service.setProjectBasedir("/test/project");
+        ProjectContext result = service.getProjectContext();
+
+        assertEquals("1.2.3", result.installedAddons().get("brut"));
+    }
+
     private Addon createAddon(String id, String groupId, String artifactId) {
         Addon addon = new Addon();
         addon.setId(id);

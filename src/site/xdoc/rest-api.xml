@@ -26,7 +26,11 @@
 
       <subsection name="Base URL">
         <p>
-          All endpoints are relative to: <code>/cms/ws/marketplace</code>
+          All endpoints are relative to: <code>/essentials/rest/dynamic/marketplace</code>
+        </p>
+        <p>
+          The REST resources are auto-registered on the Essentials dynamic CXF server
+          via <code>plugin-descriptor.json</code>.
         </p>
       </subsection>
 
@@ -49,7 +53,7 @@
           </tr>
           <tr>
             <td>GET</td>
-            <td><code>/addons?q={query}</code></td>
+            <td><code>/addons/search?q={query}</code></td>
             <td>Search addons</td>
           </tr>
           <tr>
@@ -61,7 +65,7 @@
 
         <h4>List Addons</h4>
         <source><![CDATA[
-GET /ws/marketplace/addons
+GET /essentials/rest/dynamic/marketplace/addons
 
 Response:
 [
@@ -79,7 +83,7 @@ Response:
 
         <h4>Get Addon</h4>
         <source><![CDATA[
-GET /ws/marketplace/addons/ip-filter
+GET /essentials/rest/dynamic/marketplace/addons/ip-filter
 
 Response:
 {
@@ -100,7 +104,7 @@ Response:
 
         <h4>Search Addons</h4>
         <source><![CDATA[
-GET /ws/marketplace/addons?q=security
+GET /essentials/rest/dynamic/marketplace/addons/search?q=security
 
 Response: Array of matching addons
         ]]></source>
@@ -119,35 +123,29 @@ Response: Array of matching addons
             <td>List all sources</td>
           </tr>
           <tr>
-            <td>GET</td>
-            <td><code>/sources/{id}</code></td>
-            <td>Get source by ID</td>
-          </tr>
-          <tr>
             <td>POST</td>
             <td><code>/sources</code></td>
             <td>Add new source</td>
           </tr>
           <tr>
-            <td>PUT</td>
-            <td><code>/sources/{id}</code></td>
-            <td>Update source</td>
+            <td>DELETE</td>
+            <td><code>/sources/{name}</code></td>
+            <td>Delete source</td>
           </tr>
           <tr>
-            <td>DELETE</td>
-            <td><code>/sources/{id}</code></td>
-            <td>Delete source</td>
+            <td>POST</td>
+            <td><code>/sources/{name}/refresh</code></td>
+            <td>Refresh single source</td>
           </tr>
         </table>
 
         <h4>Add Source</h4>
         <source><![CDATA[
-POST /ws/marketplace/sources
+POST /essentials/rest/dynamic/marketplace/sources
 Content-Type: application/json
 
 {
-  "id": "partner-addons",
-  "name": "Partner Addons",
+  "name": "partner-addons",
   "url": "https://partner.example.com/addons-index.json",
   "enabled": true,
   "priority": 100
@@ -155,9 +153,11 @@ Content-Type: application/json
 
 Response: 201 Created
 {
-  "id": "partner-addons",
-  "name": "Partner Addons",
-  ...
+  "name": "partner-addons",
+  "url": "https://partner.example.com/addons-index.json",
+  "enabled": true,
+  "priority": 100,
+  "readonly": false
 }
         ]]></source>
       </subsection>
@@ -193,7 +193,7 @@ Response: 201 Created
 
         <h4>Install Addon</h4>
         <source><![CDATA[
-POST /ws/marketplace/addons/ip-filter/install
+POST /essentials/rest/dynamic/marketplace/addons/ip-filter/install
 
 Response:
 {
@@ -300,8 +300,13 @@ Response:
           </tr>
           <tr>
             <td>GET</td>
-            <td><code>/health</code></td>
-            <td>Health check endpoint</td>
+            <td><code>/project-context</code></td>
+            <td>Get project brXM version and installed addons</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/project-context/refresh</code></td>
+            <td>Invalidate project context cache</td>
           </tr>
         </table>
       </subsection>

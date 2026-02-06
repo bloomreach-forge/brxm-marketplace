@@ -24,6 +24,22 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.3">
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Improvements</h4>
+        <ul>
+          <li>Auto-register Marketplace REST endpoints via Essentials plugin framework:
+              REST classes are now declared in <code>plugin-descriptor.json</code> and mounted
+              on the dynamic CXF server, eliminating the need for consumers to override
+              <code>applicationContext.xml</code></li>
+          <li>Added <code>SourceResource</code> to <code>restClasses</code> in plugin descriptor</li>
+          <li>Updated JS frontend to use <code>rest/dynamic/marketplace</code> base path</li>
+          <li>Removed manual <code>applicationContext.xml</code> from demo project</li>
+          <li>Updated installation and architecture documentation</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.2">
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 

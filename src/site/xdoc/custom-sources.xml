@@ -85,13 +85,13 @@
 
       <subsection name="Adding a Source via REST API">
         <source><![CDATA[
-curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "partner-addons",
-    "name": "Partner Addons",
+    "name": "partner-addons",
     "url": "https://partner.example.com/addons-index.json",
-    "enabled": true
+    "enabled": true,
+    "priority": 100
   }'
         ]]></source>
       </subsection>
@@ -149,28 +149,17 @@ curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
       <subsection name="Managing Sources">
         <h4>List all sources</h4>
         <source><![CDATA[
-GET /ws/marketplace/sources
+GET /essentials/rest/dynamic/marketplace/sources
         ]]></source>
 
-        <h4>Get a specific source</h4>
+        <h4>Refresh a single source</h4>
         <source><![CDATA[
-GET /ws/marketplace/sources/{id}
-        ]]></source>
-
-        <h4>Update a source</h4>
-        <source><![CDATA[
-PUT /ws/marketplace/sources/{id}
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  "enabled": false
-}
+POST /essentials/rest/dynamic/marketplace/sources/{name}/refresh
         ]]></source>
 
         <h4>Delete a source</h4>
         <source><![CDATA[
-DELETE /ws/marketplace/sources/{id}
+DELETE /essentials/rest/dynamic/marketplace/sources/{name}
         ]]></source>
       </subsection>
 
@@ -181,11 +170,11 @@ DELETE /ws/marketplace/sources/{id}
         </p>
         <ul>
           <li>The TTL expires</li>
-          <li>A source is added, updated, or deleted</li>
+          <li>A source is added or deleted</li>
           <li>The refresh endpoint is called manually</li>
         </ul>
         <source><![CDATA[
-POST /ws/marketplace/refresh
+POST /essentials/rest/dynamic/marketplace/refresh
         ]]></source>
       </subsection>
 

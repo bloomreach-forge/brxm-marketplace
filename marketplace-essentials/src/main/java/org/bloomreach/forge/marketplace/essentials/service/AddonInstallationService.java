@@ -58,6 +58,13 @@ public class AddonInstallationService {
 
     private static final String ROOT_POM = "pom.xml";
 
+    private static final List<String> SCAN_POM_PATHS = List.of(
+            "pom.xml",
+            "cms-dependencies/pom.xml",
+            "site/components/pom.xml",
+            "site/webapp/pom.xml"
+    );
+
     private final AddonRegistryService addonRegistry;
     private final PomFileReader pomFileReader;
     private final PomFileWriter pomFileWriter;
@@ -416,17 +423,7 @@ public class AddonInstallationService {
                     "No artifacts with valid target field found");
         }
 
-        Map<Path, String> pomContents = new HashMap<>();
-        boolean hasAnyInstalledDependency = false;
-        for (DependencyChange change : plan.dependencyChanges()) {
-            String content = getPomContent(change.pomPath(), pomContents);
-            if (content != null && injector.hasDependency(content, change.groupId(), change.artifactId())) {
-                hasAnyInstalledDependency = true;
-                break;
-            }
-        }
-
-        if (!hasAnyInstalledDependency) {
+        if (!projectContextService.getProjectContext().installedAddons().containsKey(addonId)) {
             log.info("Addon '{}' is not installed, nothing to uninstall", addonId);
             return InstallationResult.failure("NOT_INSTALLED",
                     "Cannot uninstall: addon is not installed");
@@ -440,18 +437,34 @@ public class AddonInstallationService {
         Map<Path, String> modifiedPoms = new HashMap<>();
         List<String> notRemoved = new ArrayList<>();
 
+        Set<Path> allPomPaths = new HashSet<>();
+        for (DependencyChange dc : plan.dependencyChanges()) {
+            allPomPaths.add(dc.pomPath());
+        }
+        for (String relPath : SCAN_POM_PATHS) {
+            allPomPaths.add(basePath.resolve(relPath));
+        }
+
         for (DependencyChange depChange : plan.dependencyChanges()) {
-            String content = getModifiedOrOriginal(depChange.pomPath(), modifiedPoms);
-            if (content == null) {
-                continue;
+            boolean removedAny = false;
+            boolean existsButNotRemoved = false;
+            for (Path pomPath : allPomPaths) {
+                String content = getModifiedOrOriginal(pomPath, modifiedPoms);
+                if (content == null) {
+                    continue;
+                }
+                String modified = injector.removeDependency(content, depChange.groupId(), depChange.artifactId());
+                if (modified != null) {
+                    modifiedPoms.put(pomPath, modified);
+                    changes.add(Change.removedDependency(
+                            basePath.relativize(pomPath).toString(),
+                            depChange.groupId() + ":" + depChange.artifactId()));
+                    removedAny = true;
+                } else if (injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
+                    existsButNotRemoved = true;
+                }
             }
-            String modified = injector.removeDependency(content, depChange.groupId(), depChange.artifactId());
-            if (modified != null) {
-                modifiedPoms.put(depChange.pomPath(), modified);
-                changes.add(Change.removedDependency(
-                        basePath.relativize(depChange.pomPath()).toString(),
-                        depChange.groupId() + ":" + depChange.artifactId()));
-            } else if (injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
+            if (!removedAny && existsButNotRemoved) {
                 notRemoved.add(depChange.groupId() + ":" + depChange.artifactId());
             }
         }

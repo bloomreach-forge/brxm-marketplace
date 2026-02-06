@@ -42,12 +42,19 @@ public class PomDependencyInjector {
 
         String indent = detectDependencyIndent(pomContent, insertPoint);
         String innerIndent = indent + detectIndentUnit(pomContent);
-
         String dependencyXml = formatDependency(groupId, artifactId, version, indent, innerIndent);
+
+        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
+        if (lineStart >= 0) {
+            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
+            return pomContent.substring(0, lineStart + 1)
+                    + dependencyXml + "\n"
+                    + closingIndent
+                    + pomContent.substring(insertPoint);
+        }
 
         return pomContent.substring(0, insertPoint)
                 + dependencyXml + "\n"
-                + indent
                 + pomContent.substring(insertPoint);
     }
 
@@ -64,9 +71,17 @@ public class PomDependencyInjector {
         String indent = detectPropertyIndent(pomContent, insertPoint);
         String propertyXml = indent + "<" + name + ">" + value + "</" + name + ">";
 
+        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
+        if (lineStart >= 0) {
+            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
+            return pomContent.substring(0, lineStart + 1)
+                    + propertyXml + "\n"
+                    + closingIndent
+                    + pomContent.substring(insertPoint);
+        }
+
         return pomContent.substring(0, insertPoint)
                 + propertyXml + "\n"
-                + indent
                 + pomContent.substring(insertPoint);
     }
 
@@ -186,16 +201,6 @@ public class PomDependencyInjector {
     }
 
     private String detectDependencyIndent(String pomContent, int insertPoint) {
-        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
-        if (lineStart < 0) {
-            return "";
-        }
-
-        String currentIndent = pomContent.substring(lineStart + 1, insertPoint);
-        if (!currentIndent.isBlank()) {
-            return currentIndent;
-        }
-
         int previousDep = pomContent.lastIndexOf("<dependency>", insertPoint);
         if (previousDep >= 0) {
             String depIndent = extractWhitespaceBeforePosition(pomContent, previousDep);
@@ -204,28 +209,37 @@ public class PomDependencyInjector {
             }
         }
 
+        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
+        if (lineStart >= 0) {
+            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
+            if (closingIndent.isBlank()) {
+                return closingIndent + detectIndentUnit(pomContent);
+            }
+        }
+
         return detectIndentUnit(pomContent) + detectIndentUnit(pomContent);
     }
 
     private String detectPropertyIndent(String pomContent, int insertPoint) {
+        int propertiesStart = pomContent.indexOf("<properties>");
+        if (propertiesStart >= 0) {
+            String section = pomContent.substring(propertiesStart, insertPoint);
+            Pattern propPattern = Pattern.compile("\n([ \t]+)<[a-zA-Z]");
+            Matcher matcher = propPattern.matcher(section);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        }
+
         int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
-        if (lineStart < 0) {
-            return "";
+        if (lineStart >= 0) {
+            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
+            if (closingIndent.isBlank()) {
+                return closingIndent + detectIndentUnit(pomContent);
+            }
         }
 
-        String line = pomContent.substring(lineStart + 1, insertPoint);
-        String leadingWhitespace = extractLeadingWhitespace(line);
-        if (leadingWhitespace != null) {
-            return leadingWhitespace;
-        }
-
-        Pattern propPattern = Pattern.compile("\n([ \t]+)<[a-zA-Z]");
-        Matcher matcher = propPattern.matcher(pomContent.substring(0, insertPoint));
-        String lastIndent = "    ";
-        while (matcher.find()) {
-            lastIndent = matcher.group(1);
-        }
-        return lastIndent;
+        return detectIndentUnit(pomContent) + detectIndentUnit(pomContent);
     }
 
     private String extractWhitespaceBeforePosition(String pomContent, int position) {
@@ -237,29 +251,21 @@ public class PomDependencyInjector {
         return indent.isBlank() ? indent : null;
     }
 
-    private String extractLeadingWhitespace(String line) {
-        int firstNonSpace = 0;
-        while (firstNonSpace < line.length() && Character.isWhitespace(line.charAt(firstNonSpace))) {
-            firstNonSpace++;
-        }
-        // Only return if there's leading whitespace before actual content
-        if (firstNonSpace > 0 && firstNonSpace < line.length()) {
-            return line.substring(0, firstNonSpace);
-        }
-        return null;
-    }
-
     private String detectIndentUnit(String pomContent) {
         if (pomContent.contains("\t<")) {
             return "\t";
         }
         Pattern pattern = Pattern.compile("\n([ ]+)<");
         Matcher matcher = pattern.matcher(pomContent);
-        if (matcher.find()) {
-            String indent = matcher.group(1);
-            if (indent.length() >= 2) {
-                return indent.substring(0, Math.min(2, indent.length()));
+        int minIndent = Integer.MAX_VALUE;
+        while (matcher.find()) {
+            int len = matcher.group(1).length();
+            if (len < minIndent) {
+                minIndent = len;
             }
+        }
+        if (minIndent != Integer.MAX_VALUE) {
+            return " ".repeat(minIndent);
         }
         return "    ";
     }

@@ -30,7 +30,9 @@ public class InstalledAddonMatcher {
         for (Dependency dep : dependencies) {
             for (Addon addon : knownAddons) {
                 if (matchesAnyArtifact(addon, dep)) {
-                    installed.put(addon.getId(), dep.version());
+                    if (dep.version() != null || !installed.containsKey(addon.getId())) {
+                        installed.put(addon.getId(), dep.version());
+                    }
                     break;
                 }
             }

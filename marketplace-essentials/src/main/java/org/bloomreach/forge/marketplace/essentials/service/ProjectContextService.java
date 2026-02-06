@@ -114,20 +114,35 @@ public class ProjectContextService {
     }
 
     private List<Dependency> resolveDependencyVersions(List<Dependency> dependencies, Map<String, String> properties) {
-        return dependencies.stream()
+        List<Dependency> resolved = dependencies.stream()
                 .map(dep -> new Dependency(
                         dep.groupId(),
                         dep.artifactId(),
                         scanner.resolveVersion(dep.version(), properties)
                 ))
                 .toList();
+
+        Map<String, String> managedVersions = new HashMap<>();
+        for (Dependency dep : resolved) {
+            if (dep.version() != null) {
+                managedVersions.putIfAbsent(dep.groupId() + ":" + dep.artifactId(), dep.version());
+            }
+        }
+
+        return resolved.stream()
+                .map(dep -> dep.version() != null ? dep
+                        : new Dependency(dep.groupId(), dep.artifactId(),
+                                managedVersions.get(dep.groupId() + ":" + dep.artifactId())))
+                .toList();
     }
 
     private String extractJavaVersion(Map<String, String> properties) {
-        String version = properties.get("java.version");
-        if (version != null) {
-            return version;
+        for (String key : List.of("java.version", "maven.compiler.release", "maven.compiler.source")) {
+            String version = properties.get(key);
+            if (version != null) {
+                return version;
+            }
         }
-        return properties.get("maven.compiler.source");
+        return null;
     }
 }

@@ -56,36 +56,54 @@ The Marketplace plugin integrates addon discovery into the brXM Essentials dashb
 
 ## Installation
 
-### Step 1: Add dependencies to cms/pom.xml
+### Step 1: Define the version property and dependency management in your root pom.xml
+
+```xml
+<properties>
+  <brxm-marketplace.version>1.0.2</brxm-marketplace.version>
+</properties>
+
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.bloomreach.forge.marketplace</groupId>
+      <artifactId>brxm-marketplace-repository</artifactId>
+      <version>${brxm-marketplace.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bloomreach.forge.marketplace</groupId>
+      <artifactId>brxm-marketplace-essentials</artifactId>
+      <version>${brxm-marketplace.version}</version>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+### Step 2: Add repository module to cms-dependencies/pom.xml
+
+```xml
+<dependency>
+    <groupId>org.bloomreach.forge.marketplace</groupId>
+    <artifactId>brxm-marketplace-repository</artifactId>
+</dependency>
+```
+
+### Step 3: Add essentials plugin to essentials/pom.xml
 
 ```xml
 <dependency>
     <groupId>org.bloomreach.forge.marketplace</groupId>
     <artifactId>brxm-marketplace-essentials</artifactId>
-    <version>1.0.0</version>
-</dependency>
-<dependency>
-    <groupId>org.bloomreach.forge.marketplace</groupId>
-    <artifactId>brxm-marketplace-repository</artifactId>
-    <version>1.0.0</version>
 </dependency>
 ```
 
-### Step 2: Rebuild and restart
+### Step 4: Rebuild and restart
 
 ```bash
 mvn clean verify
-mvn -f demo cargo:run  # or your preferred method
 ```
 
-### Step 3: Install via Essentials
-
-1. Navigate to the Essentials dashboard: `http://localhost:8080/essentials`
-2. Find **Marketplace** in the available plugins
-3. Click **Install**
-4. Restart the application when prompted
-
-The Marketplace plugin will now appear in the Essentials dashboard, ready to browse addons.
+The Marketplace plugin will appear in the Essentials dashboard at `http://localhost:8080/essentials`, ready to browse addons.
 
 ## For Addon Developers
 
@@ -193,31 +211,35 @@ installationSteps:
 
 ## REST API
 
-The marketplace exposes REST endpoints for addon discovery and installation:
+The marketplace REST endpoints are auto-registered on the Essentials dynamic CXF server.
+All paths below are relative to `/essentials/rest/dynamic/marketplace`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/ws/marketplace/addons` | List all addons |
-| GET | `/ws/marketplace/addons/{id}` | Get addon by ID |
-| GET | `/ws/marketplace/addons?q=search` | Search addons |
-| POST | `/ws/marketplace/addons/{id}/install` | Install addon |
-| POST | `/ws/marketplace/addons/{id}/uninstall` | Uninstall addon |
-| GET | `/ws/marketplace/sources` | List manifest sources |
-| POST | `/ws/marketplace/sources` | Add custom source |
-| DELETE | `/ws/marketplace/sources/{id}` | Remove custom source |
+| GET | `/addons` | List all addons |
+| GET | `/addons/{id}` | Get addon by ID |
+| GET | `/addons/search?q=query` | Search addons |
+| POST | `/addons/{id}/install` | Install addon |
+| POST | `/addons/{id}/uninstall` | Uninstall addon |
+| GET | `/project-context` | Get project context |
+| POST | `/refresh` | Refresh addon cache |
+| GET | `/sources` | List manifest sources |
+| POST | `/sources` | Add custom source |
+| DELETE | `/sources/{name}` | Remove custom source |
+| POST | `/sources/{name}/refresh` | Refresh single source |
 
 ## Adding Custom Sources
 
 Add partner or internal addon sources via REST API:
 
 ```bash
-curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "partner-addons",
-    "name": "Partner Addons",
+    "name": "partner-addons",
     "url": "https://partner.example.com/addons-index.json",
-    "enabled": true
+    "enabled": true,
+    "priority": 100
   }'
 ```
 
