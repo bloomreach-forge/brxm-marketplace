@@ -17,7 +17,6 @@ package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
-import org.bloomreach.forge.marketplace.common.model.Installation;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationPlan;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationPlan.DependencyChange;
@@ -49,10 +48,12 @@ public class AddonInstallationService {
 
     private static final Logger log = LoggerFactory.getLogger(AddonInstallationService.class);
 
-    private static final Map<Installation.Target, String> TARGET_POM_PATHS = Map.of(
-            Installation.Target.cms, "cms-dependencies/pom.xml",
-            Installation.Target.site, "site/components/pom.xml",
-            Installation.Target.platform, "pom.xml"
+    private static final Map<Artifact.Target, String> TARGET_POM_PATHS = Map.of(
+            Artifact.Target.CMS, "cms-dependencies/pom.xml",
+            Artifact.Target.SITE_COMPONENTS, "site/components/pom.xml",
+            Artifact.Target.SITE_WEBAPP, "site/webapp/pom.xml",
+            Artifact.Target.PLATFORM, "pom.xml",
+            Artifact.Target.PARENT, "pom.xml"
     );
 
     private static final String ROOT_POM = "pom.xml";
@@ -120,7 +121,17 @@ public class AddonInstallationService {
     private InstallationPlan buildPlan(Addon addon, Path basePath) {
         List<DependencyChange> dependencyChanges = new ArrayList<>();
         List<PropertyChange> propertyChanges = new ArrayList<>();
-        Set<String> addedProperties = new HashSet<>();
+
+        // Generate version property name from addon id (e.g., "brut" -> "brut.version")
+        String versionProperty = addon.getId() + ".version";
+        String version = addon.getVersion();
+
+        // Add version property to root pom (only once per addon)
+        propertyChanges.add(new PropertyChange(
+                basePath.resolve(ROOT_POM),
+                versionProperty,
+                version
+        ));
 
         for (Artifact artifact : addon.getArtifacts()) {
             if (artifact.getType() != Artifact.ArtifactType.MAVEN_LIB) {
@@ -128,11 +139,16 @@ public class AddonInstallationService {
             }
 
             Artifact.MavenCoordinates maven = artifact.getMaven();
-            if (maven == null || maven.getTarget() == null) {
+            Artifact.Target target = artifact.getTarget();
+            if (maven == null || target == null) {
                 continue;
             }
 
-            String pomRelPath = TARGET_POM_PATHS.get(maven.getTarget());
+            String pomRelPath = TARGET_POM_PATHS.get(target);
+            if (pomRelPath == null) {
+                log.warn("Unknown target '{}' for artifact {}:{}", target, maven.getGroupId(), maven.getArtifactId());
+                continue;
+            }
             Path pomPath = basePath.resolve(pomRelPath);
 
             log.debug("Planning artifact {}:{} -> target POM: {}",
@@ -142,18 +158,9 @@ public class AddonInstallationService {
                     pomPath,
                     maven.getGroupId(),
                     maven.getArtifactId(),
-                    maven.getVersion(),
-                    maven.getVersionProperty()
+                    version,
+                    versionProperty
             ));
-
-            if (maven.getVersionProperty() != null && !addedProperties.contains(maven.getVersionProperty())) {
-                propertyChanges.add(new PropertyChange(
-                        basePath.resolve(ROOT_POM),
-                        maven.getVersionProperty(),
-                        maven.getVersion()
-                ));
-                addedProperties.add(maven.getVersionProperty());
-            }
         }
 
         return new InstallationPlan(addon.getId(), dependencyChanges, propertyChanges);

@@ -151,28 +151,82 @@ installationSteps:
         </table>
       </subsection>
 
-      <subsection name="Artifact Targets">
+      <subsection name="Artifact Configuration">
         <p>
-          The <code>targets</code> field specifies where the dependency should be added:
+          Each artifact in the <code>artifacts</code> array specifies where and how a dependency should be added:
         </p>
+
+        <h4>Target Values</h4>
         <table>
           <tr>
             <th>Target</th>
             <th>Typical pom.xml location</th>
           </tr>
           <tr>
+            <td><code>parent</code></td>
+            <td>Root pom.xml (dependencyManagement)</td>
+          </tr>
+          <tr>
             <td><code>cms</code></td>
             <td>cms/pom.xml</td>
           </tr>
           <tr>
-            <td><code>site</code></td>
-            <td>site/components/pom.xml</td>
+            <td><code>site/components</code></td>
+            <td>site/components/pom.xml (default)</td>
+          </tr>
+          <tr>
+            <td><code>site/webapp</code></td>
+            <td>site/webapp/pom.xml</td>
           </tr>
           <tr>
             <td><code>platform</code></td>
-            <td>Root pom.xml (dependencyManagement)</td>
+            <td>Platform module pom.xml</td>
           </tr>
         </table>
+
+        <h4>Scope Values</h4>
+        <table>
+          <tr>
+            <th>Scope</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><code>compile</code></td>
+            <td>Default scope, available at compile and runtime</td>
+          </tr>
+          <tr>
+            <td><code>provided</code></td>
+            <td>Expected to be provided by the container</td>
+          </tr>
+          <tr>
+            <td><code>runtime</code></td>
+            <td>Only needed at runtime, not compile time</td>
+          </tr>
+          <tr>
+            <td><code>test</code></td>
+            <td>Only for test compilation and execution</td>
+          </tr>
+        </table>
+
+        <h4>Multi-Artifact Example</h4>
+        <source><![CDATA[
+artifacts:
+  - type: maven-lib
+    target: cms
+    scope: compile
+    description: "CMS integration module"
+    maven:
+      groupId: com.mycompany
+      artifactId: my-addon-cms
+
+  - type: maven-lib
+    target: site/components
+    scope: compile
+    description: "Site components library"
+    maven:
+      groupId: com.mycompany
+      artifactId: my-addon-site
+        ]]></source>
       </subsection>
 
       <subsection name="Installation Steps">

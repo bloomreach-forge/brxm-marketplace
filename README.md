@@ -103,6 +103,12 @@ pluginTier: forge-addon        # Options: forge-addon, service-plugin
 compatibility:
   brxm:
     min: "16.0.0"
+
+# Optional: for multi-artifact addons (defaults to single artifact with target: site/components)
+# artifacts:
+#   - target: cms
+#   - target: site/components
+#     artifactId: my-addon-site
 ```
 
 See [templates/addon-config.yaml](templates/addon-config.yaml) for all options.

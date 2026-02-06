@@ -24,10 +24,12 @@ compatibility:
 
 artifacts:
   - type: maven-lib
+    description: "Main library"
+    target: site/components
+    scope: compile
     maven:
       groupId: com.example
       artifactId: test-addon
-      version: 1.0.0
 
 installCapabilities:
   configAutoInstall: true

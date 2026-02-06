@@ -126,6 +126,22 @@
             "enum": ["maven-lib", "hcm-module"],
             "description": "Artifact type"
           },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this artifact provides"
+          },
+          "target": {
+            "type": "string",
+            "enum": ["parent", "cms", "site/components", "site/webapp", "platform"],
+            "default": "parent",
+            "description": "Target module where dependency should be added"
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["compile", "provided", "runtime", "test"],
+            "default": "compile",
+            "description": "Maven dependency scope"
+          },
           "maven": {
             "type": "object",
             "properties": {
@@ -134,12 +150,9 @@
               },
               "artifactId": {
                 "type": "string"
-              },
-              "version": {
-                "type": "string"
               }
             },
-            "required": ["groupId", "artifactId", "version"]
+            "required": ["groupId", "artifactId"]
           },
           "hcm": {
             "type": "object",

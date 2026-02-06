@@ -72,22 +72,58 @@ class ArtifactTest {
     }
 
     @Test
-    void mavenCoordinates_version_getterSetter() {
-        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
-        assertNull(maven.getVersion());
-
-        maven.setVersion("1.0.0");
-        assertEquals("1.0.0", maven.getVersion());
-    }
-
-    @Test
     void mavenCoordinates_toCoordinates() {
         Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
         maven.setGroupId("org.example");
         maven.setArtifactId("my-lib");
-        maven.setVersion("1.0.0");
 
-        assertEquals("org.example:my-lib:1.0.0", maven.toCoordinates());
+        assertEquals("org.example:my-lib:1.0.0", maven.toCoordinates("1.0.0"));
+    }
+
+    @Test
+    void description_getterSetter() {
+        Artifact artifact = new Artifact();
+        assertNull(artifact.getDescription());
+
+        artifact.setDescription("Component Testing");
+        assertEquals("Component Testing", artifact.getDescription());
+    }
+
+    @Test
+    void target_getterSetter() {
+        Artifact artifact = new Artifact();
+        assertNull(artifact.getTarget());
+
+        artifact.setTarget(Artifact.Target.SITE_COMPONENTS);
+        assertEquals(Artifact.Target.SITE_COMPONENTS, artifact.getTarget());
+    }
+
+    @Test
+    void scope_getterSetter() {
+        Artifact artifact = new Artifact();
+        assertNull(artifact.getScope());
+
+        artifact.setScope(Artifact.Scope.TEST);
+        assertEquals(Artifact.Scope.TEST, artifact.getScope());
+    }
+
+    @Test
+    void target_allValues() {
+        assertEquals(5, Artifact.Target.values().length);
+        assertNotNull(Artifact.Target.valueOf("PARENT"));
+        assertNotNull(Artifact.Target.valueOf("CMS"));
+        assertNotNull(Artifact.Target.valueOf("SITE_COMPONENTS"));
+        assertNotNull(Artifact.Target.valueOf("SITE_WEBAPP"));
+        assertNotNull(Artifact.Target.valueOf("PLATFORM"));
+    }
+
+    @Test
+    void scope_allValues() {
+        assertEquals(4, Artifact.Scope.values().length);
+        assertNotNull(Artifact.Scope.valueOf("COMPILE"));
+        assertNotNull(Artifact.Scope.valueOf("PROVIDED"));
+        assertNotNull(Artifact.Scope.valueOf("RUNTIME"));
+        assertNotNull(Artifact.Scope.valueOf("TEST"));
     }
 
     @Test

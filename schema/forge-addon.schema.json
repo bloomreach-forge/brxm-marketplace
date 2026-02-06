@@ -126,6 +126,22 @@
             "enum": ["maven-lib", "hcm-module"],
             "description": "Artifact type"
           },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this artifact provides"
+          },
+          "target": {
+            "type": "string",
+            "enum": ["parent", "cms", "site/components", "site/webapp", "platform"],
+            "default": "parent",
+            "description": "Target module where dependency should be added"
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["compile", "provided", "runtime", "test"],
+            "default": "compile",
+            "description": "Maven dependency scope"
+          },
           "maven": {
             "type": "object",
             "properties": {
@@ -134,21 +150,9 @@
               },
               "artifactId": {
                 "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "target": {
-                "type": "string",
-                "enum": ["cms", "site", "platform"],
-                "description": "Target module for dependency installation"
-              },
-              "versionProperty": {
-                "type": "string",
-                "description": "Property name for version (enables ${prop} syntax in POM)"
               }
             },
-            "required": ["groupId", "artifactId", "version", "target"]
+            "required": ["groupId", "artifactId"]
           },
           "hcm": {
             "type": "object",
@@ -271,6 +275,71 @@
         },
         "stars": {
           "type": "integer"
+        }
+      }
+    },
+    "installation": {
+      "type": "object",
+      "description": "Installation instructions for the addon",
+      "properties": {
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["cms", "site", "platform"]
+          },
+          "default": ["cms"],
+          "description": "Target module(s) for dependencies"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required prerequisites before installation"
+        },
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Config file path (e.g., conf/application.yaml)"
+            },
+            "properties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Property name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Property description"
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this property is required"
+                  },
+                  "default": {
+                    "type": "string",
+                    "description": "Default value if not specified"
+                  },
+                  "example": {
+                    "type": "string",
+                    "description": "Example value"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "verification": {
+          "type": "string",
+          "description": "How to verify successful installation"
         }
       }
     },
