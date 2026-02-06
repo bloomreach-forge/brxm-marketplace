@@ -1,6 +1,6 @@
 {
   "version" : "1.0",
-  "generatedAt" : "2026-02-06T06:47:25.692543024Z",
+  "generatedAt" : "2026-02-06T08:11:00.310407807Z",
   "source" : {
     "name" : "bloomreach-forge",
     "url" : "https://github.com/bloomreach-forge"
@@ -9,7 +9,7 @@
     "id" : "brut",
     "name" : "Bloomreach Unit Testing Library",
     "source" : "bloomreach-forge",
-    "version" : "5.1.1-SNAPSHOT",
+    "version" : "5.1.0",
     "description" : "Bloomreach Unit Testing Library for BrXM Delivery Tier",
     "repository" : {
       "url" : "https://github.com/bloomreach-forge/brut",
@@ -31,7 +31,7 @@
       "maven" : {
         "groupId" : "org.bloomreach.forge.brut",
         "artifactId" : "brut",
-        "version" : "5.1.1-SNAPSHOT"
+        "version" : "5.1.0"
       }
     } ],
     "documentation" : [ {
