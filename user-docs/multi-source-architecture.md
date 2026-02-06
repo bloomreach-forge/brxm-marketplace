@@ -8,9 +8,9 @@ The multi-source pipeline enables partners and customers to add their own addon 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     GitHub Pages                                 │
+│                     GitHub Pages                                │
 │  https://bloomreach-forge.github.io/brxm-marketplace/           │
-│                    addons-index.json                             │
+│                    addons-index.json                            │
 └─────────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
@@ -23,7 +23,7 @@ The multi-source pipeline enables partners and customers to add their own addon 
         └─────────────────────┼─────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              CMS (brxm-marketplace-repository)                   │
+│              CMS (brxm-marketplace-repository)                  │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │  MarketplaceDaemonModule                                │    │
 │  │  - Registers AddonRegistry with HippoServiceRegistry    │    │
@@ -39,15 +39,15 @@ The multi-source pipeline enables partners and customers to add their own addon 
                               │ HippoServiceRegistry
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Essentials Dashboard                          │
+│                    Essentials Dashboard                         │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │  EssentialsAddonService                                 │    │
 │  │  - Delegates to AddonRegistry via HippoServiceRegistry  │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │  REST: /essentials/rest/marketplace/*                   │    │
-│  │  - /addons, /addons/{id}, /addons/search               │    │
-│  │  - /sources (CRUD), /sources/{name}/refresh            │    │
+│  │  - /addons, /addons/{id}, /addons/search                │    │
+│  │  - /sources (CRUD), /sources/{name}/refresh             │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
 ```
