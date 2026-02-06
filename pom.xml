@@ -25,7 +25,7 @@
     <description>Discover, browse, and install Forge add-ons from within brXM</description>
     <groupId>org.bloomreach.forge.marketplace</groupId>
     <artifactId>brxm-marketplace</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <packaging>pom</packaging>
     <inceptionYear>2025</inceptionYear>
     <url>https://github.com/bloomreach-forge/brxm-marketplace</url>
