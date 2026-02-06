@@ -165,13 +165,13 @@
 <h2>Adding a Source via REST API</h2>
         
 <pre><code>
-curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
   -H &quot;Content-Type: application/json&quot; \
   -d '{
-    &quot;id&quot;: &quot;partner-addons&quot;,
-    &quot;name&quot;: &quot;Partner Addons&quot;,
+    &quot;name&quot;: &quot;partner-addons&quot;,
     &quot;url&quot;: &quot;https://partner.example.com/addons-index.json&quot;,
-    &quot;enabled&quot;: true
+    &quot;enabled&quot;: true,
+    &quot;priority&quot;: 100
   }'
         </code></pre>
       </section>
@@ -261,34 +261,21 @@ curl -X POST http://localhost:8080/cms/ws/marketplace/sources \
 <h4>List all sources</h4>
         
 <pre><code>
-GET /ws/marketplace/sources
+GET /essentials/rest/dynamic/marketplace/sources
         </code></pre>
 
-        </section><section><a id="Get_a_specific_source"></a>
-<h4>Get a specific source</h4>
+        </section><section><a id="Refresh_a_single_source"></a>
+<h4>Refresh a single source</h4>
         
 <pre><code>
-GET /ws/marketplace/sources/{id}
-        </code></pre>
-
-        </section><section><a id="Update_a_source"></a>
-<h4>Update a source</h4>
-        
-<pre><code>
-PUT /ws/marketplace/sources/{id}
-Content-Type: application/json
-
-{
-  &quot;name&quot;: &quot;Updated Name&quot;,
-  &quot;enabled&quot;: false
-}
+POST /essentials/rest/dynamic/marketplace/sources/{name}/refresh
         </code></pre>
 
         </section><section><a id="Delete_a_source"></a>
 <h4>Delete a source</h4>
         
 <pre><code>
-DELETE /ws/marketplace/sources/{id}
+DELETE /essentials/rest/dynamic/marketplace/sources/{name}
         </code></pre>
       </section></section></section>
 
@@ -304,13 +291,13 @@ DELETE /ws/marketplace/sources/{id}
           
 <li>The TTL expires</li>
           
-<li>A source is added, updated, or deleted</li>
+<li>A source is added or deleted</li>
           
 <li>The refresh endpoint is called manually</li>
         </ul>
         
 <pre><code>
-POST /ws/marketplace/refresh
+POST /essentials/rest/dynamic/marketplace/refresh
         </code></pre>
       </section>
 

@@ -57,28 +57,28 @@
           The Marketplace aggregates addons from multiple manifest sources:
         </p>
         <source><![CDATA[
-┌─────────────────────────────────────────────────────────────┐
-│                    Essentials UI                            │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  MarketplaceResource                        │
-│                    (REST API)                               │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│               AddonAggregationService                       │
-│         (Combines addons from all sources)                  │
-└─────────────────────────────────────────────────────────────┘
-                           │
-           ┌───────────────┼───────────────┐
-           ▼               ▼               ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  Forge Source   │ │ Partner Source  │ │ Internal Source │
-│  (GitHub Pages) │ │ (Custom URL)    │ │ (Custom URL)    │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
++-------------------------------------------------------------+
+|                      Essentials UI                          |
++-------------------------------------------------------------+
+                            |
+                            v
++-------------------------------------------------------------+
+|                   MarketplaceResource                       |
+|                      (REST API)                             |
++-------------------------------------------------------------+
+                            |
+                            v
++-------------------------------------------------------------+
+|                AddonAggregationService                      |
+|          (Combines addons from all sources)                 |
++-------------------------------------------------------------+
+                            |
+            +---------------+---------------+
+            v               v               v
++-------------------+ +-------------------+ +-------------------+
+|   Forge Source    | |  Partner Source   | |  Internal Source  |
+|  (GitHub Pages)   | |   (Custom URL)    | |   (Custom URL)    |
++-------------------+ +-------------------+ +-------------------+
         ]]></source>
       </subsection>
 
@@ -143,7 +143,7 @@
         <ul>
           <li><strong>TTL-based expiry</strong> - Cache entries expire after configurable time (default: 1 hour)</li>
           <li><strong>Atomic refresh</strong> - Uses ConcurrentHashMap.compute() to prevent cache stampede</li>
-          <li><strong>Manual refresh</strong> - POST /ws/marketplace/refresh forces immediate refresh</li>
+          <li><strong>Manual refresh</strong> - POST /essentials/rest/dynamic/marketplace/refresh forces immediate refresh</li>
         </ul>
       </subsection>
 
@@ -153,9 +153,17 @@
         </p>
         <ul>
           <li>Registers as an Essentials plugin via <code>@EssentialsPlugin</code></li>
-          <li>Provides REST resources for the Essentials dashboard</li>
+          <li>REST resources (<code>MarketplaceResource</code>, <code>SourceResource</code>,
+              <code>AddonNotFoundExceptionMapper</code>) are auto-registered via the
+              <code>restClasses</code> array in <code>plugin-descriptor.json</code></li>
+          <li>Essentials mounts these classes on the dynamic CXF server at
+              <code>/essentials/rest/dynamic/marketplace</code></li>
           <li>Uses HippoServiceRegistry for service lookup</li>
         </ul>
+        <p>
+          No manual <code>applicationContext.xml</code> override is required. The Essentials
+          <code>PluginStore</code> handles instantiation and wiring automatically.
+        </p>
       </subsection>
 
     </section>

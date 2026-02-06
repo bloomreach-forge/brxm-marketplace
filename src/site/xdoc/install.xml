@@ -24,43 +24,58 @@
 
     <section name="Installation">
 
-      <subsection name="Step 1: Add Maven Dependencies">
-        <p>
-          Add the following dependencies to your <code>cms/pom.xml</code>:
-        </p>
+      <subsection name="Step 1: Define version property and dependency management in root pom.xml">
+        <source><![CDATA[
+<properties>
+  <brxm-marketplace.version>1.0.3</brxm-marketplace.version>
+</properties>
+
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.bloomreach.forge.marketplace</groupId>
+      <artifactId>brxm-marketplace-repository</artifactId>
+      <version>${brxm-marketplace.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bloomreach.forge.marketplace</groupId>
+      <artifactId>brxm-marketplace-essentials</artifactId>
+      <version>${brxm-marketplace.version}</version>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+        ]]></source>
+      </subsection>
+
+      <subsection name="Step 2: Add repository module to cms-dependencies/pom.xml">
+        <source><![CDATA[
+<dependency>
+    <groupId>org.bloomreach.forge.marketplace</groupId>
+    <artifactId>brxm-marketplace-repository</artifactId>
+</dependency>
+        ]]></source>
+      </subsection>
+
+      <subsection name="Step 3: Add essentials plugin to essentials/pom.xml">
         <source><![CDATA[
 <dependency>
     <groupId>org.bloomreach.forge.marketplace</groupId>
     <artifactId>brxm-marketplace-essentials</artifactId>
-    <version>1.0.0</version>
-</dependency>
-<dependency>
-    <groupId>org.bloomreach.forge.marketplace</groupId>
-    <artifactId>brxm-marketplace-repository</artifactId>
-    <version>1.0.0</version>
 </dependency>
         ]]></source>
+        <p>
+          No additional configuration is required. The Marketplace REST endpoints are
+          auto-registered by the Essentials plugin framework via <code>plugin-descriptor.json</code>.
+        </p>
       </subsection>
 
-      <subsection name="Step 2: Rebuild and Restart">
-        <p>
-          Rebuild your project and restart the application:
-        </p>
+      <subsection name="Step 4: Rebuild and restart">
         <source><![CDATA[
 mvn clean verify
-mvn -f demo cargo:run
         ]]></source>
-      </subsection>
-
-      <subsection name="Step 3: Install via Essentials">
-        <ol>
-          <li>Navigate to the Essentials dashboard: <code>http://localhost:8080/essentials</code></li>
-          <li>Find <strong>Marketplace</strong> in the available plugins</li>
-          <li>Click <strong>Install</strong></li>
-          <li>Restart the application when prompted</li>
-        </ol>
         <p>
-          The Marketplace plugin will now appear in the Essentials dashboard, ready to browse addons.
+          The Marketplace plugin will appear in the Essentials dashboard at
+          <code>http://localhost:8080/essentials</code>, ready to browse addons.
         </p>
       </subsection>
 

@@ -92,56 +92,68 @@
     <section><a id="Installation"></a>
 <h1>Installation</h1>
 
-      <section><a id="Step_1.3A_Add_Maven_Dependencies"></a>
-<h2>Step 1: Add Maven Dependencies</h2>
+      <section><a id="Step_1.3A_Define_version_property_and_dependency_management_in_root_pom.xml"></a>
+<h2>Step 1: Define version property and dependency management in root pom.xml</h2>
         
-<p>
-          Add the following dependencies to your <code>cms/pom.xml</code>:
-        </p>
+<pre><code>
+&lt;properties&gt;
+  &lt;brxm-marketplace.version&gt;1.0.2&lt;/brxm-marketplace.version&gt;
+&lt;/properties&gt;
+
+&lt;dependencyManagement&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+      &lt;artifactId&gt;brxm-marketplace-repository&lt;/artifactId&gt;
+      &lt;version&gt;${brxm-marketplace.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+      &lt;artifactId&gt;brxm-marketplace-essentials&lt;/artifactId&gt;
+      &lt;version&gt;${brxm-marketplace.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;
+        </code></pre>
+      </section>
+
+      <section><a id="Step_2.3A_Add_repository_module_to_cms-dependencies.2Fpom.xml"></a>
+<h2>Step 2: Add repository module to cms-dependencies/pom.xml</h2>
+        
+<pre><code>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+    &lt;artifactId&gt;brxm-marketplace-repository&lt;/artifactId&gt;
+&lt;/dependency&gt;
+        </code></pre>
+      </section>
+
+      <section><a id="Step_3.3A_Add_essentials_plugin_to_essentials.2Fpom.xml"></a>
+<h2>Step 3: Add essentials plugin to essentials/pom.xml</h2>
         
 <pre><code>
 &lt;dependency&gt;
     &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
     &lt;artifactId&gt;brxm-marketplace-essentials&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-    &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
-    &lt;artifactId&gt;brxm-marketplace-repository&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0&lt;/version&gt;
 &lt;/dependency&gt;
         </code></pre>
-      </section>
-
-      <section><a id="Step_2.3A_Rebuild_and_Restart"></a>
-<h2>Step 2: Rebuild and Restart</h2>
         
 <p>
-          Rebuild your project and restart the application:
+          No additional configuration is required. The Marketplace REST endpoints are
+          auto-registered by the Essentials plugin framework via <code>plugin-descriptor.json</code>.
         </p>
+      </section>
+
+      <section><a id="Step_4.3A_Rebuild_and_restart"></a>
+<h2>Step 4: Rebuild and restart</h2>
         
 <pre><code>
 mvn clean verify
-mvn -f demo cargo:run
         </code></pre>
-      </section>
-
-      <section><a id="Step_3.3A_Install_via_Essentials"></a>
-<h2>Step 3: Install via Essentials</h2>
-        
-<ol style="list-style-type: decimal;">
-          
-<li>Navigate to the Essentials dashboard: <code>http://localhost:8080/essentials</code></li>
-          
-<li>Find <strong>Marketplace</strong> in the available plugins</li>
-          
-<li>Click <strong>Install</strong></li>
-          
-<li>Restart the application when prompted</li>
-        </ol>
         
 <p>
-          The Marketplace plugin will now appear in the Essentials dashboard, ready to browse addons.
+          The Marketplace plugin will appear in the Essentials dashboard at
+          <code>http://localhost:8080/essentials</code>, ready to browse addons.
         </p>
       </section>
 

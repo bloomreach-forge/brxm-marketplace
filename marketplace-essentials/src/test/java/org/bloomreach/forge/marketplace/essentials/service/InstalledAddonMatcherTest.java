@@ -165,6 +165,21 @@ class InstalledAddonMatcherTest {
         assertEquals("4.0.0", result.get("ip-filter"));
     }
 
+    @Test
+    void findInstalledAddons_retainsVersion_whenLaterDependencyHasNullVersion() {
+        Addon addon = createAddon("brut", "org.bloomreach.forge", "brut-common");
+        List<Addon> knownAddons = List.of(addon);
+        List<Dependency> dependencies = List.of(
+                new Dependency("org.bloomreach.forge", "brut-common", "5.1.0"),
+                new Dependency("org.bloomreach.forge", "brut-common", null)
+        );
+
+        Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
+
+        assertEquals(1, result.size());
+        assertEquals("5.1.0", result.get("brut"));
+    }
+
     private Addon createAddon(String id, String groupId, String artifactId) {
         Addon addon = new Addon();
         addon.setId(id);

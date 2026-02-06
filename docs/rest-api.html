@@ -96,7 +96,12 @@
 <h2>Base URL</h2>
         
 <p>
-          All endpoints are relative to: <code>/cms/ws/marketplace</code>
+          All endpoints are relative to: <code>/essentials/rest/dynamic/marketplace</code>
+        </p>
+        
+<p>
+          The REST resources are auto-registered on the Essentials dynamic CXF server
+          via <code>plugin-descriptor.json</code>.
         </p>
       </section>
 
@@ -136,7 +141,7 @@
             
 <td>GET</td>
             
-<td><code>/addons?q={query}</code></td>
+<td><code>/addons/search?q={query}</code></td>
             
 <td>Search addons</td>
           </tr>
@@ -155,7 +160,7 @@
 <h4>List Addons</h4>
         
 <pre><code>
-GET /ws/marketplace/addons
+GET /essentials/rest/dynamic/marketplace/addons
 
 Response:
 [
@@ -175,7 +180,7 @@ Response:
 <h4>Get Addon</h4>
         
 <pre><code>
-GET /ws/marketplace/addons/ip-filter
+GET /essentials/rest/dynamic/marketplace/addons/ip-filter
 
 Response:
 {
@@ -198,7 +203,7 @@ Response:
 <h4>Search Addons</h4>
         
 <pre><code>
-GET /ws/marketplace/addons?q=security
+GET /essentials/rest/dynamic/marketplace/addons/search?q=security
 
 Response: Array of matching addons
         </code></pre>
@@ -229,15 +234,6 @@ Response: Array of matching addons
           
 <tr class="a">
             
-<td>GET</td>
-            
-<td><code>/sources/{id}</code></td>
-            
-<td>Get source by ID</td>
-          </tr>
-          
-<tr class="b">
-            
 <td>POST</td>
             
 <td><code>/sources</code></td>
@@ -245,22 +241,22 @@ Response: Array of matching addons
 <td>Add new source</td>
           </tr>
           
-<tr class="a">
-            
-<td>PUT</td>
-            
-<td><code>/sources/{id}</code></td>
-            
-<td>Update source</td>
-          </tr>
-          
 <tr class="b">
             
 <td>DELETE</td>
             
-<td><code>/sources/{id}</code></td>
+<td><code>/sources/{name}</code></td>
             
 <td>Delete source</td>
+          </tr>
+          
+<tr class="a">
+            
+<td>POST</td>
+            
+<td><code>/sources/{name}/refresh</code></td>
+            
+<td>Refresh single source</td>
           </tr>
         </table>
 
@@ -268,12 +264,11 @@ Response: Array of matching addons
 <h4>Add Source</h4>
         
 <pre><code>
-POST /ws/marketplace/sources
+POST /essentials/rest/dynamic/marketplace/sources
 Content-Type: application/json
 
 {
-  &quot;id&quot;: &quot;partner-addons&quot;,
-  &quot;name&quot;: &quot;Partner Addons&quot;,
+  &quot;name&quot;: &quot;partner-addons&quot;,
   &quot;url&quot;: &quot;https://partner.example.com/addons-index.json&quot;,
   &quot;enabled&quot;: true,
   &quot;priority&quot;: 100
@@ -281,9 +276,11 @@ Content-Type: application/json
 
 Response: 201 Created
 {
-  &quot;id&quot;: &quot;partner-addons&quot;,
-  &quot;name&quot;: &quot;Partner Addons&quot;,
-  ...
+  &quot;name&quot;: &quot;partner-addons&quot;,
+  &quot;url&quot;: &quot;https://partner.example.com/addons-index.json&quot;,
+  &quot;enabled&quot;: true,
+  &quot;priority&quot;: 100,
+  &quot;readonly&quot;: false
 }
         </code></pre>
       </section></section></section>
@@ -340,7 +337,7 @@ Response: 201 Created
 <h4>Install Addon</h4>
         
 <pre><code>
-POST /ws/marketplace/addons/ip-filter/install
+POST /essentials/rest/dynamic/marketplace/addons/ip-filter/install
 
 Response:
 {
@@ -494,9 +491,18 @@ Response:
             
 <td>GET</td>
             
-<td><code>/health</code></td>
+<td><code>/project-context</code></td>
             
-<td>Health check endpoint</td>
+<td>Get project brXM version and installed addons</td>
+          </tr>
+          
+<tr class="b">
+            
+<td>POST</td>
+            
+<td><code>/project-context/refresh</code></td>
+            
+<td>Invalidate project context cache</td>
           </tr>
         </table>
       </section>
