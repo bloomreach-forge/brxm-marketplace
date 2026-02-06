@@ -108,8 +108,8 @@ public class DescriptorParserTest {
         assertNotNull(artifact.getMaven());
         assertEquals("com.example", artifact.getMaven().getGroupId());
         assertEquals("test-addon", artifact.getMaven().getArtifactId());
-        assertEquals("1.0.0", artifact.getMaven().getVersion());
-        assertEquals("com.example:test-addon:1.0.0", artifact.getMaven().toCoordinates());
+        // Version comes from top-level addon.version, not per-artifact
+        assertEquals("com.example:test-addon:1.0.0", artifact.getMaven().toCoordinates(addon.getVersion()));
     }
 
     @Test

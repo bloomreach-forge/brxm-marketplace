@@ -38,6 +38,7 @@ public class AddonConfig {
     private Publisher publisher;
     private Repository repository;
     private List<Documentation> documentation;
+    private List<ConfigArtifact> artifacts;
 
     public String getCategory() {
         return category;
@@ -93,5 +94,13 @@ public class AddonConfig {
 
     public void setDocumentation(List<Documentation> documentation) {
         this.documentation = documentation;
+    }
+
+    public List<ConfigArtifact> getArtifacts() {
+        return artifacts;
+    }
+
+    public void setArtifacts(List<ConfigArtifact> artifacts) {
+        this.artifacts = artifacts;
     }
 }

@@ -14,7 +14,7 @@
 #   - version:     from pom.xml <version>
 #   - description: from pom.xml <description> or README.md first paragraph
 #   - repository:  from GitHub API
-#   - artifacts:   from pom.xml Maven coordinates
+#   - artifacts:   from pom.xml Maven coordinates (with default target: parent, scope: compile)
 #   - documentation.readme: generated URL to README.md
 
 # Required - must be specified
@@ -42,6 +42,16 @@ compatibility:
 #   name: "Your Organization"
 #   type: community  # Options: bloomreach, ps, partner, community, internal
 #   url: "https://your-org.com"
+
+# Optional - explicit artifact configuration (defaults to single artifact with
+#   target: parent and scope: compile if omitted)
+# artifacts:
+#   - target: cms               # Required: parent, cms, site/components, site/webapp, platform
+#     scope: compile            # Optional: compile (default), provided, runtime, test
+#     description: "CMS module" # Optional: description of this artifact
+#   - target: site/components
+#     artifactId: my-addon-site # Optional: defaults to pom.xml artifactId
+#     description: "Site components"
 
 # Optional - installation instructions (only if addon requires configuration)
 # installation:

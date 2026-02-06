@@ -17,7 +17,6 @@ package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
-import org.bloomreach.forge.marketplace.common.model.Installation;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +63,7 @@ class AddonInstallationServiceTest {
     void install_addsDependencyToCmsPom() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -75,10 +74,10 @@ class AddonInstallationServiceTest {
         String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
         assertTrue(cmsPom.contains("<groupId>org.test</groupId>"));
         assertTrue(cmsPom.contains("<artifactId>test-artifact</artifactId>"));
-        assertTrue(cmsPom.contains("<version>${test.version}</version>"));
+        assertTrue(cmsPom.contains("<version>${test-addon.version}</version>"));
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
-        assertTrue(rootPom.contains("<test.version>1.0.0</test.version>"));
+        assertTrue(rootPom.contains("<test-addon.version>1.0.0</test-addon.version>"));
 
         verify(projectContextService).invalidateCache();
     }
@@ -87,24 +86,24 @@ class AddonInstallationServiceTest {
     void install_addsDependencyToSitePom() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.site, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.SITE_COMPONENTS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
         assertEquals(InstallationResult.Status.completed, result.status());
-        assertEquals(1, result.changes().size());
+        assertEquals(2, result.changes().size());
 
         String sitePom = Files.readString(tempDir.resolve("site/components/pom.xml"));
         assertTrue(sitePom.contains("<groupId>org.test</groupId>"));
-        assertTrue(sitePom.contains("<version>1.0.0</version>"));
+        assertTrue(sitePom.contains("<version>${test-addon.version}</version>"));
     }
 
     @Test
     void install_addsDependencyToPlatformPom() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.platform, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.PLATFORM);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -128,7 +127,7 @@ class AddonInstallationServiceTest {
 
     @Test
     void install_failsWhenBasedirNull() {
-        Addon addon = createAddon("test-addon", Installation.Target.cms, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", null);
@@ -139,7 +138,7 @@ class AddonInstallationServiceTest {
 
     @Test
     void install_failsWhenTargetPomNotFound() {
-        Addon addon = createAddon("test-addon", Installation.Target.cms, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -161,7 +160,7 @@ class AddonInstallationServiceTest {
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -176,10 +175,10 @@ class AddonInstallationServiceTest {
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <test.version>2.0.0</test.version>\n    </properties>");
+                "    <test-addon.version>2.0.0</test-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -194,10 +193,10 @@ class AddonInstallationServiceTest {
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <test.version>1.0.0</test.version>\n    </properties>");
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -274,19 +273,18 @@ class AddonInstallationServiceTest {
         Files.writeString(tempDir.resolve("site/components/pom.xml"), sitePom);
     }
 
-    private Addon createAddon(String id, Installation.Target target, String versionProperty) {
+    private Addon createAddon(String id, Artifact.Target target) {
         Addon addon = new Addon();
         addon.setId(id);
+        addon.setVersion("1.0.0");
 
         Artifact artifact = new Artifact();
         artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        artifact.setTarget(target);
 
         Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
         maven.setGroupId("org.test");
         maven.setArtifactId("test-artifact");
-        maven.setVersion("1.0.0");
-        maven.setTarget(target);
-        maven.setVersionProperty(versionProperty);
         artifact.setMaven(maven);
 
         addon.setArtifacts(List.of(artifact));
@@ -296,14 +294,15 @@ class AddonInstallationServiceTest {
     private Addon createAddonWithoutTarget(String id) {
         Addon addon = new Addon();
         addon.setId(id);
+        addon.setVersion("1.0.0");
 
         Artifact artifact = new Artifact();
         artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        // No target set - testing missing target scenario
 
         Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
         maven.setGroupId("org.test");
         maven.setArtifactId("test-artifact");
-        maven.setVersion("1.0.0");
         artifact.setMaven(maven);
 
         addon.setArtifacts(List.of(artifact));
@@ -313,25 +312,22 @@ class AddonInstallationServiceTest {
     private Addon createAddonWithMultipleArtifacts() {
         Addon addon = new Addon();
         addon.setId("multi-addon");
+        addon.setVersion("1.0.0");
 
         Artifact cmsArtifact = new Artifact();
         cmsArtifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        cmsArtifact.setTarget(Artifact.Target.CMS);
         Artifact.MavenCoordinates cmsMaven = new Artifact.MavenCoordinates();
         cmsMaven.setGroupId("org.test");
         cmsMaven.setArtifactId("cms-artifact");
-        cmsMaven.setVersion("1.0.0");
-        cmsMaven.setTarget(Installation.Target.cms);
-        cmsMaven.setVersionProperty("multi.version");
         cmsArtifact.setMaven(cmsMaven);
 
         Artifact siteArtifact = new Artifact();
         siteArtifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        siteArtifact.setTarget(Artifact.Target.SITE_COMPONENTS);
         Artifact.MavenCoordinates siteMaven = new Artifact.MavenCoordinates();
         siteMaven.setGroupId("org.test");
         siteMaven.setArtifactId("site-artifact");
-        siteMaven.setVersion("1.0.0");
-        siteMaven.setTarget(Installation.Target.site);
-        siteMaven.setVersionProperty("multi.version");
         siteArtifact.setMaven(siteMaven);
 
         addon.setArtifacts(List.of(cmsArtifact, siteArtifact));
@@ -347,18 +343,18 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>test-artifact</artifactId>\n" +
-                        "            <version>${test.version}</version>\n" +
+                        "            <version>${test-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <test.version>1.0.0</test.version>\n    </properties>");
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
-        addon.getArtifacts().get(0).getMaven().setVersion("2.0.0");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        addon.setVersion("2.0.0");
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
@@ -366,19 +362,19 @@ class AddonInstallationServiceTest {
         assertEquals(InstallationResult.Status.completed, result.status());
         assertEquals(1, result.changes().size());
         assertEquals("updated_property", result.changes().get(0).action());
-        assertEquals("test.version", result.changes().get(0).property());
+        assertEquals("test-addon.version", result.changes().get(0).property());
         assertEquals("1.0.0", result.changes().get(0).oldValue());
         assertEquals("2.0.0", result.changes().get(0).value());
 
         String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
-        assertTrue(updatedRootPom.contains("<test.version>2.0.0</test.version>"));
+        assertTrue(updatedRootPom.contains("<test-addon.version>2.0.0</test-addon.version>"));
     }
 
     @Test
     void upgrade_failsWhenNotInstalled() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
@@ -396,17 +392,17 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>test-artifact</artifactId>\n" +
-                        "            <version>${test.version}</version>\n" +
+                        "            <version>${test-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <test.version>1.0.0</test.version>\n    </properties>");
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
@@ -424,17 +420,17 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>test-artifact</artifactId>\n" +
-                        "            <version>${test.version}</version>\n" +
+                        "            <version>${test-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <test.version>1.0.0</test.version>\n    </properties>");
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
@@ -453,7 +449,7 @@ class AddonInstallationServiceTest {
         assertFalse(updatedCmsPom.contains("test-artifact"));
 
         String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
-        assertFalse(updatedRootPom.contains("test.version"));
+        assertFalse(updatedRootPom.contains("test-addon.version"));
 
         verify(projectContextService).invalidateCache();
     }
@@ -470,7 +466,7 @@ class AddonInstallationServiceTest {
 
     @Test
     void uninstall_failsWhenBasedirNull() {
-        Addon addon = createAddon("test-addon", Installation.Target.cms, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.uninstall("test-addon", null);
@@ -483,7 +479,7 @@ class AddonInstallationServiceTest {
     void uninstall_failsWhenNotInstalled() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
@@ -501,7 +497,7 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>cms-artifact</artifactId>\n" +
-                        "            <version>${multi.version}</version>\n" +
+                        "            <version>${multi-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
@@ -511,14 +507,14 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>site-artifact</artifactId>\n" +
-                        "            <version>${multi.version}</version>\n" +
+                        "            <version>${multi-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("site/components/pom.xml"), sitePom);
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <multi.version>1.0.0</multi.version>\n    </properties>");
+                "    <multi-addon.version>1.0.0</multi-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
         Addon addon = createAddonWithMultipleArtifacts();
@@ -540,7 +536,7 @@ class AddonInstallationServiceTest {
     void install_createsBackupBeforeWriting() throws IOException {
         setupProjectStructure();
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, "test.version");
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         service.install("test-addon", tempDir.toString());
@@ -592,7 +588,7 @@ class AddonInstallationServiceTest {
             }
         };
 
-        Addon addon = createAddon("test-addon", Installation.Target.cms, null);
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
@@ -609,14 +605,14 @@ class AddonInstallationServiceTest {
                 "    <dependency>\n" +
                         "            <groupId>org.test</groupId>\n" +
                         "            <artifactId>cms-artifact</artifactId>\n" +
-                        "            <version>${multi.version}</version>\n" +
+                        "            <version>${multi-addon.version}</version>\n" +
                         "        </dependency>\n" +
                         "    </dependencies>");
         Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         rootPom = rootPom.replace("</properties>",
-                "    <multi.version>1.0.0</multi.version>\n    </properties>");
+                "    <multi-addon.version>1.0.0</multi-addon.version>\n    </properties>");
         Files.writeString(tempDir.resolve("pom.xml"), rootPom);
 
         Addon addon = createAddonWithMultipleArtifacts();

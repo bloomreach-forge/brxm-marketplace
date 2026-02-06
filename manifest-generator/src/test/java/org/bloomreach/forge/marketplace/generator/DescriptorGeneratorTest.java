@@ -274,6 +274,170 @@ class DescriptorGeneratorTest {
         assertTrue(output.contains("artifactId: ip-filter"));
     }
 
+    @Test
+    void generate_withNoArtifactsConfig_createsDefaultArtifact() throws Exception {
+        String config = """
+                category: security
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.example</groupId>
+                    <artifactId>my-addon</artifactId>
+                    <version>1.0.0</version>
+                    <description>Test addon description</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(0, exitCode);
+
+        String output = Files.readString(outputPath);
+        assertTrue(output.contains("target: parent"));
+        assertTrue(output.contains("scope: compile"));
+    }
+
+    @Test
+    void generate_withArtifactsConfig_usesConfigValues() throws Exception {
+        String config = """
+                category: developer-tools
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                artifacts:
+                  - target: cms
+                    scope: compile
+                    description: "CMS integration module"
+                  - target: site/components
+                    artifactId: brut-common
+                    description: "Site components library"
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.bloomreach.forge</groupId>
+                    <artifactId>brut</artifactId>
+                    <version>1.0.0</version>
+                    <description>Bloomreach Unit Testing</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(0, exitCode);
+
+        String output = Files.readString(outputPath);
+        assertTrue(output.contains("target: cms"));
+        assertTrue(output.contains("target: site/components"));
+        assertTrue(output.contains("description: CMS integration module"));
+        assertTrue(output.contains("artifactId: brut-common"));
+    }
+
+    @Test
+    void generate_withMissingTarget_failsValidation() throws Exception {
+        String config = """
+                category: security
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                artifacts:
+                  - scope: compile
+                    description: "Missing target"
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.example</groupId>
+                    <artifactId>my-addon</artifactId>
+                    <version>1.0.0</version>
+                    <description>Test addon description</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(1, exitCode);
+    }
+
+    @Test
+    void generate_withInvalidTarget_failsValidation() throws Exception {
+        String config = """
+                category: security
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                artifacts:
+                  - target: invalid-target
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.example</groupId>
+                    <artifactId>my-addon</artifactId>
+                    <version>1.0.0</version>
+                    <description>Test addon description</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(1, exitCode);
+    }
+
+    @Test
+    void generate_artifactInheritsGroupIdFromPom() throws Exception {
+        String config = """
+                category: security
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                artifacts:
+                  - target: cms
+                    artifactId: custom-artifact
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.bloomreach.forge</groupId>
+                    <artifactId>my-addon</artifactId>
+                    <version>1.0.0</version>
+                    <description>Test addon description</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(0, exitCode);
+
+        String output = Files.readString(outputPath);
+        assertTrue(output.contains("groupId: org.bloomreach.forge"));
+        assertTrue(output.contains("artifactId: custom-artifact"));
+    }
+
     private int runGenerator() {
         DescriptorGenerator generator = new DescriptorGenerator();
         return new CommandLine(generator).execute(

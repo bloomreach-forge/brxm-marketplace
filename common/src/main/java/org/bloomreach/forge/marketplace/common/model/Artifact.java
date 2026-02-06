@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class Artifact {
 
     private ArtifactType type;
+    private String description;
+    private Target target;
+    private Scope scope;
     private MavenCoordinates maven;
     private HcmInfo hcm;
 
@@ -30,6 +33,30 @@ public class Artifact {
 
     public void setType(ArtifactType type) {
         this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Target getTarget() {
+        return target;
+    }
+
+    public void setTarget(Target target) {
+        this.target = target;
+    }
+
+    public Scope getScope() {
+        return scope;
+    }
+
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
 
     public MavenCoordinates getMaven() {
@@ -55,14 +82,35 @@ public class Artifact {
         HCM_MODULE
     }
 
+    public enum Target {
+        @com.fasterxml.jackson.annotation.JsonProperty("parent")
+        PARENT,
+        @com.fasterxml.jackson.annotation.JsonProperty("cms")
+        CMS,
+        @com.fasterxml.jackson.annotation.JsonProperty("site/components")
+        SITE_COMPONENTS,
+        @com.fasterxml.jackson.annotation.JsonProperty("site/webapp")
+        SITE_WEBAPP,
+        @com.fasterxml.jackson.annotation.JsonProperty("platform")
+        PLATFORM
+    }
+
+    public enum Scope {
+        @com.fasterxml.jackson.annotation.JsonProperty("compile")
+        COMPILE,
+        @com.fasterxml.jackson.annotation.JsonProperty("provided")
+        PROVIDED,
+        @com.fasterxml.jackson.annotation.JsonProperty("runtime")
+        RUNTIME,
+        @com.fasterxml.jackson.annotation.JsonProperty("test")
+        TEST
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MavenCoordinates {
 
         private String groupId;
         private String artifactId;
-        private String version;
-        private Installation.Target target;
-        private String versionProperty;
 
         public String getGroupId() {
             return groupId;
@@ -80,31 +128,7 @@ public class Artifact {
             this.artifactId = artifactId;
         }
 
-        public String getVersion() {
-            return version;
-        }
-
-        public void setVersion(String version) {
-            this.version = version;
-        }
-
-        public Installation.Target getTarget() {
-            return target;
-        }
-
-        public void setTarget(Installation.Target target) {
-            this.target = target;
-        }
-
-        public String getVersionProperty() {
-            return versionProperty;
-        }
-
-        public void setVersionProperty(String versionProperty) {
-            this.versionProperty = versionProperty;
-        }
-
-        public String toCoordinates() {
+        public String toCoordinates(String version) {
             return groupId + ":" + artifactId + ":" + version;
         }
     }

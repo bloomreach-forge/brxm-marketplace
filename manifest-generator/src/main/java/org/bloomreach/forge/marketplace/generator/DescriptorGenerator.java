@@ -145,7 +145,7 @@ public class DescriptorGenerator implements Callable<Integer> {
             Addon addon = buildAddon(config, pomInfo, readmeDescription, githubInfo);
 
             // Validate
-            List<String> errors = validate(addon);
+            List<String> errors = validate(addon, config);
             if (!errors.isEmpty()) {
                 error("Validation errors:");
                 errors.forEach(e -> error("  - " + e));
@@ -303,17 +303,8 @@ public class DescriptorGenerator implements Callable<Integer> {
         // Compatibility from config
         addon.setCompatibility(config.getCompatibility());
 
-        // Artifacts from pom.xml
-        List<Artifact> artifacts = new ArrayList<>();
-        Artifact artifact = new Artifact();
-        artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
-        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
-        maven.setGroupId(pomInfo.groupId());
-        maven.setArtifactId(pomInfo.artifactId());
-        maven.setVersion(pomInfo.version());
-        artifact.setMaven(maven);
-        artifacts.add(artifact);
-        addon.setArtifacts(artifacts);
+        // Artifacts from config or defaults from pom.xml
+        addon.setArtifacts(buildArtifacts(config, pomInfo));
 
         // Installation from config
         addon.setInstallation(config.getInstallation());
@@ -334,7 +325,94 @@ public class DescriptorGenerator implements Callable<Integer> {
         return addon;
     }
 
-    private List<String> validate(Addon addon) {
+    private List<Artifact> buildArtifacts(AddonConfig config, PomParser.PomInfo pomInfo) {
+        List<Artifact> artifacts = new ArrayList<>();
+
+        if (config.getArtifacts() == null || config.getArtifacts().isEmpty()) {
+            artifacts.add(createDefaultArtifact(pomInfo));
+        } else {
+            for (ConfigArtifact configArtifact : config.getArtifacts()) {
+                artifacts.add(buildArtifactFromConfig(configArtifact, pomInfo));
+            }
+        }
+
+        return artifacts;
+    }
+
+    private Artifact createDefaultArtifact(PomParser.PomInfo pomInfo) {
+        Artifact artifact = new Artifact();
+        artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        artifact.setTarget(Artifact.Target.PARENT);
+        artifact.setScope(Artifact.Scope.COMPILE);
+
+        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
+        maven.setGroupId(pomInfo.groupId());
+        maven.setArtifactId(pomInfo.artifactId());
+        artifact.setMaven(maven);
+
+        return artifact;
+    }
+
+    private Artifact buildArtifactFromConfig(ConfigArtifact configArtifact, PomParser.PomInfo pomInfo) {
+        Artifact artifact = new Artifact();
+
+        // Type: config or default to maven-lib
+        String type = configArtifact.getType();
+        artifact.setType(type != null ? parseArtifactType(type) : Artifact.ArtifactType.MAVEN_LIB);
+
+        // Target: required from config
+        if (configArtifact.getTarget() != null) {
+            artifact.setTarget(parseTarget(configArtifact.getTarget()));
+        }
+
+        // Scope: config or default to compile
+        String scope = configArtifact.getScope();
+        artifact.setScope(scope != null ? parseScope(scope) : Artifact.Scope.COMPILE);
+
+        // Description: optional from config
+        artifact.setDescription(configArtifact.getDescription());
+
+        // Maven coordinates: config overrides pom defaults
+        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
+        maven.setGroupId(configArtifact.getGroupId() != null ? configArtifact.getGroupId() : pomInfo.groupId());
+        maven.setArtifactId(configArtifact.getArtifactId() != null ? configArtifact.getArtifactId() : pomInfo.artifactId());
+        artifact.setMaven(maven);
+
+        return artifact;
+    }
+
+    private Artifact.ArtifactType parseArtifactType(String type) {
+        return switch (type.toLowerCase().replace("_", "-")) {
+            case "maven-lib" -> Artifact.ArtifactType.MAVEN_LIB;
+            case "hcm-module" -> Artifact.ArtifactType.HCM_MODULE;
+            default -> throw new IllegalArgumentException("Invalid artifact type: " + type);
+        };
+    }
+
+    private Artifact.Target parseTarget(String target) {
+        return switch (target.toLowerCase().replace("_", "-")) {
+            case "parent" -> Artifact.Target.PARENT;
+            case "cms" -> Artifact.Target.CMS;
+            case "site/components" -> Artifact.Target.SITE_COMPONENTS;
+            case "site/webapp" -> Artifact.Target.SITE_WEBAPP;
+            case "platform" -> Artifact.Target.PLATFORM;
+            default -> throw new IllegalArgumentException("Invalid target: " + target +
+                    ". Valid values: parent, cms, site/components, site/webapp, platform");
+        };
+    }
+
+    private Artifact.Scope parseScope(String scope) {
+        return switch (scope.toLowerCase()) {
+            case "compile" -> Artifact.Scope.COMPILE;
+            case "provided" -> Artifact.Scope.PROVIDED;
+            case "runtime" -> Artifact.Scope.RUNTIME;
+            case "test" -> Artifact.Scope.TEST;
+            default -> throw new IllegalArgumentException("Invalid scope: " + scope +
+                    ". Valid values: compile, provided, runtime, test");
+        };
+    }
+
+    private List<String> validate(Addon addon, AddonConfig config) {
         List<String> errors = new ArrayList<>();
 
         if (addon.getId() == null || addon.getId().isBlank()) {
@@ -357,6 +435,16 @@ public class DescriptorGenerator implements Callable<Integer> {
         }
         if (addon.getCompatibility() == null || addon.getCompatibility().getBrxm() == null) {
             errors.add("Missing compatibility.brxm in config file");
+        }
+
+        // Validate artifacts config
+        if (config.getArtifacts() != null) {
+            for (int i = 0; i < config.getArtifacts().size(); i++) {
+                ConfigArtifact artifact = config.getArtifacts().get(i);
+                if (artifact.getTarget() == null || artifact.getTarget().isBlank()) {
+                    errors.add("Artifact " + (i + 1) + ": missing required 'target' field");
+                }
+            }
         }
 
         return errors;

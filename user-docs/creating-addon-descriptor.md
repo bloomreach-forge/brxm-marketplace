@@ -102,7 +102,7 @@ These fields are automatically extracted - you don't need to specify them:
 | `version` | `pom.xml` → `<version>` | Inherited from parent if not set |
 | `description` | `pom.xml` → `<description>` | Falls back to README first paragraph |
 | `repository.url` | GitHub API | Current repository URL |
-| `artifacts[].maven.*` | `pom.xml` | groupId, artifactId, version |
+| `artifacts[].maven.*` | `pom.xml` | groupId, artifactId (defaults: target=parent, scope=compile) |
 | `documentation[].readme` | Generated | Link to README.md |
 
 ## Config Reference
@@ -158,6 +158,33 @@ publisher:
   type: partner       # Options: bloomreach, ps, partner, community, internal
   url: "https://acme.example.com"
 ```
+
+#### Artifacts Configuration
+
+Configure explicit artifacts for multi-artifact add-ons. If omitted, a single artifact is generated
+with `target: parent` and `scope: compile`.
+
+```yaml
+# Multi-artifact addon (like BRUT)
+artifacts:
+  - target: cms
+    scope: compile
+    description: "CMS integration module"
+  - target: site/components
+    artifactId: my-addon-site    # Optional: defaults to pom.xml artifactId
+    description: "Site components library"
+```
+
+**Available targets:** `parent`, `cms`, `site/components`, `site/webapp`, `platform`
+
+**Available scopes:** `compile` (default), `provided`, `runtime`, `test`
+
+Each artifact requires a `target` field. Other fields are optional:
+- `groupId` - Defaults to pom.xml groupId
+- `artifactId` - Defaults to pom.xml artifactId
+- `scope` - Defaults to "compile"
+- `type` - Defaults to "maven-lib"
+- `description` - Optional description
 
 #### Installation Instructions
 
@@ -312,6 +339,24 @@ compatibility:
     min: "16.0.0"
 ```
 
+### Multi-Artifact Addon (like BRUT)
+
+`.forge/addon-config.yaml`:
+```yaml
+category: developer-tools
+pluginTier: forge-addon
+compatibility:
+  brxm:
+    min: "16.0.0"
+artifacts:
+  - target: cms
+    scope: compile
+    description: "CMS testing utilities"
+  - target: site/components
+    artifactId: brut-common
+    description: "Site components for unit testing"
+```
+
 ### Addon with Configuration
 
 `.forge/addon-config.yaml`:
@@ -371,7 +416,15 @@ The description must be 10-500 characters. Ensure either:
 
 ### Missing Artifacts
 
-Artifacts are extracted from your root pom.xml. For multi-module projects, ensure the main artifact coordinates are in the root pom.
+Artifacts are extracted from your root pom.xml. For multi-module projects, configure explicit artifacts in your config:
+
+```yaml
+artifacts:
+  - target: cms
+    artifactId: my-addon-cms
+  - target: site/components
+    artifactId: my-addon-site
+```
 
 ### Workflow Not Triggering
 
