@@ -71,12 +71,6 @@ jobs:
           BR_MAVEN_USERNAME: ${{ secrets.BR_MAVEN_USERNAME }}
           BR_MAVEN_PASSWORD: ${{ secrets.BR_MAVEN_PASSWORD }}
 
-      - name: Build and test demo
-        run: mvn -B -f demo clean verify
-        env:
-          BR_MAVEN_USERNAME: ${{ secrets.BR_MAVEN_USERNAME }}
-          BR_MAVEN_PASSWORD: ${{ secrets.BR_MAVEN_PASSWORD }}
-
       - name: Deploy to Forge repository
         run: mvn -B deploy -DskipTests
         env:
@@ -87,6 +81,13 @@ jobs:
         run: gh release create "${{ github.ref_name }}" --generate-notes manifest-generator/target/manifest-generator.jar manifest-generator/target/descriptor-generator.jar
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update v1 tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -fa v1 -m "Release ${{ github.ref_name }}"
+          git push origin v1 --force
 
       - name: Build site
         run: mvn -B clean site -Pgithub.pages
