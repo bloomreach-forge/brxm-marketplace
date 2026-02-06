@@ -102,7 +102,6 @@
         <module>repository</module>
         <module>marketplace-essentials</module>
         <module>manifest-generator</module>
-        <module>demo</module>
     </modules>
     <dependencyManagement>
         <dependencies>
