@@ -280,12 +280,15 @@ installationSteps:
         </table>
       </section>
 
-      <section><a id="Artifact_Targets"></a>
-<h2>Artifact Targets</h2>
+      <section><a id="Artifact_Configuration"></a>
+<h2>Artifact Configuration</h2>
         
 <p>
-          The <code>targets</code> field specifies where the dependency should be added:
+          Each artifact in the <code>artifacts</code> array specifies where and how a dependency should be added:
         </p>
+
+        <section><section><a id="Target_Values"></a>
+<h4>Target Values</h4>
         
 <table class="table table-striped">
           
@@ -298,26 +301,103 @@ installationSteps:
           
 <tr class="b">
             
+<td><code>parent</code></td>
+            
+<td>Root pom.xml (dependencyManagement)</td>
+          </tr>
+          
+<tr class="a">
+            
 <td><code>cms</code></td>
             
 <td>cms/pom.xml</td>
           </tr>
           
+<tr class="b">
+            
+<td><code>site/components</code></td>
+            
+<td>site/components/pom.xml (default)</td>
+          </tr>
+          
 <tr class="a">
             
-<td><code>site</code></td>
+<td><code>site/webapp</code></td>
             
-<td>site/components/pom.xml</td>
+<td>site/webapp/pom.xml</td>
           </tr>
           
 <tr class="b">
             
 <td><code>platform</code></td>
             
-<td>Root pom.xml (dependencyManagement)</td>
+<td>Platform module pom.xml</td>
           </tr>
         </table>
-      </section>
+
+        </section><section><a id="Scope_Values"></a>
+<h4>Scope Values</h4>
+        
+<table class="table table-striped">
+          
+<tr class="a">
+            
+<th>Scope</th>
+            
+<th>Description</th>
+          </tr>
+          
+<tr class="b">
+            
+<td><code>compile</code></td>
+            
+<td>Default scope, available at compile and runtime</td>
+          </tr>
+          
+<tr class="a">
+            
+<td><code>provided</code></td>
+            
+<td>Expected to be provided by the container</td>
+          </tr>
+          
+<tr class="b">
+            
+<td><code>runtime</code></td>
+            
+<td>Only needed at runtime, not compile time</td>
+          </tr>
+          
+<tr class="a">
+            
+<td><code>test</code></td>
+            
+<td>Only for test compilation and execution</td>
+          </tr>
+        </table>
+
+        </section><section><a id="Multi-Artifact_Example"></a>
+<h4>Multi-Artifact Example</h4>
+        
+<pre><code>
+artifacts:
+  - type: maven-lib
+    target: cms
+    scope: compile
+    description: &quot;CMS integration module&quot;
+    maven:
+      groupId: com.mycompany
+      artifactId: my-addon-cms
+
+  - type: maven-lib
+    target: site/components
+    scope: compile
+    description: &quot;Site components library&quot;
+    maven:
+      groupId: com.mycompany
+      artifactId: my-addon-site
+        </code></pre>
+      </section></section></section>
 
       <section><a id="Installation_Steps"></a>
 <h2>Installation Steps</h2>
