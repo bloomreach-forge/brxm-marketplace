@@ -184,6 +184,11 @@ Response: 201 Created
             <td><code>/addons/{id}/uninstall</code></td>
             <td>Remove addon dependencies from project POM files</td>
           </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/addons/{id}/fix</code></td>
+            <td>Fix misconfigured addon (move misplaced dependencies, correct scopes, remove duplicates)</td>
+          </tr>
         </table>
 
         <p>
@@ -216,6 +221,30 @@ Response:
 }
         ]]></source>
 
+        <h4>Fix Misconfigured Addon</h4>
+        <source><![CDATA[
+POST /essentials/rest/dynamic/marketplace/addons/ip-filter/fix
+
+Response:
+{
+  "status": "completed",
+  "changes": [
+    {
+      "file": "site/components/pom.xml",
+      "action": "removed_dependency",
+      "coordinates": "org.bloomreach.forge.ipfilter:bloomreach-ipfilter-cms"
+    },
+    {
+      "file": "cms/pom.xml",
+      "action": "added_dependency",
+      "coordinates": "org.bloomreach.forge.ipfilter:bloomreach-ipfilter-cms:7.0.0"
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
+        ]]></source>
+
         <h4>InstallationResult Schema</h4>
         <source><![CDATA[
 {
@@ -223,7 +252,7 @@ Response:
   "changes": [
     {
       "file": "pom.xml",
-      "action": "added_dependency|added_property|removed_dependency|removed_property",
+      "action": "added_dependency|added_property|updated_property|removed_dependency|removed_property",
       "coordinates": "groupId:artifactId:version",
       "property": "property.name",
       "value": "property.value"
@@ -283,6 +312,10 @@ Response:
             <td>IO_ERROR</td>
             <td>Failed to write POM files</td>
           </tr>
+          <tr>
+            <td>NOT_MISCONFIGURED</td>
+            <td>Addon has no placement issues to fix (for fix endpoint)</td>
+          </tr>
         </table>
       </subsection>
 
@@ -301,7 +334,7 @@ Response:
           <tr>
             <td>GET</td>
             <td><code>/project-context</code></td>
-            <td>Get project brXM version and installed addons</td>
+            <td>Get project brXM version, installed addons, and misconfigured addons</td>
           </tr>
           <tr>
             <td>POST</td>

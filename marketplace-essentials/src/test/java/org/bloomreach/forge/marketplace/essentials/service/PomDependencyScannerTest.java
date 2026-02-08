@@ -55,8 +55,8 @@ class PomDependencyScannerTest {
         List<Dependency> result = scanner.extractDependencies(pom);
 
         assertEquals(2, result.size());
-        assertEquals(new Dependency("org.bloomreach.forge", "url-rewriter", "3.0.0"), result.get(0));
-        assertEquals(new Dependency("org.bloomreach.forge", "ip-filter", "4.0.0"), result.get(1));
+        assertEquals(new Dependency("org.bloomreach.forge", "url-rewriter", "3.0.0", null), result.get(0));
+        assertEquals(new Dependency("org.bloomreach.forge", "ip-filter", "4.0.0", null), result.get(1));
     }
 
     @Test

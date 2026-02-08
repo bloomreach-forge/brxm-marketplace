@@ -147,6 +147,22 @@
         </ul>
       </subsection>
 
+      <subsection name="Misconfiguration Detection">
+        <p>
+          The <code>MisconfigurationDetector</code> scans installed addons for dependency
+          placement issues:
+        </p>
+        <ul>
+          <li><strong>Wrong POM</strong> - Dependency placed in a different POM than the addon specifies</li>
+          <li><strong>Scope mismatch</strong> - Dependency has incorrect Maven scope</li>
+          <li><strong>Duplicates</strong> - Same dependency declared more than once in a POM</li>
+        </ul>
+        <p>
+          Detected issues are exposed via <code>ProjectContext.misconfiguredAddons</code> and
+          can be auto-corrected through <code>POST /addons/{id}/fix</code>.
+        </p>
+      </subsection>
+
       <subsection name="Essentials Integration">
         <p>
           The <code>marketplace-essentials</code> module integrates with the brXM Essentials framework:

@@ -15,6 +15,8 @@
  */
 package org.bloomreach.forge.marketplace.essentials.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,7 +36,15 @@ public class PomDependencyInjector {
             "<([a-zA-Z][a-zA-Z0-9._-]*)>([^<]*)</\\1>"
     );
 
+    private static final Pattern PROPERTY_INDENT_PATTERN = Pattern.compile("\n([ \t]+)<[a-zA-Z]");
+
+    private static final Pattern INDENT_UNIT_PATTERN = Pattern.compile("\n([ ]+)<");
+
     public String addDependency(String pomContent, String groupId, String artifactId, String version) {
+        return addDependency(pomContent, groupId, artifactId, version, null);
+    }
+
+    public String addDependency(String pomContent, String groupId, String artifactId, String version, String scope) {
         int insertPoint = findDependenciesInsertPoint(pomContent);
         if (insertPoint < 0) {
             return null;
@@ -42,24 +52,13 @@ public class PomDependencyInjector {
 
         String indent = detectDependencyIndent(pomContent, insertPoint);
         String innerIndent = indent + detectIndentUnit(pomContent);
-        String dependencyXml = formatDependency(groupId, artifactId, version, indent, innerIndent);
+        String dependencyXml = formatDependency(groupId, artifactId, version, scope, indent, innerIndent);
 
-        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
-        if (lineStart >= 0) {
-            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
-            return pomContent.substring(0, lineStart + 1)
-                    + dependencyXml + "\n"
-                    + closingIndent
-                    + pomContent.substring(insertPoint);
-        }
-
-        return pomContent.substring(0, insertPoint)
-                + dependencyXml + "\n"
-                + pomContent.substring(insertPoint);
+        return insertBeforeClosingTag(pomContent, insertPoint, dependencyXml);
     }
 
     public String addDependencyWithVersionProperty(String pomContent, String groupId, String artifactId, String versionProperty) {
-        return addDependency(pomContent, groupId, artifactId, "${" + versionProperty + "}");
+        return addDependency(pomContent, groupId, artifactId, "${" + versionProperty + "}", null);
     }
 
     public String addProperty(String pomContent, String name, String value) {
@@ -71,18 +70,7 @@ public class PomDependencyInjector {
         String indent = detectPropertyIndent(pomContent, insertPoint);
         String propertyXml = indent + "<" + name + ">" + value + "</" + name + ">";
 
-        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
-        if (lineStart >= 0) {
-            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
-            return pomContent.substring(0, lineStart + 1)
-                    + propertyXml + "\n"
-                    + closingIndent
-                    + pomContent.substring(insertPoint);
-        }
-
-        return pomContent.substring(0, insertPoint)
-                + propertyXml + "\n"
-                + pomContent.substring(insertPoint);
+        return insertBeforeClosingTag(pomContent, insertPoint, propertyXml);
     }
 
     public boolean hasDependency(String pomContent, String groupId, String artifactId) {
@@ -138,20 +126,31 @@ public class PomDependencyInjector {
         return pomContent.substring(start, end);
     }
 
+    public String removeDuplicateDependencies(String pomContent, String groupId, String artifactId) {
+        Pattern pattern = buildDependencyBlockPattern(groupId, artifactId);
+        Matcher matcher = pattern.matcher(pomContent);
+        List<int[]> matches = new ArrayList<>();
+        while (matcher.find()) {
+            matches.add(new int[]{matcher.start(), matcher.end()});
+        }
+
+        if (matches.size() <= 1) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder(pomContent);
+        for (int i = matches.size() - 1; i >= 1; i--) {
+            result.delete(matches.get(i)[0], matches.get(i)[1]);
+        }
+        return result.toString();
+    }
+
     public String removeDependency(String pomContent, String groupId, String artifactId) {
         if (!hasDependency(pomContent, groupId, artifactId)) {
             return null;
         }
 
-        Pattern pattern = Pattern.compile(
-                "[ \\t]*<dependency>\\s*" +
-                        "<groupId>" + Pattern.quote(groupId) + "</groupId>\\s*" +
-                        "<artifactId>" + Pattern.quote(artifactId) + "</artifactId>\\s*" +
-                        "(?:<[^>]+>[^<]*</[^>]+>\\s*)*" +
-                        "</dependency>[ \\t]*\\r?\\n?",
-                Pattern.DOTALL
-        );
-        Matcher matcher = pattern.matcher(pomContent);
+        Matcher matcher = buildDependencyBlockPattern(groupId, artifactId).matcher(pomContent);
         if (matcher.find()) {
             return pomContent.substring(0, matcher.start()) + pomContent.substring(matcher.end());
         }
@@ -173,12 +172,51 @@ public class PomDependencyInjector {
         return null;
     }
 
+    public String getVersionForDependency(String pomContent, String groupId, String artifactId) {
+        Pattern pattern = Pattern.compile(
+                "<dependency>\\s*" +
+                        "<groupId>" + Pattern.quote(groupId) + "</groupId>\\s*" +
+                        "<artifactId>" + Pattern.quote(artifactId) + "</artifactId>\\s*" +
+                        "(?:<[^>]+>[^<]*</[^>]+>\\s*)*?" +
+                        "<version>([^<]+)</version>",
+                Pattern.DOTALL
+        );
+        Matcher matcher = pattern.matcher(pomContent);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
     public boolean hasDependenciesSection(String pomContent) {
         return findDependenciesInsertPoint(pomContent) >= 0;
     }
 
     public boolean hasPropertiesSection(String pomContent) {
         return pomContent.contains("<properties>") && pomContent.contains("</properties>");
+    }
+
+    private String insertBeforeClosingTag(String pomContent, int insertPoint, String xmlToInsert) {
+        int lineStart = pomContent.lastIndexOf('\n', insertPoint - 1);
+        if (lineStart >= 0) {
+            String closingIndent = pomContent.substring(lineStart + 1, insertPoint);
+            return pomContent.substring(0, lineStart + 1)
+                    + xmlToInsert + "\n"
+                    + closingIndent
+                    + pomContent.substring(insertPoint);
+        }
+
+        return pomContent.substring(0, insertPoint)
+                + xmlToInsert + "\n"
+                + pomContent.substring(insertPoint);
+    }
+
+    private static Pattern buildDependencyBlockPattern(String groupId, String artifactId) {
+        return Pattern.compile(
+                "[ \\t]*<dependency>\\s*" +
+                        "<groupId>" + Pattern.quote(groupId) + "</groupId>\\s*" +
+                        "<artifactId>" + Pattern.quote(artifactId) + "</artifactId>\\s*" +
+                        "(?:<[^>]+>[^<]*</[^>]+>\\s*)*" +
+                        "</dependency>[ \\t]*\\r?\\n?",
+                Pattern.DOTALL
+        );
     }
 
     private int findDependenciesInsertPoint(String pomContent) {
@@ -224,8 +262,7 @@ public class PomDependencyInjector {
         int propertiesStart = pomContent.indexOf("<properties>");
         if (propertiesStart >= 0) {
             String section = pomContent.substring(propertiesStart, insertPoint);
-            Pattern propPattern = Pattern.compile("\n([ \t]+)<[a-zA-Z]");
-            Matcher matcher = propPattern.matcher(section);
+            Matcher matcher = PROPERTY_INDENT_PATTERN.matcher(section);
             if (matcher.find()) {
                 return matcher.group(1);
             }
@@ -255,8 +292,7 @@ public class PomDependencyInjector {
         if (pomContent.contains("\t<")) {
             return "\t";
         }
-        Pattern pattern = Pattern.compile("\n([ ]+)<");
-        Matcher matcher = pattern.matcher(pomContent);
+        Matcher matcher = INDENT_UNIT_PATTERN.matcher(pomContent);
         int minIndent = Integer.MAX_VALUE;
         while (matcher.find()) {
             int len = matcher.group(1).length();
@@ -270,11 +306,17 @@ public class PomDependencyInjector {
         return "    ";
     }
 
-    private String formatDependency(String groupId, String artifactId, String version, String indent, String innerIndent) {
-        return indent + "<dependency>\n"
-                + innerIndent + "<groupId>" + groupId + "</groupId>\n"
-                + innerIndent + "<artifactId>" + artifactId + "</artifactId>\n"
-                + innerIndent + "<version>" + version + "</version>\n"
-                + indent + "</dependency>";
+    private String formatDependency(String groupId, String artifactId, String version, String scope,
+                                    String indent, String innerIndent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(indent).append("<dependency>\n");
+        sb.append(innerIndent).append("<groupId>").append(groupId).append("</groupId>\n");
+        sb.append(innerIndent).append("<artifactId>").append(artifactId).append("</artifactId>\n");
+        sb.append(innerIndent).append("<version>").append(version).append("</version>\n");
+        if (scope != null) {
+            sb.append(innerIndent).append("<scope>").append(scope).append("</scope>\n");
+        }
+        sb.append(indent).append("</dependency>");
+        return sb.toString();
     }
 }

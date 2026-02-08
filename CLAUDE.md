@@ -34,17 +34,20 @@ Runs on PRs and pushes to `develop`/`main`. Verifies version alignment and build
 ### `.github/workflows/release.yml`
 Triggered on version tags (e.g., `1.0.0`). Automatically:
 - Verifies pom versions match the tag
-- Builds and tests both main project and demo
+- Builds and tests the main project
 - Deploys to Forge Maven repository
 - Creates GitHub Release with `manifest-generator.jar` and `descriptor-generator.jar`
-- Regenerates and publishes documentation
+- Updates floating `v1` tag to point to the latest release
+- Regenerates and publishes documentation to `gh-pages`
 
 ### `.github/workflows/generate-manifest.yml`
-Generates `addons-index.json` and deploys to GitHub Pages.
+Generates `addons-index.json` and deploys to the `gh-pages` branch.
 
 **Triggers:** Manual, daily schedule (6:00 UTC), push to `main`
 
 **Output:** `https://bloomreach-forge.github.io/brxm-marketplace/addons-index.json`
+
+> **GitHub Pages** is served from the `gh-pages` branch (root). Generated docs and manifests are never committed to `main` or `develop`.
 
 ## Releasing
 

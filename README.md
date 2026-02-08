@@ -50,7 +50,9 @@ The Marketplace plugin integrates addon discovery into the brXM Essentials dashb
 
 **Key Features:**
 - Aggregates addon manifests from multiple sources (Forge, partners, internal)
-- REST API for programmatic addon discovery
+- Install, upgrade, uninstall, and fix addon dependencies directly from the UI
+- Misconfiguration detection: surfaces misplaced dependencies, scope mismatches, and duplicates
+- REST API for programmatic addon discovery and management
 - CLI tools for addon developers to generate descriptors
 - JCR-based source management
 
@@ -60,7 +62,7 @@ The Marketplace plugin integrates addon discovery into the brXM Essentials dashb
 
 ```xml
 <properties>
-  <brxm-marketplace.version>1.0.2</brxm-marketplace.version>
+  <brxm-marketplace.version>1.0.4</brxm-marketplace.version>
 </properties>
 
 <dependencyManagement>
@@ -220,7 +222,9 @@ All paths below are relative to `/essentials/rest/dynamic/marketplace`.
 | GET | `/addons/{id}` | Get addon by ID |
 | GET | `/addons/search?q=query` | Search addons |
 | POST | `/addons/{id}/install` | Install addon |
+| POST | `/addons/{id}/install?upgrade=true` | Upgrade addon |
 | POST | `/addons/{id}/uninstall` | Uninstall addon |
+| POST | `/addons/{id}/fix` | Fix misconfigured addon |
 | GET | `/project-context` | Get project context |
 | POST | `/refresh` | Refresh addon cache |
 | GET | `/sources` | List manifest sources |
@@ -332,9 +336,10 @@ This project uses [git-flow](https://bloomreach-forge.github.io/using-git-flow.h
 
 The CI workflow automatically:
 - Verifies both root and demo pom versions match the tag
-- Builds and tests marketplace and demo
+- Builds and tests the main project
 - Deploys to the Forge Maven repository
 - Creates a GitHub Release with CLI tools attached
+- Updates floating `v1` tag to point to the latest release
 - Regenerates and publishes documentation
 
 ## License

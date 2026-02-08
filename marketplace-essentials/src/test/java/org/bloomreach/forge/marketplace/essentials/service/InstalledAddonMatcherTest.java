@@ -40,7 +40,7 @@ class InstalledAddonMatcherTest {
         Addon addon = createAddon("url-rewriter", "org.bloomreach.forge", "url-rewriter-core");
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -57,7 +57,7 @@ class InstalledAddonMatcherTest {
         );
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "ip-filter-addon-cms", "4.0.0")
+                new Dependency("org.bloomreach.forge", "ip-filter-addon-cms", "4.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -71,7 +71,7 @@ class InstalledAddonMatcherTest {
         Addon addon = createAddon("url-rewriter", "org.bloomreach.forge", "url-rewriter-core");
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("com.example", "other-lib", "1.0.0")
+                new Dependency("com.example", "other-lib", "1.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -84,7 +84,7 @@ class InstalledAddonMatcherTest {
         Addon addon = createAddon("url-rewriter", "org.bloomreach.forge", "url-rewriter-core");
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "2.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "2.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -97,7 +97,7 @@ class InstalledAddonMatcherTest {
     void findInstalledAddons_handlesEmptyKnownAddons() {
         List<Addon> knownAddons = Collections.emptyList();
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -123,7 +123,7 @@ class InstalledAddonMatcherTest {
         addon.setArtifacts(null);
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -140,7 +140,7 @@ class InstalledAddonMatcherTest {
         addon.setArtifacts(List.of(artifact));
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -154,8 +154,8 @@ class InstalledAddonMatcherTest {
         Addon addon2 = createAddon("ip-filter", "org.bloomreach.forge", "ip-filter-addon-cms");
         List<Addon> knownAddons = List.of(addon1, addon2);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0"),
-                new Dependency("org.bloomreach.forge", "ip-filter-addon-cms", "4.0.0")
+                new Dependency("org.bloomreach.forge", "url-rewriter-core", "3.0.0", null),
+                new Dependency("org.bloomreach.forge", "ip-filter-addon-cms", "4.0.0", null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
@@ -170,8 +170,8 @@ class InstalledAddonMatcherTest {
         Addon addon = createAddon("brut", "org.bloomreach.forge", "brut-common");
         List<Addon> knownAddons = List.of(addon);
         List<Dependency> dependencies = List.of(
-                new Dependency("org.bloomreach.forge", "brut-common", "5.1.0"),
-                new Dependency("org.bloomreach.forge", "brut-common", null)
+                new Dependency("org.bloomreach.forge", "brut-common", "5.1.0", null),
+                new Dependency("org.bloomreach.forge", "brut-common", null, null)
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);

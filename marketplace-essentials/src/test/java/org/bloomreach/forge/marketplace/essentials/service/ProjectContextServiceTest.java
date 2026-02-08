@@ -343,11 +343,105 @@ class ProjectContextServiceTest {
         assertEquals("1.2.3", result.installedAddons().get("brut"));
     }
 
+    @Test
+    void getProjectContext_detectsMisconfiguredAddon() {
+        String rootPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <parent>
+                        <groupId>org.onehippo.cms7</groupId>
+                        <artifactId>hippo-cms7-release</artifactId>
+                        <version>16.0.0</version>
+                    </parent>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>url-rewriter-core</artifactId>
+                            <version>3.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        when(pomFileReader.read(any(Path.class)))
+                .thenReturn(Optional.of(rootPom))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.empty());
+
+        Addon addon = createAddonWithTarget("url-rewriter",
+                "org.bloomreach.forge", "url-rewriter-core", Artifact.Target.CMS);
+        when(addonRegistry.findAll()).thenReturn(List.of(addon));
+
+        service.setProjectBasedir("/test/project");
+        ProjectContext result = service.getProjectContext();
+
+        assertNotNull(result.misconfiguredAddons());
+        assertEquals(1, result.misconfiguredAddons().size());
+        assertEquals("pom.xml", result.misconfiguredAddons().get("url-rewriter").get(0).actualPom());
+        assertEquals("cms-dependencies/pom.xml", result.misconfiguredAddons().get("url-rewriter").get(0).expectedPom());
+    }
+
+    @Test
+    void getProjectContext_returnsEmptyMisconfiguredAddons_whenAllCorrect() {
+        String rootPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <parent>
+                        <groupId>org.onehippo.cms7</groupId>
+                        <artifactId>hippo-cms7-release</artifactId>
+                        <version>16.0.0</version>
+                    </parent>
+                </project>
+                """;
+        String cmsDependenciesPom = """
+                <?xml version="1.0"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>url-rewriter-core</artifactId>
+                            <version>3.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        when(pomFileReader.read(any(Path.class)))
+                .thenReturn(Optional.of(rootPom))
+                .thenReturn(Optional.of(cmsDependenciesPom))
+                .thenReturn(Optional.empty());
+
+        Addon addon = createAddonWithTarget("url-rewriter",
+                "org.bloomreach.forge", "url-rewriter-core", Artifact.Target.CMS);
+        when(addonRegistry.findAll()).thenReturn(List.of(addon));
+
+        service.setProjectBasedir("/test/project");
+        ProjectContext result = service.getProjectContext();
+
+        assertTrue(result.misconfiguredAddons().isEmpty());
+    }
+
     private Addon createAddon(String id, String groupId, String artifactId) {
         Addon addon = new Addon();
         addon.setId(id);
 
         Artifact artifact = new Artifact();
+        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
+        maven.setGroupId(groupId);
+        maven.setArtifactId(artifactId);
+        artifact.setMaven(maven);
+
+        addon.setArtifacts(List.of(artifact));
+        return addon;
+    }
+
+    private Addon createAddonWithTarget(String id, String groupId, String artifactId, Artifact.Target target) {
+        Addon addon = new Addon();
+        addon.setId(id);
+
+        Artifact artifact = new Artifact();
+        artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        artifact.setTarget(target);
         Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
         maven.setGroupId(groupId);
         maven.setArtifactId(artifactId);

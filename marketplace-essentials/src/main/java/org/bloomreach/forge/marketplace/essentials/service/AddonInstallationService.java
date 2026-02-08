@@ -24,6 +24,7 @@ import org.bloomreach.forge.marketplace.essentials.model.InstallationPlan.Proper
 import org.bloomreach.forge.marketplace.essentials.model.InstallationResult;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationResult.Change;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationResult.InstallationError;
+import org.bloomreach.forge.marketplace.essentials.model.PlacementIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,7 +50,7 @@ public class AddonInstallationService {
 
     private static final Logger log = LoggerFactory.getLogger(AddonInstallationService.class);
 
-    private static final Map<Artifact.Target, String> TARGET_POM_PATHS = Map.of(
+    static final Map<Artifact.Target, String> TARGET_POM_PATHS = Map.of(
             Artifact.Target.CMS, "cms-dependencies/pom.xml",
             Artifact.Target.SITE_COMPONENTS, "site/components/pom.xml",
             Artifact.Target.SITE_WEBAPP, "site/webapp/pom.xml",
@@ -89,6 +91,18 @@ public class AddonInstallationService {
         this.injector = new PomDependencyInjector();
     }
 
+    private InstallationResult validateRequest(String addonId, String basedir) {
+        if (addonRegistry.findById(addonId).isEmpty()) {
+            log.warn("Addon '{}' not found in registry", addonId);
+            return InstallationResult.failure("ADDON_NOT_FOUND", "Addon '" + addonId + "' not found");
+        }
+        if (basedir == null) {
+            log.warn("project.basedir is not set");
+            return InstallationResult.failure("PROJECT_BASEDIR_NOT_SET", "project.basedir is not set");
+        }
+        return null;
+    }
+
     public InstallationResult install(String addonId, String basedir) {
         return install(addonId, basedir, false);
     }
@@ -97,21 +111,18 @@ public class AddonInstallationService {
         log.info("Starting {} for addon '{}' in basedir '{}'",
                 upgrade ? "upgrade" : "installation", addonId, basedir);
 
-        Optional<Addon> addonOpt = addonRegistry.findById(addonId);
-        if (addonOpt.isEmpty()) {
-            log.warn("Addon '{}' not found in registry", addonId);
-            return InstallationResult.failure("ADDON_NOT_FOUND", "Addon '" + addonId + "' not found");
+        InstallationResult validationError = validateRequest(addonId, basedir);
+        if (validationError != null) {
+            return validationError;
         }
 
-        if (basedir == null) {
-            log.warn("project.basedir is not set");
-            return InstallationResult.failure("PROJECT_BASEDIR_NOT_SET", "project.basedir is not set");
-        }
-
-        Addon addon = addonOpt.get();
+        Addon addon = addonRegistry.findById(addonId).get();
         Path basePath = Paths.get(basedir);
 
         InstallationPlan plan = buildPlan(addon, basePath);
+        if (upgrade) {
+            plan = resolveExistingVersionProperty(plan, basePath);
+        }
         log.info("Built installation plan: {} dependency changes, {} property changes",
                 plan.dependencyChanges().size(), plan.propertyChanges().size());
 
@@ -161,12 +172,16 @@ public class AddonInstallationService {
             log.debug("Planning artifact {}:{} -> target POM: {}",
                     maven.getGroupId(), maven.getArtifactId(), pomRelPath);
 
+            String scope = artifact.getScope() != null
+                    ? artifact.getScope().name().toLowerCase() : null;
+
             dependencyChanges.add(new DependencyChange(
                     pomPath,
                     maven.getGroupId(),
                     maven.getArtifactId(),
                     version,
-                    versionProperty
+                    versionProperty,
+                    scope
             ));
         }
 
@@ -266,17 +281,59 @@ public class AddonInstallationService {
                 createInstallPropertyProcessor(basePath, upgrade));
     }
 
+    private InstallationPlan resolveExistingVersionProperty(InstallationPlan plan, Path basePath) {
+        Map<String, String> pomContentsByRelPath = new HashMap<>();
+        for (String relPath : SCAN_POM_PATHS) {
+            pomFileReader.read(basePath.resolve(relPath))
+                    .ifPresent(content -> pomContentsByRelPath.put(relPath, content));
+        }
+
+        for (DependencyChange depChange : plan.dependencyChanges()) {
+            for (Map.Entry<String, String> entry : pomContentsByRelPath.entrySet()) {
+                String content = entry.getValue();
+                if (!injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
+                    continue;
+                }
+
+                String versionExpr = injector.getVersionForDependency(
+                        content, depChange.groupId(), depChange.artifactId());
+                String existingProperty = extractPropertyName(versionExpr);
+                if (existingProperty == null || existingProperty.equals(depChange.versionProperty())) {
+                    continue;
+                }
+
+                log.info("Resolving version property '{}' -> '{}' (from existing dependency {}:{})",
+                        depChange.versionProperty(), existingProperty,
+                        depChange.groupId(), depChange.artifactId());
+
+                List<PropertyChange> adjustedProperties = plan.propertyChanges().stream()
+                        .map(pc -> pc.name().equals(depChange.versionProperty())
+                                ? new PropertyChange(pc.pomPath(), existingProperty, pc.value())
+                                : pc)
+                        .toList();
+                return new InstallationPlan(plan.addonId(), plan.dependencyChanges(), adjustedProperties);
+            }
+        }
+        return plan;
+    }
+
+    private static String extractPropertyName(String versionExpr) {
+        if (versionExpr != null && versionExpr.startsWith("${") && versionExpr.endsWith("}")) {
+            return versionExpr.substring(2, versionExpr.length() - 1);
+        }
+        return null;
+    }
+
     private PlanChangeProcessor<DependencyChange> createInstallDependencyProcessor(Path basePath) {
         return (depChange, content, modifiedPoms) -> {
             if (injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
                 return Optional.empty();
             }
 
-            String modified = depChange.versionProperty() != null
-                    ? injector.addDependencyWithVersionProperty(content, depChange.groupId(),
-                            depChange.artifactId(), depChange.versionProperty())
-                    : injector.addDependency(content, depChange.groupId(),
-                            depChange.artifactId(), depChange.version());
+            String version = depChange.versionProperty() != null
+                    ? "${" + depChange.versionProperty() + "}" : depChange.version();
+            String modified = injector.addDependency(content, depChange.groupId(),
+                    depChange.artifactId(), version, depChange.scope());
 
             if (modified != null) {
                 modifiedPoms.put(depChange.pomPath(), modified);
@@ -402,21 +459,15 @@ public class AddonInstallationService {
     public InstallationResult uninstall(String addonId, String basedir) {
         log.info("Starting uninstall for addon '{}' in basedir '{}'", addonId, basedir);
 
-        Optional<Addon> addonOpt = addonRegistry.findById(addonId);
-        if (addonOpt.isEmpty()) {
-            log.warn("Addon '{}' not found in registry", addonId);
-            return InstallationResult.failure("ADDON_NOT_FOUND", "Addon '" + addonId + "' not found");
+        InstallationResult validationError = validateRequest(addonId, basedir);
+        if (validationError != null) {
+            return validationError;
         }
 
-        if (basedir == null) {
-            log.warn("project.basedir is not set");
-            return InstallationResult.failure("PROJECT_BASEDIR_NOT_SET", "project.basedir is not set");
-        }
-
-        Addon addon = addonOpt.get();
+        Addon addon = addonRegistry.findById(addonId).get();
         Path basePath = Paths.get(basedir);
 
-        InstallationPlan plan = buildPlan(addon, basePath);
+        InstallationPlan plan = resolveExistingVersionProperty(buildPlan(addon, basePath), basePath);
         if (plan.dependencyChanges().isEmpty()) {
             log.warn("No artifacts with valid target field found for addon '{}'", addonId);
             return InstallationResult.failure("MISSING_TARGET",
@@ -432,22 +483,117 @@ public class AddonInstallationService {
         return executeUninstall(plan, basePath);
     }
 
+    public InstallationResult fixInstallation(String addonId, String basedir) {
+        log.info("Starting fix for addon '{}' in basedir '{}'", addonId, basedir);
+
+        InstallationResult validationError = validateRequest(addonId, basedir);
+        if (validationError != null) {
+            return validationError;
+        }
+
+        List<PlacementIssue> issues = projectContextService.getProjectContext()
+                .misconfiguredAddons().getOrDefault(addonId, List.of());
+        if (issues.isEmpty()) {
+            return InstallationResult.failure("NOT_MISCONFIGURED",
+                    "Addon '" + addonId + "' has no placement issues to fix");
+        }
+
+        Path basePath = Paths.get(basedir);
+        return executeFix(issues, basePath);
+    }
+
+    private InstallationResult executeFix(List<PlacementIssue> issues, Path basePath) {
+        List<Change> changes = new ArrayList<>();
+        Map<Path, String> modifiedPoms = new HashMap<>();
+
+        for (PlacementIssue issue : issues) {
+            if (issue.duplicate()) {
+                Path pomPath = basePath.resolve(issue.actualPom());
+                String content = getModifiedOrOriginal(pomPath, modifiedPoms);
+                if (content == null) {
+                    continue;
+                }
+                String afterDedup = injector.removeDuplicateDependencies(
+                        content, issue.groupId(), issue.artifactId());
+                if (afterDedup != null) {
+                    modifiedPoms.put(pomPath, afterDedup);
+                    changes.add(Change.removedDependency(issue.actualPom(),
+                            issue.groupId() + ":" + issue.artifactId() + " (duplicates)"));
+                }
+                continue;
+            }
+
+            Path actualPath = basePath.resolve(issue.actualPom());
+            Path expectedPath = basePath.resolve(issue.expectedPom());
+
+            String actualContent = getModifiedOrOriginal(actualPath, modifiedPoms);
+            if (actualContent == null) {
+                continue;
+            }
+
+            String versionExpr = injector.getVersionForDependency(
+                    actualContent, issue.groupId(), issue.artifactId());
+
+            String afterRemove = injector.removeDependency(
+                    actualContent, issue.groupId(), issue.artifactId());
+            if (afterRemove == null) {
+                continue;
+            }
+            modifiedPoms.put(actualPath, afterRemove);
+            changes.add(Change.removedDependency(issue.actualPom(),
+                    issue.groupId() + ":" + issue.artifactId()));
+
+            String expectedContent = getModifiedOrOriginal(expectedPath, modifiedPoms);
+            if (expectedContent == null) {
+                continue;
+            }
+
+            String version = versionExpr != null ? versionExpr : "UNKNOWN";
+            String afterAdd = injector.addDependency(
+                    expectedContent, issue.groupId(), issue.artifactId(), version,
+                    issue.expectedScope());
+            if (afterAdd != null) {
+                modifiedPoms.put(expectedPath, afterAdd);
+                changes.add(Change.addedDependency(issue.expectedPom(),
+                        issue.groupId() + ":" + issue.artifactId()));
+            }
+        }
+
+        return writeAndFinalize(modifiedPoms, changes, null, "fix");
+    }
+
     private InstallationResult executeUninstall(InstallationPlan plan, Path basePath) {
         List<Change> changes = new ArrayList<>();
         Map<Path, String> modifiedPoms = new HashMap<>();
-        List<String> notRemoved = new ArrayList<>();
 
-        Set<Path> allPomPaths = new HashSet<>();
+        Set<Path> allPomPaths = collectAllPomPaths(plan, basePath);
+        List<String> notRemoved = removeDependenciesFromAllPoms(plan, allPomPaths, basePath, modifiedPoms, changes);
+        removeProperties(plan, basePath, modifiedPoms, changes);
+
+        List<String> warnings = notRemoved.isEmpty()
+                ? null
+                : List.of("Some artifacts could not be removed: " + String.join(", ", notRemoved));
+        return writeAndFinalize(modifiedPoms, changes, warnings, "uninstall");
+    }
+
+    private Set<Path> collectAllPomPaths(InstallationPlan plan, Path basePath) {
+        Set<Path> paths = new HashSet<>();
         for (DependencyChange dc : plan.dependencyChanges()) {
-            allPomPaths.add(dc.pomPath());
+            paths.add(dc.pomPath());
         }
         for (String relPath : SCAN_POM_PATHS) {
-            allPomPaths.add(basePath.resolve(relPath));
+            paths.add(basePath.resolve(relPath));
         }
+        return paths;
+    }
+
+    private List<String> removeDependenciesFromAllPoms(
+            InstallationPlan plan, Set<Path> allPomPaths, Path basePath,
+            Map<Path, String> modifiedPoms, List<Change> changes) {
+        List<String> notRemoved = new ArrayList<>();
 
         for (DependencyChange depChange : plan.dependencyChanges()) {
             boolean removedAny = false;
-            boolean existsButNotRemoved = false;
             for (Path pomPath : allPomPaths) {
                 String content = getModifiedOrOriginal(pomPath, modifiedPoms);
                 if (content == null) {
@@ -460,15 +606,24 @@ public class AddonInstallationService {
                             basePath.relativize(pomPath).toString(),
                             depChange.groupId() + ":" + depChange.artifactId()));
                     removedAny = true;
-                } else if (injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
-                    existsButNotRemoved = true;
                 }
             }
-            if (!removedAny && existsButNotRemoved) {
-                notRemoved.add(depChange.groupId() + ":" + depChange.artifactId());
+            if (!removedAny) {
+                boolean existsAnywhere = allPomPaths.stream()
+                        .map(p -> getModifiedOrOriginal(p, modifiedPoms))
+                        .filter(Objects::nonNull)
+                        .anyMatch(c -> injector.hasDependency(c, depChange.groupId(), depChange.artifactId()));
+                if (existsAnywhere) {
+                    notRemoved.add(depChange.groupId() + ":" + depChange.artifactId());
+                }
             }
         }
+        return notRemoved;
+    }
 
+    private void removeProperties(
+            InstallationPlan plan, Path basePath,
+            Map<Path, String> modifiedPoms, List<Change> changes) {
         for (PropertyChange propChange : plan.propertyChanges()) {
             String content = getModifiedOrOriginal(propChange.pomPath(), modifiedPoms);
             if (content == null) {
@@ -485,24 +640,26 @@ public class AddonInstallationService {
                 }
             }
         }
+    }
 
+    private InstallationResult writeAndFinalize(
+            Map<Path, String> modifiedPoms, List<Change> changes,
+            List<String> warnings, String operation) {
         try {
-            log.info("Writing {} modified POM files for uninstall", modifiedPoms.size());
+            log.info("Writing {} modified POM files for {}", modifiedPoms.size(), operation);
             writePomFiles(modifiedPoms);
             cleanupBackups();
             projectContextService.invalidateCache();
 
-            if (!notRemoved.isEmpty()) {
-                log.warn("Partial uninstall: {} artifacts could not be removed: {}",
-                        notRemoved.size(), notRemoved);
-                List<String> warnings = List.of("Some artifacts could not be removed: " + String.join(", ", notRemoved));
+            if (warnings != null && !warnings.isEmpty()) {
+                log.warn("Partial {}: {}", operation, warnings);
                 return InstallationResult.successWithWarnings(changes, warnings);
             }
 
-            log.info("Uninstall completed successfully with {} changes", changes.size());
+            log.info("{} completed successfully with {} changes", operation, changes.size());
             return InstallationResult.success(changes);
         } catch (IOException e) {
-            log.error("Failed to write POM files during uninstall: {}", e.getMessage(), e);
+            log.error("Failed to write POM files during {}: {}", operation, e.getMessage(), e);
             restoreBackups();
             return InstallationResult.failure("IO_ERROR", "Failed to write POM files: " + e.getMessage());
         }
