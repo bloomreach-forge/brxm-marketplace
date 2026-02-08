@@ -34,9 +34,10 @@ Runs on PRs and pushes to `develop`/`main`. Verifies version alignment and build
 ### `.github/workflows/release.yml`
 Triggered on version tags (e.g., `1.0.0`). Automatically:
 - Verifies pom versions match the tag
-- Builds and tests both main project and demo
+- Builds and tests the main project
 - Deploys to Forge Maven repository
 - Creates GitHub Release with `manifest-generator.jar` and `descriptor-generator.jar`
+- Updates floating `v1` tag to point to the latest release
 - Regenerates and publishes documentation to `gh-pages`
 
 ### `.github/workflows/generate-manifest.yml`
