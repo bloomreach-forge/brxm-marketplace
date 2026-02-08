@@ -140,6 +140,33 @@ java -jar descriptor-generator.jar \
   --output forge-addon.yaml \
   --verbose
         </code></pre>
+
+        </section><section><a id="Artifacts_Configuration"></a>
+<h4>Artifacts Configuration</h4>
+        
+<p>
+          By default, a single artifact is generated with <code>target: parent</code> and
+          <code>scope: compile</code>. For multi-artifact add-ons, configure explicitly in your config:
+        </p>
+        
+<pre><code>
+# .forge/addon-config.yaml
+artifacts:
+  - target: cms
+    description: &quot;CMS module&quot;
+  - target: site/components
+    artifactId: my-addon-site
+    description: &quot;Site components&quot;
+        </code></pre>
+        
+<p>
+          Valid targets: <code>parent</code>, <code>cms</code>, <code>site/components</code>,
+          <code>site/webapp</code>, <code>platform</code>
+        </p>
+        
+<p>
+          Valid scopes: <code>compile</code> (default), <code>provided</code>, <code>runtime</code>, <code>test</code>
+        </p>
       </section></section></section>
 
       <section><a id="manifest-generator"></a>

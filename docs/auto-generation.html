@@ -169,7 +169,57 @@ license: Apache-2.0
             
 <td>pom.xml coordinates</td>
           </tr>
+          
+<tr class="a">
+            
+<td>artifacts</td>
+            
+<td>pom.xml coordinates (defaults: target=parent, scope=compile)</td>
+          </tr>
         </table>
+      </section>
+
+      <section><a id="Artifacts_Configuration"></a>
+<h2>Artifacts Configuration</h2>
+        
+<p>
+          By default, a single artifact is generated with <code>target: parent</code> and
+          <code>scope: compile</code>. For multi-artifact add-ons, explicitly configure artifacts:
+        </p>
+        
+<pre><code>
+category: developer-tools
+pluginTier: forge-addon
+compatibility:
+  brxm:
+    min: &quot;16.0.0&quot;
+
+# Multi-artifact configuration
+artifacts:
+  - target: cms
+    scope: compile
+    description: &quot;CMS integration module&quot;
+  - target: site/components
+    artifactId: brut-common
+    description: &quot;Site components library&quot;
+        </code></pre>
+        
+<p>
+          Each artifact requires a <code>target</code> field. Other fields are optional:
+        </p>
+        
+<ul>
+          
+<li><code>groupId</code> - Defaults to pom.xml groupId</li>
+          
+<li><code>artifactId</code> - Defaults to pom.xml artifactId</li>
+          
+<li><code>scope</code> - Defaults to &quot;compile&quot;</li>
+          
+<li><code>type</code> - Defaults to &quot;maven-lib&quot;</li>
+          
+<li><code>description</code> - Optional artifact description</li>
+        </ul>
       </section>
 
       <section><a id="Step_2.3A_Add_GitHub_Workflow"></a>
