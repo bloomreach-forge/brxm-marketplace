@@ -62,7 +62,7 @@ The Marketplace plugin integrates addon discovery into the brXM Essentials dashb
 
 ```xml
 <properties>
-  <brxm-marketplace.version>1.0.3</brxm-marketplace.version>
+  <brxm-marketplace.version>1.0.4</brxm-marketplace.version>
 </properties>
 
 <dependencyManagement>
@@ -336,9 +336,10 @@ This project uses [git-flow](https://bloomreach-forge.github.io/using-git-flow.h
 
 The CI workflow automatically:
 - Verifies both root and demo pom versions match the tag
-- Builds and tests marketplace and demo
+- Builds and tests the main project
 - Deploys to the Forge Maven repository
 - Creates a GitHub Release with CLI tools attached
+- Updates floating `v1` tag to point to the latest release
 - Regenerates and publishes documentation
 
 ## License
