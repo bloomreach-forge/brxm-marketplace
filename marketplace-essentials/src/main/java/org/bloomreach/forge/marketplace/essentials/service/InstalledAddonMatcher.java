@@ -25,15 +25,14 @@ import java.util.Map;
 public class InstalledAddonMatcher {
 
     public Map<String, String> findInstalledAddons(List<Addon> knownAddons, List<Dependency> dependencies) {
+        Map<String, Addon> addonIndex = buildAddonIndex(knownAddons);
         Map<String, String> installed = new HashMap<>();
 
         for (Dependency dep : dependencies) {
-            for (Addon addon : knownAddons) {
-                if (matchesAnyArtifact(addon, dep)) {
-                    if (dep.version() != null || !installed.containsKey(addon.getId())) {
-                        installed.put(addon.getId(), dep.version());
-                    }
-                    break;
+            Addon addon = addonIndex.get(dep.groupId() + ":" + dep.artifactId());
+            if (addon != null) {
+                if (dep.version() != null || !installed.containsKey(addon.getId())) {
+                    installed.put(addon.getId(), dep.version());
                 }
             }
         }
@@ -41,24 +40,20 @@ public class InstalledAddonMatcher {
         return installed;
     }
 
-    private boolean matchesAnyArtifact(Addon addon, Dependency dep) {
-        List<Artifact> artifacts = addon.getArtifacts();
-        if (artifacts == null) {
-            return false;
-        }
-
-        for (Artifact artifact : artifacts) {
-            Artifact.MavenCoordinates maven = artifact.getMaven();
-            if (maven == null) {
+    private Map<String, Addon> buildAddonIndex(List<Addon> knownAddons) {
+        Map<String, Addon> index = new HashMap<>();
+        for (Addon addon : knownAddons) {
+            List<Artifact> artifacts = addon.getArtifacts();
+            if (artifacts == null) {
                 continue;
             }
-
-            if (dep.groupId().equals(maven.getGroupId())
-                    && dep.artifactId().equals(maven.getArtifactId())) {
-                return true;
+            for (Artifact artifact : artifacts) {
+                Artifact.MavenCoordinates maven = artifact.getMaven();
+                if (maven != null) {
+                    index.putIfAbsent(maven.getGroupId() + ":" + maven.getArtifactId(), addon);
+                }
             }
         }
-
-        return false;
+        return index;
     }
 }

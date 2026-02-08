@@ -76,9 +76,10 @@ public class PomDependencyScanner {
             String groupId = getChildText(depElement, "groupId");
             String artifactId = getChildText(depElement, "artifactId");
             String version = getChildText(depElement, "version");
+            String scope = getChildText(depElement, "scope");
 
             if (groupId != null && artifactId != null) {
-                dependencies.add(new Dependency(groupId, artifactId, version));
+                dependencies.add(new Dependency(groupId, artifactId, version, scope));
             }
         }
         return dependencies;
@@ -114,6 +115,7 @@ public class PomDependencyScanner {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(false);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             return builder.parse(new InputSource(new StringReader(content)));
         } catch (Exception e) {

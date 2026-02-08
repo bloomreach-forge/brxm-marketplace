@@ -38,6 +38,7 @@ import org.bloomreach.forge.marketplace.essentials.service.ProjectContextService
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Path("/marketplace")
@@ -139,25 +140,19 @@ public class MarketplaceResource {
     public InstallationResult installAddon(
             @PathParam("id") String id,
             @QueryParam("upgrade") boolean upgrade) {
-        validateAddonId(id);
-        String basedir = System.getProperty("project.basedir");
-        InstallationResult result = getInstallationService().install(id, basedir, upgrade);
-        if (result.status() == InstallationResult.Status.failed) {
-            throw new InstallationException(result);
-        }
-        return result;
+        return executeOrThrow(id, basedir -> getInstallationService().install(id, basedir, upgrade));
     }
 
     @POST
     @Path("/addons/{id}/uninstall")
     public InstallationResult uninstallAddon(@PathParam("id") String id) {
-        validateAddonId(id);
-        String basedir = System.getProperty("project.basedir");
-        InstallationResult result = getInstallationService().uninstall(id, basedir);
-        if (result.status() == InstallationResult.Status.failed) {
-            throw new InstallationException(result);
-        }
-        return result;
+        return executeOrThrow(id, basedir -> getInstallationService().uninstall(id, basedir));
+    }
+
+    @POST
+    @Path("/addons/{id}/fix")
+    public InstallationResult fixAddon(@PathParam("id") String id) {
+        return executeOrThrow(id, basedir -> getInstallationService().fixInstallation(id, basedir));
     }
 
     @GET
@@ -170,6 +165,17 @@ public class MarketplaceResource {
         return getRegistry().findAll().stream()
                 .filter(addon -> textMatcher.matches(addon, query))
                 .collect(Collectors.toList());
+    }
+
+    private InstallationResult executeOrThrow(
+            String id, Function<String, InstallationResult> operation) {
+        validateAddonId(id);
+        String basedir = System.getProperty("project.basedir");
+        InstallationResult result = operation.apply(basedir);
+        if (result.status() == InstallationResult.Status.failed) {
+            throw new InstallationException(result);
+        }
+        return result;
     }
 
     private boolean invalidFilterProvided(String input, Optional<?> parsed) {

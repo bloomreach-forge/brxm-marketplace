@@ -17,6 +17,7 @@ package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
+import org.bloomreach.forge.marketplace.essentials.model.PlacementIssue;
 import org.bloomreach.forge.marketplace.essentials.model.ProjectContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ public class ProjectContextService {
     private final AddonRegistryService addonRegistry;
     private final PomDependencyScanner scanner;
     private final InstalledAddonMatcher matcher;
+    private final MisconfigurationDetector detector;
 
     private String projectBasedir;
     private ProjectContext cachedContext;
@@ -52,6 +54,7 @@ public class ProjectContextService {
         this.addonRegistry = addonRegistry;
         this.scanner = new PomDependencyScanner();
         this.matcher = new InstalledAddonMatcher();
+        this.detector = new MisconfigurationDetector();
     }
 
     public void setProjectBasedir(String basedir) {
@@ -78,12 +81,13 @@ public class ProjectContextService {
 
         if (projectBasedir == null) {
             log.debug("project.basedir not set, returning empty context");
-            return new ProjectContext(null, null, Collections.emptyMap());
+            return ProjectContext.of(null, null, Collections.emptyMap());
         }
 
         Path basePath = Paths.get(projectBasedir);
         Map<String, String> allProperties = new HashMap<>();
         List<Dependency> allDependencies = new ArrayList<>();
+        Map<String, List<Dependency>> dependenciesByPom = new HashMap<>();
         String brxmVersion = null;
 
         for (String pomPath : POM_PATHS) {
@@ -96,6 +100,7 @@ public class ProjectContextService {
 
                 List<Dependency> deps = scanner.extractDependencies(content);
                 allDependencies.addAll(deps);
+                dependenciesByPom.put(pomPath, deps);
 
                 if ("pom.xml".equals(pomPath)) {
                     brxmVersion = scanner.extractParentVersion(content);
@@ -108,9 +113,12 @@ public class ProjectContextService {
         List<Addon> knownAddons = addonRegistry.findAll();
         Map<String, String> installedAddons = matcher.findInstalledAddons(knownAddons, resolvedDependencies);
 
+        Map<String, List<PlacementIssue>> misconfigured = detector.detect(
+                dependenciesByPom, installedAddons.keySet(), knownAddons);
+
         String javaVersion = extractJavaVersion(allProperties);
 
-        return new ProjectContext(brxmVersion, javaVersion, installedAddons);
+        return new ProjectContext(brxmVersion, javaVersion, installedAddons, misconfigured);
     }
 
     private List<Dependency> resolveDependencyVersions(List<Dependency> dependencies, Map<String, String> properties) {
@@ -118,7 +126,8 @@ public class ProjectContextService {
                 .map(dep -> new Dependency(
                         dep.groupId(),
                         dep.artifactId(),
-                        scanner.resolveVersion(dep.version(), properties)
+                        scanner.resolveVersion(dep.version(), properties),
+                        dep.scope()
                 ))
                 .toList();
 
@@ -132,7 +141,8 @@ public class ProjectContextService {
         return resolved.stream()
                 .map(dep -> dep.version() != null ? dep
                         : new Dependency(dep.groupId(), dep.artifactId(),
-                                managedVersions.get(dep.groupId() + ":" + dep.artifactId())))
+                                managedVersions.get(dep.groupId() + ":" + dep.artifactId()),
+                                dep.scope()))
                 .toList();
     }
 

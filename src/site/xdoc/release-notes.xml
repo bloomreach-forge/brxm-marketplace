@@ -24,6 +24,48 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.4">
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Features</h4>
+        <ul>
+          <li>Misconfiguration detection: the Marketplace now detects addons with dependencies
+              placed in the wrong POM, with incorrect scope, or duplicated across POM files.
+              Misconfigured addons are surfaced in the project context and highlighted in the UI
+              with a dedicated "Misconfigured" filter</li>
+          <li>Fix installation endpoint: <code>POST /addons/{id}/fix</code> automatically
+              corrects detected placement issues (moves dependencies to the correct POM,
+              fixes scopes, removes duplicates)</li>
+          <li>Project context now includes <code>misconfiguredAddons</code> map with per-addon
+              <code>PlacementIssue</code> details (actual/expected POM, scope mismatch, duplicates)</li>
+        </ul>
+
+        <h4>Security</h4>
+        <ul>
+          <li>XXE protection: POM XML parsing now disables external entity processing
+              via <code>disallow-doctype-decl</code></li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+          <li>Installation plan model: <code>InstallationPlan</code> record with sealed
+              <code>DependencyChange</code> and <code>PropertyChange</code> types for
+              type-safe installation planning</li>
+          <li>Immutable project context: <code>ProjectContext</code> maps are now wrapped
+              with <code>Collections.unmodifiableMap()</code></li>
+          <li>Narrowed exception handling in <code>FilesystemPomFileReader</code>
+              (<code>IOException</code> instead of <code>Exception</code>)</li>
+          <li>DRY refactoring in <code>PomDependencyInjector</code>: extracted shared
+              insert/pattern-building helpers and promoted regex patterns to static fields</li>
+          <li>Decomposed <code>MisconfigurationDetector.detectForAddon()</code> into
+              focused <code>checkPlacement()</code> and <code>checkDuplicates()</code> methods</li>
+          <li>Extracted <code>executeOrThrow()</code> helper in <code>MarketplaceResource</code>
+              to eliminate repeated validation/execution boilerplate</li>
+          <li>Index-based addon lookup in <code>InstalledAddonMatcher</code> replacing
+              O(n*m) nested loops with O(1) map lookups</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.3">
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 

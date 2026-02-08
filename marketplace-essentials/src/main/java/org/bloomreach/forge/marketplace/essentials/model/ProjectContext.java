@@ -15,11 +15,28 @@
  */
 package org.bloomreach.forge.marketplace.essentials.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProjectContext(
         String brxmVersion,
         String javaVersion,
-        Map<String, String> installedAddons
+        Map<String, String> installedAddons,
+        Map<String, List<PlacementIssue>> misconfiguredAddons
 ) {
+
+    public ProjectContext {
+        installedAddons = installedAddons != null
+                ? Collections.unmodifiableMap(installedAddons) : Map.of();
+        misconfiguredAddons = misconfiguredAddons != null
+                ? Collections.unmodifiableMap(misconfiguredAddons) : Map.of();
+    }
+
+    public static ProjectContext of(String brxmVersion, String javaVersion, Map<String, String> installedAddons) {
+        return new ProjectContext(brxmVersion, javaVersion, installedAddons, Map.of());
+    }
 }

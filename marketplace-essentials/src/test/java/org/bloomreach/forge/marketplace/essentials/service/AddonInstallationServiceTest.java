@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.bloomreach.forge.marketplace.essentials.model.PlacementIssue;
 import org.bloomreach.forge.marketplace.essentials.model.ProjectContext;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -294,6 +295,12 @@ class AddonInstallationServiceTest {
         return addon;
     }
 
+    private Addon createAddonWithScope(String id, Artifact.Target target, Artifact.Scope scope) {
+        Addon addon = createAddon(id, target);
+        addon.getArtifacts().get(0).setScope(scope);
+        return addon;
+    }
+
     private Addon createAddonWithoutTarget(String id) {
         Addon addon = new Addon();
         addon.setId(id);
@@ -436,7 +443,7 @@ class AddonInstallationServiceTest {
         Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
         when(projectContextService.getProjectContext())
-                .thenReturn(new ProjectContext(null, null, Map.of("test-addon", "1.0.0")));
+                .thenReturn(ProjectContext.of(null, null, Map.of("test-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
@@ -487,7 +494,7 @@ class AddonInstallationServiceTest {
         Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
         when(projectContextService.getProjectContext())
-                .thenReturn(new ProjectContext(null, null, Map.of()));
+                .thenReturn(ProjectContext.of(null, null, Map.of()));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
@@ -527,7 +534,7 @@ class AddonInstallationServiceTest {
         Addon addon = createAddonWithMultipleArtifacts();
         when(addonRegistry.findById("multi-addon")).thenReturn(Optional.of(addon));
         when(projectContextService.getProjectContext())
-                .thenReturn(new ProjectContext(null, null, Map.of("multi-addon", "1.0.0")));
+                .thenReturn(ProjectContext.of(null, null, Map.of("multi-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
@@ -627,7 +634,7 @@ class AddonInstallationServiceTest {
         Addon addon = createAddonWithMultipleArtifacts();
         when(addonRegistry.findById("multi-addon")).thenReturn(Optional.of(addon));
         when(projectContextService.getProjectContext())
-                .thenReturn(new ProjectContext(null, null, Map.of("multi-addon", "1.0.0")));
+                .thenReturn(ProjectContext.of(null, null, Map.of("multi-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
@@ -656,7 +663,7 @@ class AddonInstallationServiceTest {
         Addon addon = createAddon("test-addon", Artifact.Target.CMS);
         when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
         when(projectContextService.getProjectContext())
-                .thenReturn(new ProjectContext(null, null, Map.of("test-addon", "1.0.0")));
+                .thenReturn(ProjectContext.of(null, null, Map.of("test-addon", "1.0.0")));
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
@@ -701,5 +708,253 @@ class AddonInstallationServiceTest {
 
         assertEquals(InstallationResult.Status.failed, result.status());
         assertTrue(result.warnings().isEmpty());
+    }
+
+    @Test
+    void fix_movesDependencyFromWrongToCorrectPom() throws IOException {
+        setupProjectStructure();
+
+        // Dependency is in root pom.xml but should be in cms-dependencies/pom.xml
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>${test-addon.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        rootPom = rootPom.replace("</properties>",
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        PlacementIssue issue = new PlacementIssue("org.test", "test-artifact", "pom.xml", "cms-dependencies/pom.xml");
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null,
+                        Map.of("test-addon", "1.0.0"),
+                        Map.of("test-addon", List.of(issue))));
+
+        InstallationResult result = service.fixInstallation("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+
+        String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertFalse(updatedRootPom.contains("test-artifact"));
+
+        String updatedCmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        assertTrue(updatedCmsPom.contains("<groupId>org.test</groupId>"));
+        assertTrue(updatedCmsPom.contains("<artifactId>test-artifact</artifactId>"));
+
+        verify(projectContextService).invalidateCache();
+    }
+
+    @Test
+    void fix_preservesVersionExpression() throws IOException {
+        setupProjectStructure();
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>${test-addon.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        rootPom = rootPom.replace("</properties>",
+                "    <test-addon.version>1.0.0</test-addon.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        PlacementIssue issue = new PlacementIssue("org.test", "test-artifact", "pom.xml", "cms-dependencies/pom.xml");
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null,
+                        Map.of("test-addon", "1.0.0"),
+                        Map.of("test-addon", List.of(issue))));
+
+        service.fixInstallation("test-addon", tempDir.toString());
+
+        String updatedCmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        assertTrue(updatedCmsPom.contains("<version>${test-addon.version}</version>"));
+    }
+
+    @Test
+    void fix_failsWhenNotMisconfigured() throws IOException {
+        setupProjectStructure();
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(new ProjectContext(null, null,
+                        Map.of("test-addon", "1.0.0"),
+                        Map.of()));
+
+        InstallationResult result = service.fixInstallation("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals("NOT_MISCONFIGURED", result.errors().get(0).code());
+    }
+
+    @Test
+    void upgrade_resolvesCustomPropertyName() throws IOException {
+        setupProjectStructure();
+
+        String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        cmsPom = cmsPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>${my.custom.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</properties>",
+                "    <my.custom.version>1.0.0</my.custom.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        addon.setVersion("2.0.0");
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString(), true);
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(1, result.changes().size());
+        assertEquals("updated_property", result.changes().get(0).action());
+        assertEquals("my.custom.version", result.changes().get(0).property());
+        assertEquals("1.0.0", result.changes().get(0).oldValue());
+        assertEquals("2.0.0", result.changes().get(0).value());
+
+        String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertTrue(updatedRootPom.contains("<my.custom.version>2.0.0</my.custom.version>"));
+        assertFalse(updatedRootPom.contains("test-addon.version"));
+    }
+
+    @Test
+    void upgrade_failsWhenDependencyInWrongPom() throws IOException {
+        setupProjectStructure();
+
+        // Addon targets CMS, but dependency exists in root pom.xml — must fix first, then upgrade
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>${my.custom.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        addon.setVersion("2.0.0");
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString(), true);
+
+        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals("NOT_INSTALLED", result.errors().get(0).code());
+    }
+
+    @Test
+    void upgrade_resolvesCustomProperty_whenScopePrecedesVersion() throws IOException {
+        setupProjectStructure();
+
+        // Dependency has <scope> between <artifactId> and <version>
+        String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        cmsPom = cmsPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <scope>provided</scope>\n" +
+                        "            <version>${my.custom.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</properties>",
+                "    <my.custom.version>1.0.0</my.custom.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        addon.setVersion("2.0.0");
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString(), true);
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(1, result.changes().size());
+        assertEquals("updated_property", result.changes().get(0).action());
+        assertEquals("my.custom.version", result.changes().get(0).property());
+
+        String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertTrue(updatedRootPom.contains("<my.custom.version>2.0.0</my.custom.version>"));
+        assertFalse(updatedRootPom.contains("test-addon.version"));
+    }
+
+    @Test
+    void install_includesScopeInDependency() throws IOException {
+        setupProjectStructure();
+
+        Addon addon = createAddonWithScope("test-addon", Artifact.Target.CMS, Artifact.Scope.PROVIDED);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+
+        String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        assertTrue(cmsPom.contains("<scope>provided</scope>"));
+    }
+
+    @Test
+    void uninstall_removesCustomPropertyName() throws IOException {
+        setupProjectStructure();
+
+        String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        cmsPom = cmsPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "            <groupId>org.test</groupId>\n" +
+                        "            <artifactId>test-artifact</artifactId>\n" +
+                        "            <version>${my.custom.version}</version>\n" +
+                        "        </dependency>\n" +
+                        "    </dependencies>");
+        Files.writeString(tempDir.resolve("cms-dependencies/pom.xml"), cmsPom);
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</properties>",
+                "    <my.custom.version>1.0.0</my.custom.version>\n    </properties>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(projectContextService.getProjectContext())
+                .thenReturn(ProjectContext.of(null, null, Map.of("test-addon", "1.0.0")));
+
+        InstallationResult result = service.uninstall("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.completed, result.status());
+
+        String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertFalse(updatedRootPom.contains("my.custom.version"));
+        assertFalse(updatedRootPom.contains("test-addon.version"));
+
+        String updatedCmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        assertFalse(updatedCmsPom.contains("test-artifact"));
+    }
+
+    @Test
+    void fix_failsWhenAddonNotFound() {
+        when(addonRegistry.findById("unknown")).thenReturn(Optional.empty());
+
+        InstallationResult result = service.fixInstallation("unknown", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals("ADDON_NOT_FOUND", result.errors().get(0).code());
     }
 }

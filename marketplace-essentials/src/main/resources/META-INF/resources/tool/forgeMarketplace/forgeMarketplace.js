@@ -65,7 +65,8 @@
                 return {
                     brxmVersion: data.brxmVersion || null,
                     javaVersion: data.javaVersion || null,
-                    installedAddons: data.installedAddons || {}
+                    installedAddons: data.installedAddons || {},
+                    misconfiguredAddons: data.misconfiguredAddons || {}
                 };
             }
 
@@ -104,6 +105,13 @@
 
                 uninstallAddon: function (addonId) {
                     return $http.post(REST_BASE + '/addons/' + addonId + '/uninstall')
+                        .then(function (response) {
+                            return response.data;
+                        });
+                },
+
+                fixAddon: function (addonId) {
+                    return $http.post(REST_BASE + '/addons/' + addonId + '/fix')
                         .then(function (response) {
                             return response.data;
                         });
@@ -148,7 +156,8 @@
                 $scope.projectContext = {
                     brxmVersion: null,
                     javaVersion: null,
-                    installedAddons: {}
+                    installedAddons: {},
+                    misconfiguredAddons: {}
                 };
 
                 // -----------------------------------------------------------------
@@ -188,7 +197,25 @@
                         compareVersions(addon.version, installed) > 0;
                 };
 
+                $scope.isMisconfigured = function (addon) {
+                    if (!addon || !addon.id) return false;
+                    var issues = $scope.projectContext.misconfiguredAddons[addon.id];
+                    return issues && issues.length > 0;
+                };
+
+                $scope.getPlacementIssues = function (addon) {
+                    if (!addon || !addon.id) return [];
+                    return $scope.projectContext.misconfiguredAddons[addon.id] || [];
+                };
+
+                $scope.getMisconfiguredCount = function () {
+                    return Object.keys($scope.projectContext.misconfiguredAddons || {}).length;
+                };
+
                 $scope.getInstallStatus = function (addon) {
+                    if ($scope.isMisconfigured(addon)) {
+                        return { status: 'misconfigured', label: 'Misconfigured', class: 'badge-misconfigured' };
+                    }
                     if ($scope.hasUpdate(addon)) {
                         return { status: 'update', label: 'Update Available', class: 'badge-update' };
                     }
@@ -324,6 +351,8 @@
                         results = results.filter($scope.isInstalled);
                     } else if ($scope.quickFilter === 'updatable') {
                         results = results.filter($scope.hasUpdate);
+                    } else if ($scope.quickFilter === 'misconfigured') {
+                        results = results.filter($scope.isMisconfigured);
                     } else if ($scope.quickFilter === 'compatible') {
                         results = results.filter(function (addon) {
                             return $scope.getCompatibilityStatus(addon).status === 'compatible';
@@ -399,8 +428,11 @@
                     var text = '<dependency>\n' +
                         '  <groupId>' + artifact.maven.groupId + '</groupId>\n' +
                         '  <artifactId>' + artifact.maven.artifactId + '</artifactId>\n' +
-                        '  <version>' + version + '</version>\n' +
-                        '</dependency>';
+                        '  <version>' + version + '</version>\n';
+                    if (artifact.scope) {
+                        text += '  <scope>' + artifact.scope + '</scope>\n';
+                    }
+                    text += '</dependency>';
 
                     var button = $event.target;
                     navigator.clipboard.writeText(text).then(function () {
@@ -495,7 +527,8 @@
                     'ALREADY_INSTALLED': 'Add-on is already installed',
                     'NOT_INSTALLED': 'Add-on is not currently installed',
                     'PROPERTY_CONFLICT': 'Version property conflict detected',
-                    'IO_ERROR': 'Failed to write changes to disk'
+                    'IO_ERROR': 'Failed to write changes to disk',
+                    'NOT_MISCONFIGURED': 'Add-on has no placement issues to fix'
                 };
 
                 function formatInstallError(error, operationName) {
@@ -525,6 +558,7 @@
                     $scope.installing = true;
                     $scope.installResult = null;
                     $scope.installError = null;
+                    $scope.lastOperationName = operationName;
 
                     operation()
                         .then(function (result) {
@@ -555,6 +589,10 @@
                     return $scope.isInstalled(addon) && !$scope.installing && hasInstallableArtifacts(addon);
                 };
 
+                $scope.canFix = function (addon) {
+                    return $scope.isMisconfigured(addon) && !$scope.installing && hasInstallableArtifacts(addon);
+                };
+
                 $scope.installAddon = function (addon) {
                     performInstallOperation(addon, function () {
                         return marketplaceService.installAddon(addon.id, false);
@@ -573,9 +611,16 @@
                     }, 'Uninstall');
                 };
 
+                $scope.fixAddon = function (addon) {
+                    performInstallOperation(addon, function () {
+                        return marketplaceService.fixAddon(addon.id);
+                    }, 'Fix');
+                };
+
                 $scope.clearInstallFeedback = function () {
                     $scope.installResult = null;
                     $scope.installError = null;
+                    $scope.lastOperationName = null;
                 };
 
                 // -----------------------------------------------------------------

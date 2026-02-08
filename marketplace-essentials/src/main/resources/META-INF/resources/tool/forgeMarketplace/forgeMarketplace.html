@@ -99,6 +99,9 @@
           Updatable<span ng-if="getUpdatableCount() > 0" class="chip-count">{{getUpdatableCount()}}</span>
         </button>
         <button class="filter-chip" ng-class="{'active': quickFilter==='compatible'}" ng-click="setQuickFilter('compatible')">Compatible</button>
+        <button class="filter-chip" ng-class="{'active': quickFilter==='misconfigured'}" ng-click="setQuickFilter('misconfigured')" ng-if="getMisconfiguredCount() > 0">
+          Misconfigured<span class="chip-count">{{getMisconfiguredCount()}}</span>
+        </button>
       </div>
       <div class="list-header-row">
         <span class="count">{{resultCounts.filtered}} of {{resultCounts.total}}</span>
@@ -231,8 +234,20 @@
             {{installing ? 'Updating...' : 'Update to v' + selectedAddon.version}}
           </button>
 
+          <!-- Fix Button -->
+          <button class="btn btn-warning"
+                  ng-if="canFix(selectedAddon)"
+                  ng-click="fixAddon(selectedAddon)"
+                  ng-disabled="installing">
+            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <span ng-if="installing" class="btn-spinner"></span>
+            {{installing ? 'Fixing...' : 'Fix Installation'}}
+          </button>
+
           <!-- Installed Badge (only when up to date) -->
-          <span class="badge-installed-action" ng-if="isInstalled(selectedAddon) && !hasUpdate(selectedAddon)">
+          <span class="badge-installed-action" ng-if="isInstalled(selectedAddon) && !hasUpdate(selectedAddon) && !isMisconfigured(selectedAddon)">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
@@ -282,7 +297,7 @@
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
               </svg>
-              <span>Installation Complete</span>
+              <span>{{lastOperationName}} Complete</span>
               <button class="close-btn" ng-click="clearInstallFeedback()">&times;</button>
             </div>
             <ul class="changes-list">
@@ -324,6 +339,35 @@
             </ul>
           </div>
         </div>
+      </div>
+
+      <!-- Misconfiguration Warning -->
+      <div class="misconfig-warning" ng-if="isMisconfigured(selectedAddon)">
+        <div class="misconfig-warning-header">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+          <strong>Dependency Configuration Issue</strong>
+        </div>
+        <p>The following dependencies have configuration issues:</p>
+        <ul class="misconfig-issue-list">
+          <li ng-repeat="issue in getPlacementIssues(selectedAddon)">
+            <code>{{issue.groupId}}:{{issue.artifactId}}</code>
+            <span ng-if="issue.duplicate">
+              has duplicate entries in <code>{{issue.actualPom}}</code>
+            </span>
+            <span ng-if="!issue.duplicate && issue.actualPom !== issue.expectedPom">
+              <span class="misconfig-arrow">is in</span>
+              <code>{{issue.actualPom}}</code>
+              <span class="misconfig-arrow">but should be in</span>
+              <code>{{issue.expectedPom}}</code>
+            </span>
+            <span ng-if="!issue.duplicate && issue.expectedScope">
+              <span ng-if="issue.actualPom !== issue.expectedPom"> &mdash; </span>
+              scope is <code>{{issue.actualScope}}</code> but should be <code>{{issue.expectedScope}}</code>
+            </span>
+          </li>
+        </ul>
       </div>
 
       <!-- Compatibility Strip -->
@@ -406,7 +450,8 @@
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
     <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
-<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+<span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
+</span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
               </div>
             </div>
@@ -427,7 +472,8 @@
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
     <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
-<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+<span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
+</span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
               </div>
             </div>
@@ -448,7 +494,8 @@
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
     <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
-<span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
+<span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
+</span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
               </div>
             </div>

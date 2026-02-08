@@ -181,6 +181,42 @@ class PomDependencyInjectorTest {
     }
 
     @Test
+    void addDependency_includesScope_whenProvided() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>existing</groupId>
+                            <artifactId>artifact</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.addDependency(pom, "org.bloomreach.forge", "new-addon", "1.0.0", "provided");
+
+        assertTrue(result.contains("<scope>provided</scope>"));
+        assertTrue(result.indexOf("<version>") < result.indexOf("<scope>"));
+        assertTrue(result.indexOf("<scope>") < result.indexOf("</dependency>", result.indexOf("<scope>")));
+    }
+
+    @Test
+    void addDependency_omitsScope_whenNull() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.addDependency(pom, "org.bloomreach.forge", "new-addon", "1.0.0", null);
+
+        assertFalse(result.contains("<scope>"));
+    }
+
+    @Test
     void addDependency_returnsNull_whenNoDependenciesSection() {
         String pom = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -539,5 +575,186 @@ class PomDependencyInjectorTest {
         assertTrue(result.contains("<last.prop>3</last.prop>"));
         assertFalse(result.contains("target.prop"));
         assertFalse(result.contains("remove-me"));
+    }
+
+    @Test
+    void getVersionForDependency_returnsVersionText() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>some-addon</artifactId>
+                            <version>2.5.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertEquals("2.5.0", injector.getVersionForDependency(pom, "org.bloomreach.forge", "some-addon"));
+    }
+
+    @Test
+    void getVersionForDependency_returnsPropertyExpression() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>some-addon</artifactId>
+                            <version>${some-addon.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertEquals("${some-addon.version}", injector.getVersionForDependency(pom, "org.bloomreach.forge", "some-addon"));
+    }
+
+    @Test
+    void getVersionForDependency_returnsNull_whenNotFound() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.other</groupId>
+                            <artifactId>other</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertNull(injector.getVersionForDependency(pom, "org.bloomreach.forge", "some-addon"));
+    }
+
+    @Test
+    void getVersionForDependency_handlesElementsBetweenArtifactIdAndVersion() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>some-addon</artifactId>
+                            <scope>provided</scope>
+                            <version>${custom.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertEquals("${custom.version}", injector.getVersionForDependency(pom, "org.bloomreach.forge", "some-addon"));
+    }
+
+    @Test
+    void getVersionForDependency_returnsNull_whenNoVersionElement() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>some-addon</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertNull(injector.getVersionForDependency(pom, "org.bloomreach.forge", "some-addon"));
+    }
+
+    @Test
+    void removeDuplicateDependencies_keepsFirstRemovesRest() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>${brut.version}</version>
+                            <scope>test</scope>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>${brut.version}</version>
+                            <scope>test</scope>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>${brut.version}</version>
+                            <scope>test</scope>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.removeDuplicateDependencies(pom, "org.bloomreach.forge", "brut-common");
+
+        assertNotNull(result);
+        assertTrue(result.contains("brut-common"));
+        int first = result.indexOf("brut-common");
+        int second = result.indexOf("brut-common", first + 1);
+        assertEquals(-1, second, "Should have exactly one occurrence");
+    }
+
+    @Test
+    void removeDuplicateDependencies_returnsNull_whenNoDuplicates() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertNull(injector.removeDuplicateDependencies(pom, "org.bloomreach.forge", "brut-common"));
+    }
+
+    @Test
+    void removeDuplicateDependencies_preservesOtherDependencies() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.other</groupId>
+                            <artifactId>keep-this</artifactId>
+                            <version>2.0.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>brut-common</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.removeDuplicateDependencies(pom, "org.bloomreach.forge", "brut-common");
+
+        assertNotNull(result);
+        assertTrue(result.contains("keep-this"));
+        assertTrue(result.contains("brut-common"));
+        // brut-common should appear only once (in artifactId context)
+        int firstArtifact = result.indexOf("<artifactId>brut-common</artifactId>");
+        int secondArtifact = result.indexOf("<artifactId>brut-common</artifactId>", firstArtifact + 1);
+        assertEquals(-1, secondArtifact);
     }
 }

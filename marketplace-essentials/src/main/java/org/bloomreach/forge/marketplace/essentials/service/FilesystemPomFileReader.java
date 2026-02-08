@@ -18,6 +18,7 @@ package org.bloomreach.forge.marketplace.essentials.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class FilesystemPomFileReader implements PomFileReader {
             if (Files.exists(pomPath)) {
                 return Optional.of(Files.readString(pomPath));
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.warn("Failed to read POM file {}: {}", pomPath, e.getMessage());
         }
 

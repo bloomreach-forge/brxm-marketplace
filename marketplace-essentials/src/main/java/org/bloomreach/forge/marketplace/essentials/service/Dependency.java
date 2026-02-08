@@ -15,5 +15,5 @@
  */
 package org.bloomreach.forge.marketplace.essentials.service;
 
-public record Dependency(String groupId, String artifactId, String version) {
+public record Dependency(String groupId, String artifactId, String version, String scope) {
 }

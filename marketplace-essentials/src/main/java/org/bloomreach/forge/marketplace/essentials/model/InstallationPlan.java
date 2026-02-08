@@ -33,8 +33,14 @@ public record InstallationPlan(
             String groupId,
             String artifactId,
             String version,
-            String versionProperty
+            String versionProperty,
+            String scope
     ) implements HasPomPath {
+        public DependencyChange(Path pomPath, String groupId, String artifactId,
+                                String version, String versionProperty) {
+            this(pomPath, groupId, artifactId, version, versionProperty, null);
+        }
+
         public String resolvedVersion() {
             return versionProperty != null ? "${" + versionProperty + "}" : version;
         }
