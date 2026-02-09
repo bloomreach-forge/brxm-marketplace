@@ -293,7 +293,8 @@ java -jar manifest-generator.jar --validate forge-addon.yaml
 
 The schema is available at:
 - `common/src/main/resources/forge-addon.schema.json`
-- `https://bloomreach-forge.github.io/brxm-marketplace/schema/forge-addon.schema.json`
+
+> **Security note:** The manifest generator parses `pom.xml` files with XXE protections enabled (doctype declarations and external entities are disabled). This applies whether you run the CLI locally or via the GitHub Action.
 
 ## Testing Locally
 

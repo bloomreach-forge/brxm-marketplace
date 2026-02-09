@@ -34,6 +34,7 @@ public class FilesystemPomFileWriter implements PomFileWriter {
 
     @Override
     public void write(Path pomPath, String content) throws IOException {
+        rejectSymlink(pomPath);
         createBackup(pomPath);
         Files.writeString(pomPath, content);
     }
@@ -57,6 +58,10 @@ public class FilesystemPomFileWriter implements PomFileWriter {
         for (Path original : backedUpFiles) {
             Path backup = getBackupPath(original);
             try {
+                if (Files.isSymbolicLink(original)) {
+                    log.error("Refusing to restore over symlink: {}", original);
+                    continue;
+                }
                 if (Files.exists(backup)) {
                     Files.copy(backup, original, StandardCopyOption.REPLACE_EXISTING);
                     log.info("Restored from backup: {}", original);
@@ -74,10 +79,17 @@ public class FilesystemPomFileWriter implements PomFileWriter {
             return;
         }
         if (Files.exists(pomPath)) {
+            rejectSymlink(pomPath);
             Path backup = getBackupPath(pomPath);
             Files.copy(pomPath, backup, StandardCopyOption.REPLACE_EXISTING);
             backedUpFiles.add(pomPath);
             log.debug("Created backup: {}", backup);
+        }
+    }
+
+    private static void rejectSymlink(Path path) throws IOException {
+        if (Files.isSymbolicLink(path)) {
+            throw new IOException("Refusing to operate on symlink: " + path);
         }
     }
 

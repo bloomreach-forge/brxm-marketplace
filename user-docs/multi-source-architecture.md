@@ -45,7 +45,7 @@ The multi-source pipeline enables partners and customers to add their own addon 
 │  │  - Delegates to AddonRegistry via HippoServiceRegistry  │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  REST: /essentials/rest/marketplace/*                   │    │
+│  │  REST: /essentials/rest/dynamic/marketplace/*                   │    │
 │  │  - /addons, /addons/{id}, /addons/search                │    │
 │  │  - /sources (CRUD), /sources/{name}/refresh             │    │
 │  └─────────────────────────────────────────────────────────┘    │
@@ -107,19 +107,19 @@ When looking up an unqualified ID, the forge source is preferred.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/essentials/rest/marketplace/addons` | List all addons |
-| GET | `/essentials/rest/marketplace/addons/{id}` | Get addon by ID |
-| GET | `/essentials/rest/marketplace/addons/search?q=` | Search addons |
-| POST | `/essentials/rest/marketplace/refresh` | Refresh all sources |
+| GET | `/essentials/rest/dynamic/marketplace/addons` | List all addons |
+| GET | `/essentials/rest/dynamic/marketplace/addons/{id}` | Get addon by ID |
+| GET | `/essentials/rest/dynamic/marketplace/addons/search?q=` | Search addons |
+| POST | `/essentials/rest/dynamic/marketplace/refresh` | Refresh all sources |
 
 ### Source Management Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/essentials/rest/marketplace/sources` | List all sources |
-| POST | `/essentials/rest/marketplace/sources` | Create new source |
-| DELETE | `/essentials/rest/marketplace/sources/{name}` | Delete source |
-| POST | `/essentials/rest/marketplace/sources/{name}/refresh` | Refresh single source |
+| GET | `/essentials/rest/dynamic/marketplace/sources` | List all sources |
+| POST | `/essentials/rest/dynamic/marketplace/sources` | Create new source |
+| DELETE | `/essentials/rest/dynamic/marketplace/sources/{name}` | Delete source |
+| POST | `/essentials/rest/dynamic/marketplace/sources/{name}/refresh` | Refresh single source |
 
 #### Create Source Request
 
@@ -262,9 +262,17 @@ See [Creating an Addon Descriptor](creating-addon-descriptor.md) for full schema
 
 ### Validation
 
-- Source URLs must be valid HTTP/HTTPS/file URLs
+- Source URLs must be valid HTTP/HTTPS (with a non-null host) or `file://` URLs. Malformed URLs like `http:///` are rejected
+- Creating a source with a `file://` URL emits a WARN log for auditability
 - Source names must be unique
 - Addon manifests are validated against the JSON schema
+
+### Security Hardening
+
+- **XXE protection**: All XML parsers disable doctype declarations, external general entities, and external parameter entities
+- **XML escaping**: Dependency coordinates and property values are escaped before interpolation into POM XML, preventing injection via malicious addon manifests
+- **Symlink protection**: POM file operations reject symbolic links to prevent write-through attacks
+- **XML validation**: Modified POM files are validated as well-formed XML before being written to disk
 
 ## Verification
 
@@ -272,18 +280,18 @@ After deployment, verify the setup:
 
 ```bash
 # List sources (should include forge)
-curl http://localhost:8080/essentials/rest/marketplace/sources
+curl http://localhost:8080/essentials/rest/dynamic/marketplace/sources
 
 # List addons
-curl http://localhost:8080/essentials/rest/marketplace/addons
+curl http://localhost:8080/essentials/rest/dynamic/marketplace/addons
 
 # Add custom source
-curl -X POST http://localhost:8080/essentials/rest/marketplace/sources \
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
   -H "Content-Type: application/json" \
   -d '{"name":"test","url":"https://example.com/addons.json"}'
 
 # Refresh specific source
-curl -X POST http://localhost:8080/essentials/rest/marketplace/sources/test/refresh
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources/test/refresh
 ```
 
 ## Related Documentation

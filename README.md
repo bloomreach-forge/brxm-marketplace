@@ -249,6 +249,16 @@ curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
 
 See [Adding Custom Sources](user-docs/adding-custom-sources.md) for the complete guide.
 
+## Security
+
+The marketplace applies defense-in-depth when handling XML and external input:
+
+- **XXE protection** - All XML parsers disable doctype declarations, external general entities, and external parameter entities
+- **XML escaping** - Values interpolated into POM XML (dependency coordinates, properties) are escaped at the point of construction
+- **URL validation** - Source URLs must be well-formed `http`/`https` (with a valid host) or `file://`. Creating a `file://` source emits a WARN log
+- **Symlink protection** - POM file write, backup, and restore operations reject symbolic links
+- **XML validation** - Modified POM files are validated as well-formed XML before being written to disk
+
 ## Project Structure
 
 ```

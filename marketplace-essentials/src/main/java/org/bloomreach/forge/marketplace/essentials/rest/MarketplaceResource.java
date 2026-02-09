@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 public class MarketplaceResource {
 
     private final AddonTextMatcher textMatcher = new AddonTextMatcher();
-    private AddonRegistryService registry;
-    private ProjectContextService projectContextService;
-    private AddonInstallationService installationService;
+    private volatile AddonRegistryService registry;
+    private volatile ProjectContextService projectContextService;
+    private volatile AddonInstallationService installationService;
 
     public MarketplaceResource() {
         // Default constructor - uses singleton service
@@ -58,14 +58,14 @@ public class MarketplaceResource {
         this.registry = registry;
     }
 
-    private AddonRegistryService getRegistry() {
+    private synchronized AddonRegistryService getRegistry() {
         if (registry == null) {
             registry = EssentialsAddonService.getInstance();
         }
         return registry;
     }
 
-    private ProjectContextService getProjectContextService() {
+    private synchronized ProjectContextService getProjectContextService() {
         if (projectContextService == null) {
             projectContextService = new ProjectContextService(
                     new FilesystemPomFileReader(),
@@ -75,7 +75,7 @@ public class MarketplaceResource {
         return projectContextService;
     }
 
-    private AddonInstallationService getInstallationService() {
+    private synchronized AddonInstallationService getInstallationService() {
         if (installationService == null) {
             installationService = new AddonInstallationService(
                     getRegistry(),
