@@ -1,0 +1,138 @@
+{
+  "version" : "1.0",
+  "generatedAt" : "2026-02-20T21:01:45.982466169Z",
+  "source" : {
+    "name" : "bloomreach-forge",
+    "url" : "https://github.com/bloomreach-forge"
+  },
+  "addons" : [ {
+    "id" : "brut",
+    "name" : "Bloomreach Unit Testing Library",
+    "source" : "bloomreach-forge",
+    "version" : "5.3.2",
+    "description" : "Bloomreach Unit Testing Library for BrXM Delivery Tier",
+    "repository" : {
+      "url" : "https://github.com/bloomreach-forge/brut",
+      "branch" : "master"
+    },
+    "publisher" : {
+      "name" : "bloomreach-forge",
+      "type" : "community"
+    },
+    "category" : "developer-tools",
+    "pluginTier" : "forge-addon",
+    "compatibility" : {
+      "brxm" : {
+        "min" : "16.0.0"
+      }
+    },
+    "artifacts" : [ {
+      "type" : "maven-lib",
+      "description" : "Core testing utilities and base classes",
+      "target" : "site/components",
+      "scope" : "test",
+      "maven" : {
+        "groupId" : "org.bloomreach.forge.brut",
+        "artifactId" : "brut-common"
+      }
+    }, {
+      "type" : "maven-lib",
+      "description" : "HST component testing support",
+      "target" : "site/components",
+      "scope" : "test",
+      "maven" : {
+        "groupId" : "org.bloomreach.forge.brut",
+        "artifactId" : "brut-components"
+      }
+    }, {
+      "type" : "maven-lib",
+      "description" : "JAX-RS and Page Model API testing support",
+      "target" : "site/components",
+      "scope" : "test",
+      "maven" : {
+        "groupId" : "org.bloomreach.forge.brut",
+        "artifactId" : "brut-resources"
+      }
+    } ],
+    "versions" : [ {
+      "version" : "4.0.2",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "15.0.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Core testing utilities and base classes",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-common"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "HST component testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-components"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "JAX-RS and Page Model API testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-resources"
+        }
+      } ],
+      "inferredMax" : "16.0.0"
+    }, {
+      "version" : "5.3.1",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.0.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Core testing utilities and base classes",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-common"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "HST component testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-components"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "JAX-RS and Page Model API testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-resources"
+        }
+      } ]
+    } ],
+    "documentation" : [ {
+      "type" : "site",
+      "url" : "https://bloomreach-forge.github.io/brut/"
+    } ],
+    "installation" : {
+      "target" : [ "site" ],
+      "verification" : "Tests run with @BrxmComponentTest, @BrxmPageModelTest, or @BrxmJaxrsTest"
+    }
+  } ]
+}
