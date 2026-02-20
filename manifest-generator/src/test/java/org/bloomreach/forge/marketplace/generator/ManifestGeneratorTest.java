@@ -15,6 +15,7 @@
  */
 package org.bloomreach.forge.marketplace.generator;
 
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.parser.DescriptorParser;
 import org.bloomreach.forge.marketplace.common.validation.SchemaValidator;
 import org.bloomreach.forge.marketplace.common.validation.ValidationResult;
@@ -52,6 +53,50 @@ class ManifestGeneratorTest {
             publisher:
               name: Test Publisher
             category: integration
+            """;
+
+    private static final String DESCRIPTOR_V4 = """
+            id: brut
+            name: BRUT
+            version: 4.0.2
+            description: Bloomreach Unit Testing utilities
+            repository:
+              url: https://github.com/bloomreach-forge/brut
+            publisher:
+              name: Bloomreach Forge
+              type: community
+            category: developer-tools
+            pluginTier: forge-addon
+            compatibility:
+              brxm:
+                min: "15.0.0"
+            artifacts:
+              - type: maven-lib
+                maven:
+                  groupId: org.bloomreach.forge.brut
+                  artifactId: brut-resources
+            """;
+
+    private static final String DESCRIPTOR_V5 = """
+            id: brut
+            name: BRUT
+            version: 5.0.1
+            description: Bloomreach Unit Testing utilities
+            repository:
+              url: https://github.com/bloomreach-forge/brut
+            publisher:
+              name: Bloomreach Forge
+              type: community
+            category: developer-tools
+            pluginTier: forge-addon
+            compatibility:
+              brxm:
+                min: "17.0.0"
+            artifacts:
+              - type: maven-lib
+                maven:
+                  groupId: org.bloomreach.forge.brut
+                  artifactId: brut-resources
             """;
 
     @BeforeEach
@@ -169,5 +214,118 @@ class ManifestGeneratorTest {
         int exitCode = execute("--org", "test-org", "--output", outputFile.getAbsolutePath());
 
         assertEquals(1, exitCode);
+    }
+
+    // --- resolveEpochs tests ---
+
+    @Test
+    void resolveEpochs_selectsLatestPatchPerMajorAndSetsInferredMax() throws Exception {
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v4.0.0", "4.0.0", false, false),
+                new GitHubService.ReleaseInfo("v4.0.1", "4.0.1", false, false),
+                new GitHubService.ReleaseInfo("v4.0.2", "4.0.2", false, false),
+                new GitHubService.ReleaseInfo("v5.0.0", "5.0.0", false, false),
+                new GitHubService.ReleaseInfo("v5.0.1", "5.0.1", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v4.0.2", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V4));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v5.0.1", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V5));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertEquals(2, epochs.size(), "one epoch per major");
+        assertEquals("4.0.2", epochs.get(0).getVersion(), "latest patch of major 4");
+        assertEquals("5.0.1", epochs.get(1).getVersion(), "latest patch of major 5");
+        // epoch 4 has no explicit max → inferredMax is epoch 5's brxm.min
+        assertEquals("17.0.0", epochs.get(0).getInferredMax());
+        // last epoch never gets inferredMax
+        assertNull(epochs.get(1).getInferredMax());
+    }
+
+    @Test
+    void resolveEpochs_doesNotSetInferredMaxWhenExplicitMaxDeclared() throws Exception {
+        String descriptorV4WithMax = DESCRIPTOR_V4.replace(
+                "min: \"15.0.0\"",
+                "min: \"15.0.0\"\n    max: \"16.6.5\""
+        );
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v4.0.2", "4.0.2", false, false),
+                new GitHubService.ReleaseInfo("v5.0.1", "5.0.1", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v4.0.2", "forge-addon.yaml"))
+                .thenReturn(Optional.of(descriptorV4WithMax));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v5.0.1", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V5));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertEquals(2, epochs.size());
+        assertNull(epochs.get(0).getInferredMax(), "explicit max present, inferredMax must be null");
+    }
+
+    @Test
+    void resolveEpochs_returnsEmptyWhenNoReleases() throws Exception {
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of());
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertTrue(epochs.isEmpty());
+    }
+
+    @Test
+    void resolveEpochs_returnsEmptyOnApiError() throws Exception {
+        when(gitHubService.listReleases("test-org", "brut"))
+                .thenThrow(new GitHubService.GitHubException("Rate limited", 403));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertTrue(epochs.isEmpty(), "silently falls back to empty on API error");
+    }
+
+    @Test
+    void resolveEpochs_skipsTagWithoutDescriptor() throws Exception {
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v4.0.2", "4.0.2", false, false),
+                new GitHubService.ReleaseInfo("v5.0.1", "5.0.1", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v4.0.2", "forge-addon.yaml"))
+                .thenReturn(Optional.empty());
+        when(gitHubService.fetchFileContent("test-org", "brut", "v5.0.1", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V5));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertEquals(1, epochs.size(), "epoch without descriptor is skipped");
+        assertEquals("5.0.1", epochs.get(0).getVersion());
+    }
+
+    @Test
+    void execute_setsVersionsOnAddonWhenReleasesExist() throws Exception {
+        when(gitHubService.listRepositories("test-org")).thenReturn(List.of(
+                new GitHubService.RepoInfo("brut", "test-org/brut", "main", "https://github.com/test-org/brut")
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "main", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V5));
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v4.0.2", "4.0.2", false, false),
+                new GitHubService.ReleaseInfo("v5.0.1", "5.0.1", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v4.0.2", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V4));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v5.0.1", "forge-addon.yaml"))
+                .thenReturn(Optional.of(DESCRIPTOR_V5));
+        when(validator.validate(anyString())).thenReturn(ValidationResult.valid());
+
+        int exitCode = execute("--org", "test-org", "--output", outputFile.getAbsolutePath());
+
+        assertEquals(0, exitCode);
+        String json = java.nio.file.Files.readString(outputFile.toPath());
+        assertTrue(json.contains("\"versions\""), "output JSON must include versions array");
     }
 }

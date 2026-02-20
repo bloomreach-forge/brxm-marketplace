@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.generator;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.parser.DescriptorParseException;
 import org.bloomreach.forge.marketplace.common.parser.DescriptorParser;
 import org.bloomreach.forge.marketplace.common.validation.SchemaValidator;
@@ -27,7 +28,10 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
@@ -60,7 +64,7 @@ public class ManifestGenerator implements Callable<Integer> {
     private Path outputPath;
 
     @Option(names = {"--descriptor"}, description = "Descriptor filename to look for", defaultValue = "forge-addon.yaml")
-    private String descriptorFilename;
+    private String descriptorFilename = "forge-addon.yaml";
 
     @Option(names = {"--dry-run"}, description = "Print manifest to stdout without writing file")
     private boolean dryRun;
@@ -146,6 +150,10 @@ public class ManifestGenerator implements Callable<Integer> {
             Optional<Addon> addon = processDescriptor(content.get(), repo.name(), logger);
 
             if (addon.isPresent()) {
+                List<AddonVersion> epochs = resolveEpochs(github, organization, repo.name(), logger);
+                if (!epochs.isEmpty()) {
+                    addon.get().setVersions(epochs);
+                }
                 addons.add(addon.get());
                 valid++;
             } else {
@@ -172,6 +180,113 @@ public class ManifestGenerator implements Callable<Integer> {
         } catch (DescriptorParseException e) {
             logger.error("  [ERROR] " + repoName + ": " + e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Scans GitHub Releases for the repository, groups by major version, takes the latest patch
+     * per epoch, and returns a sorted list of {@link AddonVersion} entries with inferred ceilings.
+     * Returns an empty list on any error (silent fallback).
+     */
+    List<AddonVersion> resolveEpochs(GitHubService github, String org, String repo, GeneratorLogger logger) {
+        List<GitHubService.ReleaseInfo> releases;
+        try {
+            releases = github.listReleases(org, repo);
+        } catch (GitHubService.GitHubException e) {
+            logger.verbose("  [EPOCHS] Skipping epochs for " + repo + ": " + e.getMessage());
+            return List.of();
+        }
+        if (releases == null || releases.isEmpty()) {
+            return List.of();
+        }
+
+        // Group by major version, preserving insertion order (releases come from API newest-first)
+        Map<Integer, List<GitHubService.ReleaseInfo>> byMajor = new LinkedHashMap<>();
+        for (GitHubService.ReleaseInfo release : releases) {
+            int major = parseMajor(release.version());
+            if (major < 0) {
+                continue;
+            }
+            byMajor.computeIfAbsent(major, k -> new ArrayList<>()).add(release);
+        }
+
+        // Sort majors ascending and take the latest patch per group
+        List<Integer> sortedMajors = new ArrayList<>(byMajor.keySet());
+        Collections.sort(sortedMajors);
+
+        List<AddonVersion> epochs = new ArrayList<>();
+        for (int major : sortedMajors) {
+            List<GitHubService.ReleaseInfo> group = byMajor.get(major);
+            group.sort((a, b) -> compareSemver(b.version(), a.version())); // descending
+            GitHubService.ReleaseInfo latest = group.get(0);
+
+            Optional<String> content = github.fetchFileContent(org, repo, latest.tagName(), descriptorFilename);
+            if (content.isEmpty()) {
+                logger.verbose("  [EPOCHS] No descriptor at tag " + latest.tagName() + " for " + repo);
+                continue;
+            }
+
+            try {
+                Addon tagAddon = parser.parse(content.get());
+                AddonVersion epoch = new AddonVersion();
+                epoch.setVersion(tagAddon.getVersion() != null ? tagAddon.getVersion() : latest.version());
+                epoch.setCompatibility(tagAddon.getCompatibility());
+                epoch.setArtifacts(tagAddon.getArtifacts());
+                epochs.add(epoch);
+            } catch (DescriptorParseException e) {
+                logger.verbose("  [EPOCHS] Failed to parse descriptor at " + latest.tagName() + ": " + e.getMessage());
+            }
+        }
+
+        // Infer exclusive upper bound for open-ended epochs
+        for (int i = 0; i < epochs.size() - 1; i++) {
+            AddonVersion current = epochs.get(i);
+            AddonVersion next = epochs.get(i + 1);
+            boolean currentHasNoMax = current.getCompatibility() != null
+                    && current.getCompatibility().getBrxm() != null
+                    && current.getCompatibility().getBrxm().getMax() == null;
+            boolean nextHasMin = next.getCompatibility() != null
+                    && next.getCompatibility().getBrxm() != null
+                    && next.getCompatibility().getBrxm().getMin() != null;
+            if (currentHasNoMax && nextHasMin) {
+                current.setInferredMax(next.getCompatibility().getBrxm().getMin());
+            }
+        }
+
+        return epochs;
+    }
+
+    private static int parseMajor(String version) {
+        if (version == null || version.isBlank()) {
+            return -1;
+        }
+        String[] parts = version.split("\\.");
+        try {
+            return Integer.parseInt(parts[0].replaceAll("[^0-9].*", ""));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static int compareSemver(String v1, String v2) {
+        String[] p1 = v1.split("\\.");
+        String[] p2 = v2.split("\\.");
+        int len = Math.max(p1.length, p2.length);
+        for (int i = 0; i < len; i++) {
+            int n1 = parseSemverPart(i < p1.length ? p1[i] : "0");
+            int n2 = parseSemverPart(i < p2.length ? p2[i] : "0");
+            if (n1 != n2) {
+                return Integer.compare(n1, n2);
+            }
+        }
+        return 0;
+    }
+
+    private static int parseSemverPart(String part) {
+        try {
+            return Integer.parseInt(part.replaceAll("[^0-9].*", ""));
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 

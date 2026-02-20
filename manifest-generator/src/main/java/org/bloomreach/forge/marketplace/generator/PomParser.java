@@ -37,6 +37,13 @@ public class PomParser {
 
     public PomParser() {
         this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        try {
+            documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        } catch (javax.xml.parsers.ParserConfigurationException e) {
+            throw new IllegalStateException("Failed to configure secure XML parser", e);
+        }
         this.xPathFactory = XPathFactory.newInstance();
     }
 

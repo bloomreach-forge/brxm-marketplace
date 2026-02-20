@@ -22,7 +22,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080/essentials/rest/marketplace"
+      "value": "http://localhost:8080/essentials/rest/dynamic/marketplace"
     }
   ],
   "item": [

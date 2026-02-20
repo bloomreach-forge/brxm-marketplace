@@ -50,6 +50,20 @@ public class AddonInstallationService {
 
     private static final Logger log = LoggerFactory.getLogger(AddonInstallationService.class);
 
+    private static final DocumentBuilderFactory DBF = createSecureFactory();
+
+    private static DocumentBuilderFactory createSecureFactory() {
+        try {
+            DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+            f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            f.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            f.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            return f;
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException("Failed to configure secure XML parser", e);
+        }
+    }
+
     static final Map<Artifact.Target, String> TARGET_POM_PATHS = Map.of(
             Artifact.Target.CMS, "cms-dependencies/pom.xml",
             Artifact.Target.SITE_COMPONENTS, "site/components/pom.xml",
@@ -91,16 +105,16 @@ public class AddonInstallationService {
         this.injector = new PomDependencyInjector();
     }
 
-    private InstallationResult validateRequest(String addonId, String basedir) {
+    private Optional<InstallationResult> validateRequest(String addonId, String basedir) {
         if (addonRegistry.findById(addonId).isEmpty()) {
             log.warn("Addon '{}' not found in registry", addonId);
-            return InstallationResult.failure("ADDON_NOT_FOUND", "Addon '" + addonId + "' not found");
+            return Optional.of(InstallationResult.failure("ADDON_NOT_FOUND", "Addon '" + addonId + "' not found"));
         }
         if (basedir == null) {
             log.warn("project.basedir is not set");
-            return InstallationResult.failure("PROJECT_BASEDIR_NOT_SET", "project.basedir is not set");
+            return Optional.of(InstallationResult.failure("PROJECT_BASEDIR_NOT_SET", "project.basedir is not set"));
         }
-        return null;
+        return Optional.empty();
     }
 
     public InstallationResult install(String addonId, String basedir) {
@@ -111,9 +125,9 @@ public class AddonInstallationService {
         log.info("Starting {} for addon '{}' in basedir '{}'",
                 upgrade ? "upgrade" : "installation", addonId, basedir);
 
-        InstallationResult validationError = validateRequest(addonId, basedir);
-        if (validationError != null) {
-            return validationError;
+        Optional<InstallationResult> validationError = validateRequest(addonId, basedir);
+        if (validationError.isPresent()) {
+            return validationError.get();
         }
 
         Addon addon = addonRegistry.findById(addonId).get();
@@ -422,14 +436,12 @@ public class AddonInstallationService {
 
     private void validateXml(Path pomPath, String content) throws IOException {
         try {
-            var factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            var builder = factory.newDocumentBuilder();
+            var builder = DBF.newDocumentBuilder();
             builder.parse(new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
         } catch (SAXException e) {
-            throw new IOException("Modified POM is not well-formed XML: " + pomPath + " - " + e.getMessage());
+            throw new IOException("Modified POM is not well-formed XML: " + pomPath + " - " + e.getMessage(), e);
         } catch (ParserConfigurationException e) {
-            throw new IOException("XML parser configuration error: " + e.getMessage());
+            throw new IOException("XML parser configuration error: " + e.getMessage(), e);
         }
     }
 
@@ -459,9 +471,9 @@ public class AddonInstallationService {
     public InstallationResult uninstall(String addonId, String basedir) {
         log.info("Starting uninstall for addon '{}' in basedir '{}'", addonId, basedir);
 
-        InstallationResult validationError = validateRequest(addonId, basedir);
-        if (validationError != null) {
-            return validationError;
+        Optional<InstallationResult> validationError = validateRequest(addonId, basedir);
+        if (validationError.isPresent()) {
+            return validationError.get();
         }
 
         Addon addon = addonRegistry.findById(addonId).get();
@@ -486,9 +498,9 @@ public class AddonInstallationService {
     public InstallationResult fixInstallation(String addonId, String basedir) {
         log.info("Starting fix for addon '{}' in basedir '{}'", addonId, basedir);
 
-        InstallationResult validationError = validateRequest(addonId, basedir);
-        if (validationError != null) {
-            return validationError;
+        Optional<InstallationResult> validationError = validateRequest(addonId, basedir);
+        if (validationError.isPresent()) {
+            return validationError.get();
         }
 
         List<PlacementIssue> issues = projectContextService.getProjectContext()

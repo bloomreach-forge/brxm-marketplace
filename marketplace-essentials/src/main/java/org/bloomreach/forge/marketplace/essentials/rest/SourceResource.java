@@ -71,15 +71,10 @@ public class SourceResource {
             return errorResponse(Response.Status.SERVICE_UNAVAILABLE, "Source management not available");
         }
 
-        try {
-            List<SourceResponse> sources = service.listSources().stream()
-                    .map(this::toResponse)
-                    .toList();
-            return Response.ok(sources).build();
-        } catch (Exception e) {
-            log.error("Failed to list sources: {}", e.getMessage(), e);
-            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Failed to list sources");
-        }
+        List<SourceResponse> sources = service.listSources().stream()
+                .map(this::toResponse)
+                .toList();
+        return Response.ok(sources).build();
     }
 
     @POST
@@ -89,13 +84,18 @@ public class SourceResource {
             return errorResponse(Response.Status.SERVICE_UNAVAILABLE, "Source management not available");
         }
 
-        String validationError = validateRequest(request);
-        if (validationError != null) {
-            return errorResponse(Response.Status.BAD_REQUEST, validationError);
+        Optional<String> validationError = validateRequest(request);
+        if (validationError.isPresent()) {
+            return errorResponse(Response.Status.BAD_REQUEST, validationError.get());
         }
 
         try {
             service.createSource(request.name(), request.url(), request.enabled(), request.priority());
+            if (request.url().startsWith("file:")) {
+                log.warn("Creating source '{}' with local file URL: {}. "
+                        + "Sources not distributed by Bloomreach are used at your own risk.",
+                        request.name(), request.url());
+            }
             log.info("Created source: {}", request.name());
 
             SourceResponse response = new SourceResponse(
@@ -103,9 +103,6 @@ public class SourceResource {
             return Response.status(Response.Status.CREATED).entity(response).build();
         } catch (IllegalArgumentException e) {
             return errorResponse(Response.Status.CONFLICT, e.getMessage());
-        } catch (Exception e) {
-            log.error("Failed to create source: {}", e.getMessage(), e);
-            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Failed to create source");
         }
     }
 
@@ -125,9 +122,6 @@ public class SourceResource {
             return errorResponse(Response.Status.NOT_FOUND, e.getMessage());
         } catch (IllegalStateException e) {
             return errorResponse(Response.Status.FORBIDDEN, e.getMessage());
-        } catch (Exception e) {
-            log.error("Failed to delete source {}: {}", name, e.getMessage(), e);
-            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Failed to delete source");
         }
     }
 
@@ -158,9 +152,6 @@ public class SourceResource {
             )).build();
         } catch (IllegalArgumentException e) {
             return errorResponse(Response.Status.NOT_FOUND, e.getMessage());
-        } catch (Exception e) {
-            log.error("Failed to refresh source {}: {}", name, e.getMessage(), e);
-            return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "Failed to refresh source: " + e.getMessage());
         }
     }
 
@@ -168,24 +159,26 @@ public class SourceResource {
         return new SourceResponse(info.name(), info.url(), info.enabled(), info.priority(), info.readonly());
     }
 
-    private String validateRequest(SourceRequest request) {
+    private Optional<String> validateRequest(SourceRequest request) {
         if (request.name() == null || request.name().isBlank()) {
-            return "Source name is required";
+            return Optional.of("Source name is required");
         }
         if (request.url() == null || request.url().isBlank()) {
-            return "Source URL is required";
+            return Optional.of("Source URL is required");
         }
         if (!isValidUrl(request.url())) {
-            return "Invalid URL format";
+            return Optional.of("Invalid URL format");
         }
-        return null;
+        return Optional.empty();
     }
 
     private boolean isValidUrl(String url) {
         try {
             URI uri = URI.create(url);
-            return uri.getScheme() != null &&
-                    (uri.getScheme().equals("http") || uri.getScheme().equals("https") || uri.getScheme().equals("file"));
+            String scheme = uri.getScheme();
+            if (scheme == null) return false;
+            if (scheme.equals("file")) return true;
+            return (scheme.equals("http") || scheme.equals("https")) && uri.getHost() != null;
         } catch (Exception e) {
             return false;
         }

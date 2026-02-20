@@ -24,6 +24,7 @@ import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +36,21 @@ import java.util.function.Function;
 public class PomDependencyScanner {
 
     private static final Logger log = LoggerFactory.getLogger(PomDependencyScanner.class);
+
+    private static final DocumentBuilderFactory DBF = createSecureFactory();
+
+    private static DocumentBuilderFactory createSecureFactory() {
+        try {
+            DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+            f.setNamespaceAware(false);
+            f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            f.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            f.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            return f;
+        } catch (ParserConfigurationException e) {
+            throw new IllegalStateException("Failed to configure secure XML parser", e);
+        }
+    }
 
     public List<Dependency> extractDependencies(String pomContent) {
         return parseAndExtract(pomContent, Collections.emptyList(), this::extractDependenciesFromDoc);
@@ -113,10 +129,7 @@ public class PomDependencyScanner {
 
     private Document parseXml(String content) {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            DocumentBuilder builder = DBF.newDocumentBuilder();
             return builder.parse(new InputSource(new StringReader(content)));
         } catch (Exception e) {
             log.warn("Failed to parse POM XML: {}", e.getMessage());

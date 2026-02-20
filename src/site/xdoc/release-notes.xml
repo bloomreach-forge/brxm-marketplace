@@ -24,6 +24,40 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.5">
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Security</h4>
+        <ul>
+          <li>XXE hardening: all <code>DocumentBuilderFactory</code> instances now disable
+              external general entities, external parameter entities, and doctype declarations.
+              Applies to <code>PomParser</code> (manifest-generator), <code>PomDependencyScanner</code>,
+              and <code>AddonInstallationService</code></li>
+          <li>XML injection prevention: <code>PomDependencyInjector</code> now escapes
+              <code>&amp;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>"</code>,
+              <code>'</code> in all values interpolated into POM XML (dependency coordinates,
+              property names/values)</li>
+          <li>URL validation hardening: <code>SourceResource.isValidUrl()</code> now requires
+              a non-null host for <code>http</code>/<code>https</code> URLs, rejecting
+              malformed URLs like <code>http:///</code></li>
+          <li>Audit logging: creating a source with a <code>file://</code> URL now emits a
+              WARN-level log for traceability</li>
+          <li>Symlink protection: <code>FilesystemPomFileWriter</code> rejects symlinks before
+              write, backup, and restore operations to prevent symlink-following attacks</li>
+        </ul>
+
+        <h4>Performance</h4>
+        <ul>
+          <li>Reduced lock contention: <code>EssentialsAddonService.doLoadAddons()</code> now
+              performs HTTP fetches outside the <code>synchronized</code> block, preventing
+              thread starvation during slow network requests</li>
+          <li>Eliminated per-call <code>DocumentBuilderFactory</code> creation in
+              <code>PomDependencyScanner</code> and <code>AddonInstallationService</code>
+              by extracting to <code>private static final</code> fields configured once at
+              class load</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.4">
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 

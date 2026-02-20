@@ -98,4 +98,22 @@ class GitHubServiceTest {
 
         assertFalse(result.isPresent());
     }
+
+    @Test
+    void releaseInfo_record_storesAllFields() {
+        GitHubService.ReleaseInfo info = new GitHubService.ReleaseInfo("v4.0.2", "4.0.2", false, false);
+
+        assertEquals("v4.0.2", info.tagName());
+        assertEquals("4.0.2", info.version());
+        assertFalse(info.prerelease());
+        assertFalse(info.draft());
+    }
+
+    @Test
+    void releaseInfo_record_equalityByValue() {
+        GitHubService.ReleaseInfo a = new GitHubService.ReleaseInfo("v1.0.0", "1.0.0", false, false);
+        GitHubService.ReleaseInfo b = new GitHubService.ReleaseInfo("v1.0.0", "1.0.0", false, false);
+
+        assertEquals(a, b);
+    }
 }

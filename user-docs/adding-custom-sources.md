@@ -81,6 +81,36 @@ Your addon source must provide a JSON manifest following this structure:
 | `documentation` | Array of documentation links |
 | `lifecycle.status` | `incubating`, `active`, `maintenance`, `deprecated`, `archived` |
 | `security` | Permissions and network access requirements |
+| `versions` | Array of compatibility epochs (see below) |
+
+#### The `versions[]` array
+
+Custom source maintainers can include a `versions[]` array on each addon entry to provide epoch-level compatibility data without requiring GitHub Release scanning. Each entry represents the latest patch of a major version line:
+
+```json
+{
+  "id": "your-addon-id",
+  ...
+  "compatibility": {
+    "brxm": { "min": "17.0.0" }
+  },
+  "versions": [
+    {
+      "version": "4.0.2",
+      "compatibility": { "brxm": { "min": "15.0.0", "max": "16.6.5" } },
+      "artifacts": [{ "type": "maven-lib", "maven": { "groupId": "com.example", "artifactId": "your-addon" } }]
+    },
+    {
+      "version": "5.0.1",
+      "compatibility": { "brxm": { "min": "17.0.0" } },
+      "artifacts": [{ "type": "maven-lib", "maven": { "groupId": "com.example", "artifactId": "your-addon" } }],
+      "inferredMax": null
+    }
+  ]
+}
+```
+
+When `versions[]` is present, the marketplace filters by checking whether _any_ epoch is compatible with the user's brXM version. This allows users on older brXM versions to discover the appropriate installable version even when a newer major epoch exists.
 
 See [Creating an Addon Descriptor](creating-addon-descriptor.md) for complete field documentation.
 
@@ -98,12 +128,26 @@ See [Creating an Addon Descriptor](creating-addon-descriptor.md) for complete fi
 - `developer-tools` - Development utilities
 - `other` - Other functionality
 
+## URL Requirements
+
+Source URLs must pass validation before a source is created:
+
+| Scheme | Requirement |
+|--------|-------------|
+| `https://` | Must include a valid host (e.g., `https://example.com/addons.json`) |
+| `http://` | Must include a valid host (e.g., `http://internal.corp/addons.json`) |
+| `file://` | Accepted for local manifests. A WARN-level log is emitted for auditability |
+
+Malformed URLs (e.g., `http:///`, `ftp://`, no scheme) are rejected with HTTP 400.
+
+> **Note:** Sources not distributed by Bloomreach are used at your own risk. The `file://` scheme is intended for partners and internal teams hosting manifests locally.
+
 ## Adding a Source via REST API
 
 ### 1. Create the Source
 
 ```bash
-curl -X POST http://localhost:8080/essentials/rest/marketplace/sources \
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources \
   -H "Content-Type: application/json" \
   -d '{
     "name": "my-company",
@@ -127,13 +171,13 @@ curl -X POST http://localhost:8080/essentials/rest/marketplace/sources \
 ### 2. Verify the Source
 
 ```bash
-curl http://localhost:8080/essentials/rest/marketplace/sources
+curl http://localhost:8080/essentials/rest/dynamic/marketplace/sources
 ```
 
 ### 3. Refresh to Load Addons
 
 ```bash
-curl -X POST http://localhost:8080/essentials/rest/marketplace/sources/my-company/refresh
+curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources/my-company/refresh
 ```
 
 **Response:**
@@ -149,7 +193,7 @@ curl -X POST http://localhost:8080/essentials/rest/marketplace/sources/my-compan
 ### 4. Verify Addons Loaded
 
 ```bash
-curl http://localhost:8080/essentials/rest/marketplace/addons
+curl http://localhost:8080/essentials/rest/dynamic/marketplace/addons
 ```
 
 ## Adding a Source via JCR
@@ -186,13 +230,13 @@ When addon IDs conflict, the higher-priority source takes precedence for unquali
 ### List All Sources
 
 ```bash
-curl http://localhost:8080/essentials/rest/marketplace/sources
+curl http://localhost:8080/essentials/rest/dynamic/marketplace/sources
 ```
 
 ### Delete a Source
 
 ```bash
-curl -X DELETE http://localhost:8080/essentials/rest/marketplace/sources/my-company
+curl -X DELETE http://localhost:8080/essentials/rest/dynamic/marketplace/sources/my-company
 ```
 
 **Note:** The default `forge` source is readonly and cannot be deleted.
@@ -229,13 +273,13 @@ To temporarily disable a source without deleting it, update the JCR node:
 
 1. Refresh the source:
    ```bash
-   curl -X POST http://localhost:8080/essentials/rest/marketplace/sources/my-company/refresh
+   curl -X POST http://localhost:8080/essentials/rest/dynamic/marketplace/sources/my-company/refresh
    ```
 
 2. Check the refresh response for failures
 
 3. Validate your manifest against the schema at:
-   `schema/forge-addon.schema.json`
+   `common/src/main/resources/forge-addon.schema.json`
 
 ### CORS Issues
 

@@ -27,6 +27,7 @@ import org.onehippo.cms7.services.HippoServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -88,25 +89,30 @@ public class EssentialsAddonService implements AddonRegistryService {
             if (!forceReload && loaded) {
                 return;
             }
-            if (forceReload) {
-                loaded = false;
-            }
+        }
 
-            String manifestUrl = getManifestUrl();
-            String operation = forceReload ? "Refreshing" : "Loading";
-            log.info("{} addons from: {}", operation, manifestUrl);
+        String manifestUrl = getManifestUrl();
+        String operation = forceReload ? "Refreshing" : "Loading";
+        log.info("{} addons from: {}", operation, manifestUrl);
 
-            try {
-                List<Addon> addonList = fetchAddons(manifestUrl);
-                Map<String, Addon> newAddons = new ConcurrentHashMap<>();
-                addonList.forEach(addon -> newAddons.put(addon.getId(), addon));
-                addons = newAddons;
-                loaded = true;
-                log.info("{} {} addons", forceReload ? "Refreshed" : "Loaded", addons.size());
-            } catch (Exception e) {
-                log.error("Failed to {} addons from {}: {}",
-                        forceReload ? "refresh" : "load", manifestUrl, e.getMessage());
+        List<Addon> addonList;
+        try {
+            addonList = fetchAddons(manifestUrl);
+        } catch (IOException e) {
+            log.error("Failed to {} addons from {}: {}",
+                    forceReload ? "refresh" : "load", manifestUrl, e.getMessage());
+            return;
+        }
+
+        synchronized (loadLock) {
+            if (!forceReload && loaded) {
+                return;
             }
+            Map<String, Addon> newAddons = new ConcurrentHashMap<>(addonList.size());
+            addonList.forEach(addon -> newAddons.put(addon.getId(), addon));
+            addons = newAddons;
+            loaded = true;
+            log.info("{} {} addons", forceReload ? "Refreshed" : "Loaded", addons.size());
         }
     }
 
@@ -118,7 +124,7 @@ public class EssentialsAddonService implements AddonRegistryService {
         return DEFAULT_MANIFEST_URL;
     }
 
-    private List<Addon> fetchAddons(String url) throws Exception {
+    private List<Addon> fetchAddons(String url) throws IOException {
         if (url.startsWith("file:") || !url.startsWith("http")) {
             return loadFromFile(url);
         }
@@ -129,24 +135,29 @@ public class EssentialsAddonService implements AddonRegistryService {
                 .GET()
                 .build();
 
-        HttpResponse<InputStream> response = httpClient.send(request,
-                HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("HTTP request interrupted", e);
+        }
 
         if (response.statusCode() != 200) {
-            throw new RuntimeException("HTTP " + response.statusCode());
+            throw new IOException("HTTP " + response.statusCode());
         }
 
         return parseManifest(response.body());
     }
 
-    private List<Addon> loadFromFile(String path) throws Exception {
+    private List<Addon> loadFromFile(String path) throws IOException {
         String filePath = path.startsWith("file:") ? path.substring(5) : path;
         try (InputStream is = new java.io.FileInputStream(filePath)) {
             return parseManifest(is);
         }
     }
 
-    private List<Addon> parseManifest(InputStream is) throws Exception {
+    private List<Addon> parseManifest(InputStream is) throws IOException {
         JsonNode root = objectMapper.readTree(is);
 
         // Handle both formats: raw array or wrapper object with "addons" field

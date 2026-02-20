@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bloomreach-forge.github.io/brxm-marketplace/schema/forge-addon.schema.json",
+  "$id": "resource:/forge-addon.schema.json",
   "title": "Forge Add-on Descriptor",
   "description": "Schema for forge-addon.yaml files that describe Bloomreach Forge add-ons",
   "type": "object",
@@ -340,6 +340,26 @@
         "verification": {
           "type": "string",
           "description": "How to verify successful installation"
+        }
+      }
+    },
+    "versions": {
+      "type": "array",
+      "description": "Historical compatibility epochs, one per major version line. Populated by the manifest generator from GitHub Releases.",
+      "items": {
+        "type": "object",
+        "required": ["version", "compatibility", "artifacts"],
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Addon version for this epoch (latest patch of this major line)"
+          },
+          "compatibility": { "$ref": "#/properties/compatibility" },
+          "artifacts": { "$ref": "#/properties/artifacts" },
+          "inferredMax": {
+            "type": "string",
+            "description": "Exclusive upper bound on brXM version, inferred from the next epoch's brxm.min"
+          }
         }
       }
     },

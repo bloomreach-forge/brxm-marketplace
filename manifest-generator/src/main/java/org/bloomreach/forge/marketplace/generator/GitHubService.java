@@ -123,6 +123,43 @@ public class GitHubService {
     }
 
     /**
+     * Lists all non-draft, non-prerelease releases for a repository.
+     */
+    public List<ReleaseInfo> listReleases(String org, String repo) throws GitHubException {
+        List<ReleaseInfo> releases = new ArrayList<>();
+        int page = 1;
+        int perPage = 100;
+
+        while (true) {
+            String url = String.format("%s/repos/%s/%s/releases?per_page=%d&page=%d",
+                    GITHUB_API, org, repo, perPage, page);
+            JsonNode response = get(url);
+
+            if (!response.isArray() || response.isEmpty()) {
+                break;
+            }
+
+            for (JsonNode releaseNode : response) {
+                boolean draft = releaseNode.path("draft").asBoolean(false);
+                boolean prerelease = releaseNode.path("prerelease").asBoolean(false);
+                if (draft || prerelease) {
+                    continue;
+                }
+                String tagName = releaseNode.path("tag_name").asText();
+                String version = tagName.startsWith("v") ? tagName.substring(1) : tagName;
+                releases.add(new ReleaseInfo(tagName, version, false, false));
+            }
+
+            if (response.size() < perPage) {
+                break;
+            }
+            page++;
+        }
+
+        return releases;
+    }
+
+    /**
      * Gets the current commit SHA for a branch.
      */
     public Optional<String> getLatestCommit(String org, String repo, String branch) {
@@ -173,6 +210,11 @@ public class GitHubService {
      * Repository information.
      */
     public record RepoInfo(String name, String fullName, String defaultBranch, String htmlUrl) {}
+
+    /**
+     * Release information.
+     */
+    public record ReleaseInfo(String tagName, String version, boolean prerelease, boolean draft) {}
 
     /**
      * Exception for GitHub API errors.

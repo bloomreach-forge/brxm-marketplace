@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class SourceResourceTest {
@@ -179,12 +178,4 @@ class SourceResourceTest {
         verify(sourceManagementService, never()).refreshSource(anyString());
     }
 
-    @Test
-    void getSources_returnsInternalError_onException() {
-        when(sourceManagementService.listSources()).thenThrow(new RuntimeException("JCR error"));
-
-        Response response = resource.getSources();
-
-        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
-    }
 }

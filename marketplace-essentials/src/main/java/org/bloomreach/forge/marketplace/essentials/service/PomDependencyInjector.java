@@ -27,6 +27,15 @@ import java.util.regex.Pattern;
  */
 public class PomDependencyInjector {
 
+    private static String escapeXml(String value) {
+        if (value == null) return null;
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
+    }
+
     private static final Pattern DEPENDENCY_PATTERN = Pattern.compile(
             "<dependency>\\s*<groupId>([^<]+)</groupId>\\s*<artifactId>([^<]+)</artifactId>",
             Pattern.DOTALL
@@ -68,7 +77,7 @@ public class PomDependencyInjector {
         }
 
         String indent = detectPropertyIndent(pomContent, insertPoint);
-        String propertyXml = indent + "<" + name + ">" + value + "</" + name + ">";
+        String propertyXml = indent + "<" + escapeXml(name) + ">" + escapeXml(value) + "</" + escapeXml(name) + ">";
 
         return insertBeforeClosingTag(pomContent, insertPoint, propertyXml);
     }
@@ -111,7 +120,7 @@ public class PomDependencyInjector {
         Matcher matcher = pattern.matcher(pomContent);
         if (matcher.find()) {
             return pomContent.substring(0, matcher.start())
-                    + "<" + name + ">" + newValue + "</" + name + ">"
+                    + "<" + name + ">" + escapeXml(newValue) + "</" + name + ">"
                     + pomContent.substring(matcher.end());
         }
         return null;
@@ -310,11 +319,11 @@ public class PomDependencyInjector {
                                     String indent, String innerIndent) {
         StringBuilder sb = new StringBuilder();
         sb.append(indent).append("<dependency>\n");
-        sb.append(innerIndent).append("<groupId>").append(groupId).append("</groupId>\n");
-        sb.append(innerIndent).append("<artifactId>").append(artifactId).append("</artifactId>\n");
-        sb.append(innerIndent).append("<version>").append(version).append("</version>\n");
+        sb.append(innerIndent).append("<groupId>").append(escapeXml(groupId)).append("</groupId>\n");
+        sb.append(innerIndent).append("<artifactId>").append(escapeXml(artifactId)).append("</artifactId>\n");
+        sb.append(innerIndent).append("<version>").append(escapeXml(version)).append("</version>\n");
         if (scope != null) {
-            sb.append(innerIndent).append("<scope>").append(scope).append("</scope>\n");
+            sb.append(innerIndent).append("<scope>").append(escapeXml(scope)).append("</scope>\n");
         }
         sb.append(indent).append("</dependency>");
         return sb.toString();
