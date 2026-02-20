@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.repository.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Category;
 import org.bloomreach.forge.marketplace.common.model.Compatibility;
 import org.bloomreach.forge.marketplace.common.model.PluginTier;
@@ -167,10 +168,31 @@ public class AddonRegistry implements AddonRegistryService {
         if (brxmVersion == null) {
             return true;
         }
+        List<AddonVersion> versions = addon.getVersions();
+        if (versions != null && !versions.isEmpty()) {
+            return versions.stream().anyMatch(v -> isEpochCompatible(v, brxmVersion));
+        }
+        // fallback: flat compatibility (pre-epoch behavior)
         Compatibility compat = addon.getCompatibility();
         if (compat == null || compat.getBrxm() == null) {
             return true;
         }
         return versionComparator.isInRange(brxmVersion, compat.getBrxm());
+    }
+
+    private boolean isEpochCompatible(AddonVersion epoch, String brxmVersion) {
+        Compatibility compat = epoch.getCompatibility();
+        if (compat == null || compat.getBrxm() == null) {
+            return false;
+        }
+        if (!versionComparator.isInRange(brxmVersion, compat.getBrxm())) {
+            return false;
+        }
+        // inferredMax is exclusive — a brxmVersion >= inferredMax belongs to the next epoch
+        String inferredMax = epoch.getInferredMax();
+        if (inferredMax != null && versionComparator.compare(brxmVersion, inferredMax) >= 0) {
+            return false;
+        }
+        return true;
     }
 }

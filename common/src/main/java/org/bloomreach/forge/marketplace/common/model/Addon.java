@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,10 @@ public class Addon {
     private PluginTier pluginTier;
     private Compatibility compatibility;
     private List<Artifact> artifacts;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<AddonVersion> versions;
+
     private InstallCapabilities installCapabilities;
     private Security security;
     private List<Documentation> documentation;
@@ -136,6 +141,14 @@ public class Addon {
 
     public void setArtifacts(List<Artifact> artifacts) {
         this.artifacts = artifacts;
+    }
+
+    public List<AddonVersion> getVersions() {
+        return versions;
+    }
+
+    public void setVersions(List<AddonVersion> versions) {
+        this.versions = versions;
     }
 
     public InstallCapabilities getInstallCapabilities() {

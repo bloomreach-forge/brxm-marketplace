@@ -26,7 +26,13 @@ pluginTier: forge-addon  # Options: forge-addon, service-plugin
 compatibility:
   brxm:
     min: "16.0.0"   # Minimum compatible brXM version
-    # max: "17.0.0" # Optional: Maximum compatible version
+    # max: "17.0.0" # Optional: Maximum compatible version.
+    #               # Strongly recommended on the latest patch of an older major line:
+    #               # when you publish a new major that raises the brXM floor (e.g. 5.0.0 requires
+    #               # brXM 17+), set max here on the last 4.x release so the marketplace can show
+    #               # this version to users still on brXM 16.x.
+    #               # If omitted, an implicit ceiling is inferred from the next major epoch's
+    #               # brxm.min, but explicit is always more accurate.
 
 # Optional - repository branch (defaults to "main")
 # repository:

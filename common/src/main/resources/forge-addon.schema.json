@@ -343,6 +343,26 @@
         }
       }
     },
+    "versions": {
+      "type": "array",
+      "description": "Historical compatibility epochs, one per major version line. Populated by the manifest generator from GitHub Releases.",
+      "items": {
+        "type": "object",
+        "required": ["version", "compatibility", "artifacts"],
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Addon version for this epoch (latest patch of this major line)"
+          },
+          "compatibility": { "$ref": "#/properties/compatibility" },
+          "artifacts": { "$ref": "#/properties/artifacts" },
+          "inferredMax": {
+            "type": "string",
+            "description": "Exclusive upper bound on brXM version, inferred from the next epoch's brxm.min"
+          }
+        }
+      }
+    },
     "x": {
       "type": "object",
       "description": "Extension point for custom metadata"

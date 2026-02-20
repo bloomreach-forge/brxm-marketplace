@@ -37,7 +37,11 @@ An Essentials plugin that brings the Forge ecosystem directly into your brXM dev
 
 | Marketplace Version | brXM Version | Java |
 |---------------------|--------------|------|
-| 1.x | 16.x | 17+ |
+| 1.x | 16.x+ | 17+ |
+
+The marketplace supports **multi-version discovery**: when an addon has multiple major versions with different brXM requirements, users are shown the version compatible with their brXM installation rather than seeing no results. For example, if an addon has a 4.x line (brXM 15–16) and a 5.x line (brXM 17+), both groups of users see the correct installable version.
+
+Addon developers: see [How Compatibility Epochs Work](user-docs/creating-addon-descriptor.md#how-compatibility-epochs-work) to ensure your historical releases are discoverable.
 
 ## What is Bloomreach Forge Marketplace?
 

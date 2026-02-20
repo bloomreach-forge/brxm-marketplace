@@ -123,8 +123,41 @@ pluginTier: forge-addon
 compatibility:
   brxm:
     min: "16.0.0"     # Required: minimum version
-    max: "17.0.0"     # Optional: maximum version
+    max: "17.0.0"     # Optional: maximum version (see "How compatibility epochs work" below)
 ```
+
+## How Compatibility Epochs Work
+
+The manifest generator scans your GitHub Releases (not just `master`/`main`) to build a multi-version compatibility picture. This ensures users on older brXM versions still see the right installable addon version even after you bump to a new major.
+
+### What the generator does
+
+1. Fetches all non-draft, non-prerelease GitHub Releases for your repository.
+2. Groups releases by **major version** (e.g., 4.x, 5.x).
+3. Takes the **latest patch** of each major line as the authoritative descriptor for that epoch (e.g., 4.0.2 rather than 4.0.0).
+4. Reads `forge-addon.yaml` from that release's tag to get the `compatibility`, `version`, and `artifacts`.
+5. Infers an exclusive upper bound (`inferredMax`) for each epoch if no explicit `max` is set — the inferred ceiling is the next epoch's `brxm.min`.
+6. Publishes the result as a `versions[]` array on the addon entry in the manifest.
+
+### Why `brxm.max` matters on older releases
+
+**The retroactive-cap problem:** when you publish a new major (e.g., 5.0.0 requiring brXM 17+) and the old 4.x line has no `max`, users on brXM 16 see no compatible version because the latest descriptor only covers the new epoch.
+
+Fix: on the latest patch of the old major line, set an explicit `max`:
+
+```yaml
+# On the latest 4.x patch (e.g., 4.0.2) — set max when you know 5.x breaks compat
+compatibility:
+  brxm:
+    min: "15.0.0"
+    max: "16.6.5"   # Explicit ceiling: users above 16.6.5 need the 5.x line
+```
+
+If you forget to set `max`, the generator infers it from the next epoch's `brxm.min` as an exclusive bound — but explicit is always more precise and overrides the inferred value.
+
+### Ensuring your tags have descriptors
+
+The generator reads `forge-addon.yaml` from each release's git tag. Make sure your release workflow commits an up-to-date `forge-addon.yaml` before tagging. The recommended workflow (see [Quick Start](#quick-start-recommended)) does this automatically via the `release: published` trigger.
 
 ### Optional Fields
 

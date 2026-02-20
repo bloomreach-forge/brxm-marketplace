@@ -81,6 +81,36 @@ Your addon source must provide a JSON manifest following this structure:
 | `documentation` | Array of documentation links |
 | `lifecycle.status` | `incubating`, `active`, `maintenance`, `deprecated`, `archived` |
 | `security` | Permissions and network access requirements |
+| `versions` | Array of compatibility epochs (see below) |
+
+#### The `versions[]` array
+
+Custom source maintainers can include a `versions[]` array on each addon entry to provide epoch-level compatibility data without requiring GitHub Release scanning. Each entry represents the latest patch of a major version line:
+
+```json
+{
+  "id": "your-addon-id",
+  ...
+  "compatibility": {
+    "brxm": { "min": "17.0.0" }
+  },
+  "versions": [
+    {
+      "version": "4.0.2",
+      "compatibility": { "brxm": { "min": "15.0.0", "max": "16.6.5" } },
+      "artifacts": [{ "type": "maven-lib", "maven": { "groupId": "com.example", "artifactId": "your-addon" } }]
+    },
+    {
+      "version": "5.0.1",
+      "compatibility": { "brxm": { "min": "17.0.0" } },
+      "artifacts": [{ "type": "maven-lib", "maven": { "groupId": "com.example", "artifactId": "your-addon" } }],
+      "inferredMax": null
+    }
+  ]
+}
+```
+
+When `versions[]` is present, the marketplace filters by checking whether _any_ epoch is compatible with the user's brXM version. This allows users on older brXM versions to discover the appropriate installable version even when a newer major epoch exists.
 
 See [Creating an Addon Descriptor](creating-addon-descriptor.md) for complete field documentation.
 

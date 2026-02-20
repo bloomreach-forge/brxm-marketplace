@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.repository.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Category;
 import org.bloomreach.forge.marketplace.common.model.Compatibility;
 import org.bloomreach.forge.marketplace.common.model.PluginTier;
@@ -346,6 +347,111 @@ public class AddonRegistryTest {
 
         assertTrue(registry.findById("partner:my-addon").isPresent());
         assertFalse(registry.findById("my-addon").isPresent());
+    }
+
+    // --- Epoch (versions[]) filtering tests ---
+
+    @Test
+    void filter_withEpochs_matchesOlderBrxmViaExplicitMax() {
+        // epoch 4: min=15, max=16.6.5 (explicit); epoch 5: min=17
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        addon.setVersions(List.of(
+                epoch("4.0.2", "15.0.0", "16.6.5", null),
+                epoch("5.0.1", "17.0.0", null, null)
+        ));
+
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, "16.6.5");
+
+        assertEquals(1, result.size(), "addon should match via epoch 4 explicit max");
+    }
+
+    @Test
+    void filter_withEpochs_brxmAtEpochBoundaryExcludedByInferredMax() {
+        // epoch 4: min=15, no explicit max, inferredMax=17.0.0; epoch 5: min=17
+        // brxmVersion=17.0.0 must NOT match epoch 4 (17.0 >= inferredMax 17.0 is exclusive)
+        // and MUST match epoch 5
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        AddonVersion v4 = epoch("4.0.2", "15.0.0", null, null);
+        v4.setInferredMax("17.0.0");
+        addon.setVersions(List.of(v4, epoch("5.0.1", "17.0.0", null, null)));
+
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, "17.0.0");
+
+        assertEquals(1, result.size(), "addon should match via epoch 5 when brxm=17.0.0");
+    }
+
+    @Test
+    void filter_withEpochs_brxmBetweenEpochsBelowInferredMax() {
+        // brxmVersion=16.7.0 < inferredMax=17.0.0 → epoch 4 matches
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        AddonVersion v4 = epoch("4.0.2", "15.0.0", null, null);
+        v4.setInferredMax("17.0.0");
+        addon.setVersions(List.of(v4, epoch("5.0.1", "17.0.0", null, null)));
+
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, "16.7.0");
+
+        assertEquals(1, result.size(), "16.7.0 is below inferredMax so epoch 4 matches");
+    }
+
+    @Test
+    void filter_withEpochs_newerBrxmMatchesLatestEpoch() {
+        // brxmVersion=20.0.0: epoch 4 excluded by inferredMax, epoch 5 (no max) matches
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        AddonVersion v4 = epoch("4.0.2", "15.0.0", null, null);
+        v4.setInferredMax("17.0.0");
+        addon.setVersions(List.of(v4, epoch("5.0.1", "17.0.0", null, null)));
+
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, "20.0.0");
+
+        assertEquals(1, result.size(), "20.0.0 should match epoch 5 which has no ceiling");
+    }
+
+    @Test
+    void filter_withEpochs_veryOldBrxmMatchesNoEpoch() {
+        // brxmVersion=10.0.0 is below both epochs' min → excluded
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        AddonVersion v4 = epoch("4.0.2", "15.0.0", null, null);
+        v4.setInferredMax("17.0.0");
+        addon.setVersions(List.of(v4, epoch("5.0.1", "17.0.0", null, null)));
+
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, "10.0.0");
+
+        assertTrue(result.isEmpty(), "10.0.0 is below all epochs' min");
+    }
+
+    @Test
+    void filter_withEpochs_nullBrxmVersionReturnsAddon() {
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        addon.setVersions(List.of(epoch("5.0.1", "17.0.0", null, null)));
+        registry.register(addon);
+
+        List<Addon> result = registry.filter(null, null, null, null);
+
+        assertEquals(1, result.size());
+    }
+
+    private AddonVersion epoch(String version, String brxmMin, String brxmMax, String inferredMax) {
+        Compatibility.VersionRange range = new Compatibility.VersionRange();
+        range.setMin(brxmMin);
+        range.setMax(brxmMax);
+        Compatibility compat = new Compatibility();
+        compat.setBrxm(range);
+
+        AddonVersion av = new AddonVersion();
+        av.setVersion(version);
+        av.setCompatibility(compat);
+        av.setInferredMax(inferredMax);
+        return av;
     }
 
     private Addon createAddon(String id, Category category) {
