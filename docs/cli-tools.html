@@ -9,7 +9,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                       <meta http-equiv="Content-Language" content="" />
-      <title>Maven Coordinates – Bloomreach Forge Marketplace</title>
+      <title>CLI Tools – Bloomreach Forge Marketplace</title>
   <link rel="stylesheet" href="./css/forge-maven-skin-syntaxhighlighter-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/forge-maven-skin-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/site.css" />
@@ -63,7 +63,8 @@
                   <li class="nav-header">For Addon Developers</li>
               <li>  <a href="addon-descriptor.html" title="Creating Descriptors">  <span class="none"></span>  Creating Descriptors</a>  </li>
         <li>  <a href="auto-generation.html" title="Auto-Generation">  <span class="none"></span>  Auto-Generation</a>  </li>
-        <li>  <a href="cli-tools.html" title="CLI Tools">  <span class="none"></span>  CLI Tools</a>  </li>
+        <li class="active">  <a href="#"><span class="none"></span>CLI Tools</a>
+  </li>
                   <li class="nav-header">For Platform Operators</li>
               <li>  <a href="custom-sources.html" title="Custom Sources">  <span class="none"></span>  Custom Sources</a>  </li>
         <li>  <a href="rest-api.html" title="REST API">  <span class="none"></span>  REST API</a>  </li>
@@ -85,29 +86,149 @@
     </div>
   </div>
   <div id="bodyColumn"  class="span10" >
-    <section><a id="Maven_Coordinates"></a>
-<h1>Maven Coordinates</h1><section><a id="Apache_Maven"></a>
-<h2>Apache Maven</h2>
-<pre>&lt;dependency&gt;
-  &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
-  &lt;artifactId&gt;brxm-marketplace&lt;/artifactId&gt;
-  &lt;version&gt;1.0.6&lt;/version&gt;
-  &lt;type&gt;pom&lt;/type&gt;
-&lt;/dependency&gt;</pre></section><section><a id="Apache_Ivy"></a>
-<h2>Apache Ivy</h2>
-<pre>&lt;dependency org=&quot;org.bloomreach.forge.marketplace&quot; name=&quot;brxm-marketplace&quot; rev=&quot;1.0.6&quot;&gt;
-  &lt;artifact name=&quot;brxm-marketplace&quot; type=&quot;pom&quot; /&gt;
-&lt;/dependency&gt;</pre></section><section><a id="Groovy_Grape"></a>
-<h2>Groovy Grape</h2>
-<pre>@Grapes(
-@Grab(group='org.bloomreach.forge.marketplace', module='brxm-marketplace', version='1.0.6')
-)</pre></section><section><a id="Gradle.2FGrails"></a>
-<h2>Gradle/Grails</h2>
-<pre>implementation 'org.bloomreach.forge.marketplace:brxm-marketplace:1.0.6'</pre></section><section><a id="Scala_SBT"></a>
-<h2>Scala SBT</h2>
-<pre>libraryDependencies += &quot;org.bloomreach.forge.marketplace&quot; % &quot;brxm-marketplace&quot; % &quot;1.0.6&quot;</pre></section><section><a id="Leiningen"></a>
-<h2>Leiningen</h2>
-<pre>[org.bloomreach.forge.marketplace/brxm-marketplace &quot;1.0.6&quot;]</pre></section></section>
+    
+  
+
+    <section><a id="CLI_Tools"></a>
+<h1>CLI Tools</h1>
+
+      <section><a id="Overview"></a>
+<h2>Overview</h2>
+        
+<p>
+          Two CLI tools are available from
+          <a href="https://github.com/bloomreach-forge/brxm-marketplace/releases" class="externalLink">GitHub Releases</a>:
+        </p>
+        
+<ul>
+          
+<li><strong>descriptor-generator.jar</strong> - For addon developers</li>
+          
+<li><strong>manifest-generator.jar</strong> - For manifest maintainers</li>
+        </ul>
+      </section>
+
+      <section><a id="descriptor-generator"></a>
+<h2>descriptor-generator</h2>
+        
+<p>
+          Generates <code>forge-addon.yaml</code> for addon repositories by combining
+          a config file with pom.xml metadata.
+        </p>
+        
+<pre><code>
+# Download
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+# Usage
+java -jar descriptor-generator.jar [options]
+
+Options:
+  -c, --config &lt;file&gt;    Config file path (default: .forge/addon-config.yaml)
+  -o, --output &lt;file&gt;    Output file path (default: forge-addon.yaml)
+  -p, --pom &lt;file&gt;       POM file path (default: pom.xml)
+  -v, --verbose          Enable verbose output
+  -h, --help             Show help
+        </code></pre>
+
+        <section><section><a id="Example"></a>
+<h4>Example</h4>
+        
+<pre><code>
+java -jar descriptor-generator.jar \
+  --config .forge/addon-config.yaml \
+  --output forge-addon.yaml \
+  --verbose
+        </code></pre>
+
+        </section><section><a id="Artifacts_Configuration"></a>
+<h4>Artifacts Configuration</h4>
+        
+<p>
+          By default, a single artifact is generated with <code>target: parent</code> and
+          <code>scope: compile</code>. For multi-artifact add-ons, configure explicitly in your config:
+        </p>
+        
+<pre><code>
+# .forge/addon-config.yaml
+artifacts:
+  - target: cms
+    description: &quot;CMS module&quot;
+  - target: site/components
+    artifactId: my-addon-site
+    description: &quot;Site components&quot;
+        </code></pre>
+        
+<p>
+          Valid targets: <code>parent</code>, <code>cms</code>, <code>site/components</code>,
+          <code>site/webapp</code>, <code>platform</code>
+        </p>
+        
+<p>
+          Valid scopes: <code>compile</code> (default), <code>provided</code>, <code>runtime</code>, <code>test</code>
+        </p>
+      </section></section></section>
+
+      <section><a id="manifest-generator"></a>
+<h2>manifest-generator</h2>
+        
+<p>
+          Generates <code>addons-index.json</code> by scanning a GitHub organization for
+          repositories containing <code>forge-addon.yaml</code> files.
+        </p>
+        
+<pre><code>
+# Download
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/manifest-generator.jar
+
+# Usage
+java -jar manifest-generator.jar [options]
+
+Options:
+  -g, --org &lt;name&gt;       GitHub organization to scan (required)
+  -o, --output &lt;file&gt;    Output file path (default: addons-index.json)
+  -t, --token &lt;token&gt;    GitHub token for API access
+  -v, --verbose          Enable verbose output
+  -h, --help             Show help
+        </code></pre>
+
+        <section><section><a id="Example_1"></a>
+<h4>Example</h4>
+        
+<pre><code>
+java -jar manifest-generator.jar \
+  --org bloomreach-forge \
+  --output addons-index.json \
+  --token $GITHUB_TOKEN \
+  --verbose
+        </code></pre>
+        
+<p>
+          This tool is primarily used by the Marketplace's GitHub Actions workflow to
+          generate the official Forge addon index.
+        </p>
+      </section></section></section>
+
+      <section><a id="Downloading_Specific_Versions"></a>
+<h2>Downloading Specific Versions</h2>
+        
+<p>
+          To download a specific version of the tools:
+        </p>
+        
+<pre><code>
+# Latest
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/latest/download/descriptor-generator.jar
+
+# Specific version
+curl -sLO https://github.com/bloomreach-forge/brxm-marketplace/releases/download/1.0.0/descriptor-generator.jar
+        </code></pre>
+      </section>
+
+    </section>
+
+  
+
     </div>
     </div>
     </div>

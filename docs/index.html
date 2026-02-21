@@ -9,7 +9,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                       <meta http-equiv="Content-Language" content="" />
-      <title>Maven Coordinates – Bloomreach Forge Marketplace</title>
+      <title>Introduction – Bloomreach Forge Marketplace</title>
   <link rel="stylesheet" href="./css/forge-maven-skin-syntaxhighlighter-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/forge-maven-skin-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/site.css" />
@@ -58,7 +58,8 @@
     
     <ul class="nav nav-list">
             <li class="nav-header">Getting Started</li>
-              <li>  <a href="index.html" title="Home">  <span class="none"></span>  Home</a>  </li>
+              <li class="active">  <a href="#"><span class="none"></span>Home</a>
+  </li>
         <li>  <a href="install.html" title="Installation">  <span class="none"></span>  Installation</a>  </li>
                   <li class="nav-header">For Addon Developers</li>
               <li>  <a href="addon-descriptor.html" title="Creating Descriptors">  <span class="none"></span>  Creating Descriptors</a>  </li>
@@ -85,29 +86,121 @@
     </div>
   </div>
   <div id="bodyColumn"  class="span10" >
-    <section><a id="Maven_Coordinates"></a>
-<h1>Maven Coordinates</h1><section><a id="Apache_Maven"></a>
-<h2>Apache Maven</h2>
-<pre>&lt;dependency&gt;
-  &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
-  &lt;artifactId&gt;brxm-marketplace&lt;/artifactId&gt;
-  &lt;version&gt;1.0.6&lt;/version&gt;
-  &lt;type&gt;pom&lt;/type&gt;
-&lt;/dependency&gt;</pre></section><section><a id="Apache_Ivy"></a>
-<h2>Apache Ivy</h2>
-<pre>&lt;dependency org=&quot;org.bloomreach.forge.marketplace&quot; name=&quot;brxm-marketplace&quot; rev=&quot;1.0.6&quot;&gt;
-  &lt;artifact name=&quot;brxm-marketplace&quot; type=&quot;pom&quot; /&gt;
-&lt;/dependency&gt;</pre></section><section><a id="Groovy_Grape"></a>
-<h2>Groovy Grape</h2>
-<pre>@Grapes(
-@Grab(group='org.bloomreach.forge.marketplace', module='brxm-marketplace', version='1.0.6')
-)</pre></section><section><a id="Gradle.2FGrails"></a>
-<h2>Gradle/Grails</h2>
-<pre>implementation 'org.bloomreach.forge.marketplace:brxm-marketplace:1.0.6'</pre></section><section><a id="Scala_SBT"></a>
-<h2>Scala SBT</h2>
-<pre>libraryDependencies += &quot;org.bloomreach.forge.marketplace&quot; % &quot;brxm-marketplace&quot; % &quot;1.0.6&quot;</pre></section><section><a id="Leiningen"></a>
-<h2>Leiningen</h2>
-<pre>[org.bloomreach.forge.marketplace/brxm-marketplace &quot;1.0.6&quot;]</pre></section></section>
+    
+  
+
+    <section><a id="Bloomreach_Forge_Marketplace"></a>
+<h1>Bloomreach Forge Marketplace</h1>
+
+      <section><a id="What_is_the_Marketplace.3F"></a>
+<h2>What is the Marketplace?</h2>
+        
+<p>
+          The Bloomreach Forge Marketplace is an Essentials plugin that brings addon discovery
+          directly into your brXM development environment. Browse, search, and get installation
+          instructions for Forge addons without leaving the CMS.
+        </p>
+        
+<p>
+          Key features:
+        </p>
+        
+<ul>
+          
+<li><strong>Browse Addons</strong> - Search and filter available Forge addons</li>
+          
+<li><strong>Multi-Source Support</strong> - Aggregate addons from Forge, partners, and internal sources</li>
+          
+<li><strong>Version Compatibility</strong> - See which addon versions work with your brXM version</li>
+          
+<li><strong>Installation Guide</strong> - View step-by-step installation instructions</li>
+        </ul>
+      </section>
+
+      <section><a id="For_Addon_Developers"></a>
+<h2>For Addon Developers</h2>
+        
+<p>
+          Publishing your addon to the Marketplace is simple:
+        </p>
+        
+<ol style="list-style-type: decimal;">
+          
+<li>Add a <code>.forge/addon-config.yaml</code> to your repository</li>
+          
+<li>Set up the GitHub workflow for auto-generation</li>
+          
+<li>Release your addon - the descriptor is generated automatically</li>
+        </ol>
+        
+<p>
+          See <a href="addon-descriptor.html">Creating Descriptors</a> for the complete guide.
+        </p>
+      </section>
+
+      <section><a id="For_Platform_Operators"></a>
+<h2>For Platform Operators</h2>
+        
+<p>
+          Add custom addon sources to include partner or internal addons:
+        </p>
+        
+<ul>
+          
+<li>Create a manifest file hosting your addon descriptors</li>
+          
+<li>Register the source via REST API or JCR configuration</li>
+          
+<li>Addons appear alongside Forge addons in the Marketplace</li>
+        </ul>
+        
+<p>
+          See <a href="custom-sources.html">Custom Sources</a> for details.
+        </p>
+      </section>
+
+      <section><a id="Version_Compatibility"></a>
+<h2>Version Compatibility</h2>
+        
+<table class="table table-striped">
+          
+<tr class="a">
+            
+<th>Marketplace Version</th>
+            
+<th>brXM Version</th>
+            
+<th>Java</th>
+          </tr>
+          
+<tr class="b">
+            
+<td>1.x</td>
+            
+<td>16.x</td>
+            
+<td>17+</td>
+          </tr>
+        </table>
+      </section>
+
+      <section><a id="Project_Links"></a>
+<h2>Project Links</h2>
+        
+<ul>
+          
+<li><a href="https://github.com/bloomreach-forge/brxm-marketplace" class="externalLink">Source Code on GitHub</a></li>
+          
+<li><a href="https://github.com/bloomreach-forge/brxm-marketplace/issues" class="externalLink">Issue Tracker</a></li>
+          
+<li><a href="https://github.com/bloomreach-forge/brxm-marketplace/releases" class="externalLink">Releases</a></li>
+        </ul>
+      </section>
+
+    </section>
+
+  
+
     </div>
     </div>
     </div>
