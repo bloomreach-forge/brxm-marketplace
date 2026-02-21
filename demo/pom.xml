@@ -12,7 +12,7 @@
   <description>Marketplace Demo</description>
   <groupId>org.bloomreach.forge.marketplace</groupId>
   <artifactId>demo</artifactId>
-  <version>1.0.6</version>
+  <version>1.0.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <!--
