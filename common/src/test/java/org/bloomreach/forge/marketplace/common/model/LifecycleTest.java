@@ -28,8 +28,8 @@ class LifecycleTest {
         Lifecycle lifecycle = new Lifecycle();
         assertNull(lifecycle.getStatus());
 
-        lifecycle.setStatus(Lifecycle.LifecycleStatus.active);
-        assertEquals(Lifecycle.LifecycleStatus.active, lifecycle.getStatus());
+        lifecycle.setStatus(Lifecycle.LifecycleStatus.ACTIVE);
+        assertEquals(Lifecycle.LifecycleStatus.ACTIVE, lifecycle.getStatus());
     }
 
     @Test
@@ -54,10 +54,10 @@ class LifecycleTest {
     @Test
     void lifecycleStatus_allValues() {
         assertEquals(5, Lifecycle.LifecycleStatus.values().length);
-        assertNotNull(Lifecycle.LifecycleStatus.valueOf("incubating"));
-        assertNotNull(Lifecycle.LifecycleStatus.valueOf("active"));
-        assertNotNull(Lifecycle.LifecycleStatus.valueOf("maintenance"));
-        assertNotNull(Lifecycle.LifecycleStatus.valueOf("deprecated"));
-        assertNotNull(Lifecycle.LifecycleStatus.valueOf("archived"));
+        assertNotNull(Lifecycle.LifecycleStatus.valueOf("INCUBATING"));
+        assertNotNull(Lifecycle.LifecycleStatus.valueOf("ACTIVE"));
+        assertNotNull(Lifecycle.LifecycleStatus.valueOf("MAINTENANCE"));
+        assertNotNull(Lifecycle.LifecycleStatus.valueOf("DEPRECATED"));
+        assertNotNull(Lifecycle.LifecycleStatus.valueOf("ARCHIVED"));
     }
 }

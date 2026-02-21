@@ -24,7 +24,62 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.6">
+        <p><strong>Release Date:</strong> 2026-02-21</p>
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Features</h4>
+        <ul>
+          <li>Epoch-aware installation: the backend now selects the compatible epoch (addon
+              major-version line) for the project's brXM version when installing, rather than
+              always using the latest release</li>
+          <li>Epoch-aware UI: version badges, install/update button labels, brXM range display,
+              and Maven dependency snippets in the detail panel now reflect the epoch-matched
+              version rather than the master version</li>
+          <li>Compatibility warning dialog: when no epoch is compatible with the project's brXM
+              version, clicking Install shows a confirmation dialog so users can proceed
+              knowingly</li>
+          <li>Epoch-aware misconfiguration detection: validates installed dependencies against
+              master and all epoch expectations; an issue is only reported when no expectation
+              from any epoch is satisfied. Supports addons that rename or move artifacts across
+              major versions</li>
+          <li>Epoch-aware installed addon matching: detects installed addons whose Maven artifact
+              coordinates differ between major versions</li>
+          <li>Frontend test suite: 81 Jest + angular-mocks unit tests covering the AngularJS
+              controller and service, runnable with <code>npm test</code></li>
+          <li>Structured error responses: REST error payloads now include both a human-readable
+              <code>message</code> and a machine-readable <code>code</code>
+              (e.g., <code>NOT_FOUND</code>, <code>ADDON_NOT_FOUND</code>)</li>
+        </ul>
+
+        <h4>Fixed</h4>
+        <ul>
+          <li>Flash of multiple action buttons (Install/Update/Fix/Uninstall) when clicking an
+              action: replaced <code>ng-if</code> with <code>ng-show</code> for atomic,
+              flicker-free state transitions</li>
+          <li>Momentary overlap of the empty-state message and the addon list when switching
+              filter chips: replaced independent <code>ng-if</code>/<code>ng-repeat</code> with
+              <code>ng-switch</code></li>
+          <li>Documentation link briefly flashing between primary and secondary style during
+              install: added <code>installing</code> guard so the link style does not change
+              mid-operation</li>
+          <li><code>addons-index.json</code> is now preserved during gh-pages site redeploy;
+              previously the manifest was wiped whenever documentation was regenerated</li>
+        </ul>
+
+        <h4>Changed</h4>
+        <ul>
+          <li>Java enum constants renamed to uppercase <code>CONSTANT_CASE</code>
+              (<code>approved</code> → <code>APPROVED</code>,
+               <code>community</code> → <code>COMMUNITY</code>, etc.) to comply with Java naming
+              conventions. JSON and YAML serialization is unchanged via explicit
+              <code>@JsonProperty</code> annotations — no breaking change for API consumers or
+              addon descriptor files</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.5">
+        <p><strong>Release Date:</strong> 2026-02-20</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 
         <h4>Security</h4>
@@ -59,6 +114,7 @@
       </subsection>
 
       <subsection name="Version 1.0.4">
+        <p><strong>Release Date:</strong> 2026-02-08</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 
         <h4>Features</h4>
@@ -101,6 +157,7 @@
       </subsection>
 
       <subsection name="Version 1.0.3">
+        <p><strong>Release Date:</strong> 2026-02-06</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 
         <h4>Improvements</h4>
@@ -117,6 +174,7 @@
       </subsection>
 
       <subsection name="Version 1.0.2">
+        <p><strong>Release Date:</strong> 2026-02-06</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 
         <h4>Features</h4>
@@ -139,6 +197,7 @@
       </subsection>
 
       <subsection name="Version 1.0.1">
+        <p><strong>Release Date:</strong> 2026-02-06</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
 
         <h4>Improvements</h4>

@@ -54,6 +54,17 @@
         return 0;
     }
 
+    // Returns true when brxmVersion falls within epoch's supported range.
+    // max (explicit) is checked inclusively; inferredMax (generator-derived) exclusively.
+    function isEpochCompatible(epoch, brxmVersion) {
+        if (!epoch || !epoch.compatibility || !epoch.compatibility.brxm) return false;
+        var brxm = epoch.compatibility.brxm;
+        if (brxm.min && compareVersions(brxmVersion, brxm.min) < 0) return false;
+        if (brxm.max && compareVersions(brxmVersion, brxm.max) > 0) return false;
+        if (epoch.inferredMax && compareVersions(brxmVersion, epoch.inferredMax) >= 0) return false;
+        return true;
+    }
+
     // =========================================================================
     // Marketplace API Service
     // =========================================================================
@@ -153,6 +164,9 @@
                 $scope.showUninstallConfirm = false;
                 $scope.addonToUninstall = null;
 
+                $scope.showCompatWarning = false;
+                $scope.addonToInstall = null;
+
                 $scope.projectContext = {
                     brxmVersion: null,
                     javaVersion: null,
@@ -193,8 +207,8 @@
                 $scope.hasUpdate = function (addon) {
                     if (!$scope.isInstalled(addon)) return false;
                     var installed = $scope.getInstalledVersion(addon);
-                    return installed && addon.version &&
-                        compareVersions(addon.version, installed) > 0;
+                    var display = $scope.getDisplayVersion(addon);
+                    return installed && display && compareVersions(display, installed) > 0;
                 };
 
                 $scope.isMisconfigured = function (addon) {
@@ -230,18 +244,89 @@
                 // -----------------------------------------------------------------
 
                 $scope.getCompatibilityStatus = function (addon) {
+                    var projectVersion = $scope.projectContext.brxmVersion;
+                    if (!projectVersion) return { status: 'unknown', label: '', class: '' };
+
+                    var versions = addon && addon.versions;
+                    if (versions && versions.length > 0) {
+                        var hasMatch = versions.some(function (epoch) {
+                            return isEpochCompatible(epoch, projectVersion);
+                        });
+                        return hasMatch
+                            ? { status: 'compatible', label: 'Compatible', class: 'badge-compatible' }
+                            : { status: 'incompatible', label: 'Incompatible', class: 'badge-incompatible' };
+                    }
+
                     if (!addon || !addon.compatibility || !addon.compatibility.brxm) {
                         return { status: 'unknown', label: '', class: '' };
                     }
                     var compat = addon.compatibility.brxm;
-                    var projectVersion = $scope.projectContext.brxmVersion;
                     var minOk = !compat.min || compareVersions(projectVersion, compat.min) >= 0;
                     var maxOk = !compat.max || compareVersions(projectVersion, compat.max) <= 0;
+                    return (minOk && maxOk)
+                        ? { status: 'compatible', label: 'Compatible', class: 'badge-compatible' }
+                        : { status: 'incompatible', label: 'Incompatible', class: 'badge-incompatible' };
+                };
 
-                    if (minOk && maxOk) {
-                        return { status: 'compatible', label: 'Compatible', class: 'badge-compatible' };
+                // Returns the first epoch from addon.versions[] whose range covers the
+                // project's brXM version, or null if no match / no project context.
+                $scope.getMatchingEpoch = function (addon) {
+                    if (!addon || !addon.versions || addon.versions.length === 0) return null;
+                    var brxmVersion = $scope.projectContext.brxmVersion;
+                    if (!brxmVersion) return null;
+                    for (var i = 0; i < addon.versions.length; i++) {
+                        if (isEpochCompatible(addon.versions[i], brxmVersion)) {
+                            return addon.versions[i];
+                        }
                     }
-                    return { status: 'incompatible', label: 'Incompatible', class: 'badge-incompatible' };
+                    return null;
+                };
+
+                // Returns a human-readable brXM range string.
+                // When epochs are present, prefers the matched epoch's range; falls back to
+                // the earliest epoch's min so the full supported history is visible.
+                $scope.getBrxmRange = function (addon) {
+                    if (!addon) return '';
+                    var versions = addon.versions;
+                    if (versions && versions.length > 0) {
+                        var epoch = $scope.getMatchingEpoch(addon) || versions[0];
+                        var compat = epoch.compatibility && epoch.compatibility.brxm;
+                        if (compat && compat.min) {
+                            var ceiling = compat.max || epoch.inferredMax;
+                            return compat.min + (ceiling ? ' \u2014 ' + ceiling : '+');
+                        }
+                    }
+                    if (addon.compatibility && addon.compatibility.brxm && addon.compatibility.brxm.min) {
+                        var brxm = addon.compatibility.brxm;
+                        return brxm.min + (brxm.max ? ' \u2014 ' + brxm.max : '+');
+                    }
+                    return '';
+                };
+
+                // Returns the version string of the matching epoch when it differs from
+                // addon.version (i.e. the user needs an older release to match their brXM).
+                $scope.getRecommendedVersion = function (addon) {
+                    if (!addon || !$scope.hasProjectContext()) return null;
+                    var epoch = $scope.getMatchingEpoch(addon);
+                    if (!epoch || epoch.version === addon.version) return null;
+                    return epoch.version;
+                };
+
+                // The version to display/use for this addon given the current project context.
+                // Prefers the matching epoch's version over the master addon.version.
+                $scope.getDisplayVersion = function (addon) {
+                    return $scope.getRecommendedVersion(addon) || (addon && addon.version) || '';
+                };
+
+                // The artifacts to display for this addon given the current project context.
+                // Uses the matching epoch's artifact list when available.
+                $scope.getDisplayArtifacts = function (addon) {
+                    if (!addon) return [];
+                    var epoch = $scope.getMatchingEpoch(addon);
+                    if (epoch && epoch.artifacts && epoch.artifacts.length > 0) {
+                        return epoch.artifacts;
+                    }
+                    return addon.artifacts || [];
                 };
 
                 // -----------------------------------------------------------------
@@ -267,9 +352,10 @@
 
                 $scope.getArtifactsByTarget = function (addon) {
                     var groups = { cms: [], site: [], other: [] };
-                    if (!addon || !addon.artifacts) return groups;
+                    var artifacts = $scope.getDisplayArtifacts(addon);
+                    if (!artifacts || artifacts.length === 0) return groups;
 
-                    addon.artifacts.forEach(function (artifact) {
+                    artifacts.forEach(function (artifact) {
                         if (!artifact.maven) return;
                         var aid = (artifact.maven.artifactId || '').toLowerCase();
                         if (aid.indexOf('cms') >= 0 || aid.indexOf('-repository') >= 0) {
@@ -424,7 +510,7 @@
                 // -----------------------------------------------------------------
 
                 $scope.copyToClipboard = function (artifact, $event) {
-                    var version = artifact.maven.version || $scope.selectedAddon.version;
+                    var version = artifact.maven.version || $scope.getDisplayVersion($scope.selectedAddon);
                     var text = '<dependency>\n' +
                         '  <groupId>' + artifact.maven.groupId + '</groupId>\n' +
                         '  <artifactId>' + artifact.maven.artifactId + '</artifactId>\n' +
@@ -549,7 +635,7 @@
                 }
 
                 function hasInstallableArtifacts(addon) {
-                    return addon.artifacts && addon.artifacts.some(function (a) {
+                    return $scope.getDisplayArtifacts(addon).some(function (a) {
                         return a.type === 'maven-lib' && a.maven && a.target;
                     });
                 }
@@ -594,6 +680,12 @@
                 };
 
                 $scope.installAddon = function (addon) {
+                    var compatStatus = $scope.getCompatibilityStatus(addon);
+                    if ($scope.hasProjectContext() && compatStatus && compatStatus.status === 'incompatible') {
+                        $scope.showCompatWarning = true;
+                        $scope.addonToInstall = addon;
+                        return;
+                    }
                     performInstallOperation(addon, function () {
                         return marketplaceService.installAddon(addon.id, false);
                     }, 'Installation');
@@ -641,6 +733,20 @@
                     $scope.showUninstallConfirm = false;
                     $scope.uninstallAddon($scope.addonToUninstall);
                     $scope.addonToUninstall = null;
+                };
+
+                $scope.cancelCompatWarning = function () {
+                    $scope.showCompatWarning = false;
+                    $scope.addonToInstall = null;
+                };
+
+                $scope.proceedInstall = function () {
+                    $scope.showCompatWarning = false;
+                    var addon = $scope.addonToInstall;
+                    $scope.addonToInstall = null;
+                    performInstallOperation(addon, function () {
+                        return marketplaceService.installAddon(addon.id, false);
+                    }, 'Installation');
                 };
 
                 // -----------------------------------------------------------------

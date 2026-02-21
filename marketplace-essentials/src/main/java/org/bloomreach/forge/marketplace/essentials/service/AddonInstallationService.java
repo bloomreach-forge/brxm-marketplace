@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationPlan;
@@ -154,9 +155,24 @@ public class AddonInstallationService {
         List<DependencyChange> dependencyChanges = new ArrayList<>();
         List<PropertyChange> propertyChanges = new ArrayList<>();
 
-        // Generate version property name from addon id (e.g., "brut" -> "brut.version")
+        // Resolve epoch-compatible version and artifacts when project brXM is known
+        String brxmVersion = Optional.ofNullable(projectContextService.getProjectContext())
+                .map(org.bloomreach.forge.marketplace.essentials.model.ProjectContext::brxmVersion)
+                .orElse(null);
+        Optional<AddonVersion> epoch = brxmVersion != null
+                ? addonRegistry.findCompatibleEpoch(addon.getId(), brxmVersion)
+                : Optional.empty();
+
         String versionProperty = addon.getId() + ".version";
-        String version = addon.getVersion();
+        String version = epoch.map(AddonVersion::getVersion).orElse(addon.getVersion());
+        List<Artifact> artifacts = epoch
+                .filter(e -> e.getArtifacts() != null && !e.getArtifacts().isEmpty())
+                .map(AddonVersion::getArtifacts)
+                .orElse(addon.getArtifacts());
+
+        epoch.ifPresent(e -> log.info(
+                "Using epoch {} (brXM {}) instead of master version {} for addon '{}'",
+                e.getVersion(), brxmVersion, addon.getVersion(), addon.getId()));
 
         // Add version property to root pom (only once per addon)
         propertyChanges.add(new PropertyChange(
@@ -165,7 +181,7 @@ public class AddonInstallationService {
                 version
         ));
 
-        for (Artifact artifact : addon.getArtifacts()) {
+        for (Artifact artifact : artifacts) {
             if (artifact.getType() != Artifact.ArtifactType.MAVEN_LIB) {
                 continue;
             }

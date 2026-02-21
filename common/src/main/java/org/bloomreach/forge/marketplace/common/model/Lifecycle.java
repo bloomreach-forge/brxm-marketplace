@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -50,10 +51,10 @@ public class Lifecycle {
     }
 
     public enum LifecycleStatus {
-        incubating,
-        active,
-        maintenance,
-        deprecated,
-        archived
+        @JsonProperty("incubating") INCUBATING,
+        @JsonProperty("active") ACTIVE,
+        @JsonProperty("maintenance") MAINTENANCE,
+        @JsonProperty("deprecated") DEPRECATED,
+        @JsonProperty("archived") ARCHIVED
     }
 }

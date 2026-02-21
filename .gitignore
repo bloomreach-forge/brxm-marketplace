@@ -40,5 +40,9 @@ Thumbs.db
 # Claude Code (user-specific)
 .claude/
 
+# Node / Jest (frontend tests)
+node_modules/
+package-lock.json
+
 # Generated site (committed to master by release workflow)
 docs/

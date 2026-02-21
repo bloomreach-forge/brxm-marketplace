@@ -113,9 +113,10 @@
           <option value="popular">Most Popular</option>
         </select>
       </div>
-      <div class="list-scroll">
-        <!-- Empty State -->
-        <div class="state-container" ng-if="addons.length === 0" style="padding: 60px 20px;">
+      <div class="list-scroll" ng-switch on="addons.length">
+        <!-- Empty State — ng-switch ensures this and the list are toggled by the same watcher,
+             preventing the brief overlap that occurs when ng-if and ng-repeat fire separately. -->
+        <div class="state-container" ng-switch-when="0" style="padding: 60px 20px;">
           <h3 ng-if="quickFilter === 'installed' && !hasProjectContext()">Project not detected</h3>
           <p ng-if="quickFilter === 'installed' && !hasProjectContext()">Run Essentials in development mode to detect installed add-ons</p>
 
@@ -145,27 +146,29 @@
         </div>
 
         <!-- Addon List -->
-        <div class="addon-item"
-             ng-repeat="addon in addons track by addon.id"
-             ng-click="selectAddon(addon)"
-             ng-keydown="handleKeyDown($event, addon, $index)"
-             ng-class="{'selected': selectedAddon && selectedAddon.id === addon.id}"
-             tabindex="0"
-             role="button"
-             aria-label="{{addon.name}}">
-          <div class="addon-icon" ng-class="getCategoryClass(addon.category)">
-            {{addon.name.charAt(0)}}
-          </div>
-          <div class="addon-info">
-            <h3>{{addon.name}}</h3>
-            <p>{{addon.description}}</p>
-            <div class="addon-meta">
-              <span class="tag tag-version" ng-if="addon.version">v{{addon.version}}</span>
-              <span class="tag tag-category" ng-if="addon.category">{{formatCategory(addon.category)}}</span>
+        <div ng-switch-default>
+          <div class="addon-item"
+               ng-repeat="addon in addons track by addon.id"
+               ng-click="selectAddon(addon)"
+               ng-keydown="handleKeyDown($event, addon, $index)"
+               ng-class="{'selected': selectedAddon && selectedAddon.id === addon.id}"
+               tabindex="0"
+               role="button"
+               aria-label="{{addon.name}}">
+            <div class="addon-icon" ng-class="getCategoryClass(addon.category)">
+              {{addon.name.charAt(0)}}
             </div>
-            <div class="addon-badges">
-              <span class="badge" ng-class="getInstallStatus(addon).class" ng-if="getInstallStatus(addon).label">{{getInstallStatus(addon).label}}</span>
-              <span class="badge" ng-class="getCompatibilityStatus(addon).class" ng-if="getCompatibilityStatus(addon).label">{{getCompatibilityStatus(addon).label}}</span>
+            <div class="addon-info">
+              <h3>{{addon.name}}</h3>
+              <p>{{addon.description}}</p>
+              <div class="addon-meta">
+                <span class="tag tag-version" ng-if="addon.version">v{{getDisplayVersion(addon)}}</span>
+                <span class="tag tag-category" ng-if="addon.category">{{formatCategory(addon.category)}}</span>
+              </div>
+              <div class="addon-badges">
+                <span class="badge" ng-class="getInstallStatus(addon).class" ng-if="getInstallStatus(addon).label">{{getInstallStatus(addon).label}}</span>
+                <span class="badge" ng-class="getCompatibilityStatus(addon).class" ng-if="getCompatibilityStatus(addon).label">{{getCompatibilityStatus(addon).label}}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -202,52 +205,54 @@
               By {{selectedAddon.publisher.name}}
             </div>
             <div class="detail-tags">
-              <span class="tag tag-version" ng-if="selectedAddon.version">v{{selectedAddon.version}}</span>
+              <span class="tag tag-version" ng-if="selectedAddon.version">v{{getDisplayVersion(selectedAddon)}}</span>
               <span class="tag tag-category" ng-if="selectedAddon.category">{{formatCategory(selectedAddon.category)}}</span>
             </div>
           </div>
         </div>
         <div class="detail-actions">
+          <!-- Spinner — ng-show keeps all buttons in the DOM so transitions are
+               handled by display:none with no enter/leave animation classes. -->
+          <button class="btn btn-primary" ng-show="installing" disabled>
+            <span class="btn-spinner"></span>
+            {{lastOperationName || 'Working'}}...
+          </button>
+
           <!-- Install Button -->
           <button class="btn btn-primary"
-                  ng-if="canInstall(selectedAddon)"
-                  ng-click="installAddon(selectedAddon)"
-                  ng-disabled="installing">
-            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  ng-show="!installing && canInstall(selectedAddon)"
+                  ng-click="installAddon(selectedAddon)">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
               <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
             </svg>
-            <span ng-if="installing" class="btn-spinner"></span>
-            {{installing ? 'Installing...' : 'Install'}}
+            Install
           </button>
 
           <!-- Update Button -->
           <button class="btn btn-update"
-                  ng-if="canUpdate(selectedAddon)"
-                  ng-click="updateAddon(selectedAddon)"
-                  ng-disabled="installing">
-            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  ng-show="!installing && canUpdate(selectedAddon)"
+                  ng-click="updateAddon(selectedAddon)">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
               <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
             </svg>
-            <span ng-if="installing" class="btn-spinner"></span>
-            {{installing ? 'Updating...' : 'Update to v' + selectedAddon.version}}
+            Update to v{{getDisplayVersion(selectedAddon)}}
           </button>
 
           <!-- Fix Button -->
           <button class="btn btn-warning"
-                  ng-if="canFix(selectedAddon)"
-                  ng-click="fixAddon(selectedAddon)"
-                  ng-disabled="installing">
-            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  ng-show="!installing && canFix(selectedAddon)"
+                  ng-click="fixAddon(selectedAddon)">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
             </svg>
-            <span ng-if="installing" class="btn-spinner"></span>
-            {{installing ? 'Fixing...' : 'Fix Installation'}}
+            Fix Installation
           </button>
 
           <!-- Installed Badge (only when up to date) -->
-          <span class="badge-installed-action" ng-if="isInstalled(selectedAddon) && !hasUpdate(selectedAddon) && !isMisconfigured(selectedAddon)">
+          <span class="badge-installed-action"
+                ng-show="!installing && isInstalled(selectedAddon) && !hasUpdate(selectedAddon) && !isMisconfigured(selectedAddon)">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
             </svg>
@@ -256,25 +261,23 @@
 
           <!-- Uninstall Button -->
           <button class="btn btn-danger"
-                  ng-if="canUninstall(selectedAddon)"
-                  ng-click="confirmUninstall(selectedAddon)"
-                  ng-disabled="installing">
-            <svg ng-if="!installing" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  ng-show="!installing && canUninstall(selectedAddon)"
+                  ng-click="confirmUninstall(selectedAddon)">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
               <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
             </svg>
-            <span ng-if="installing" class="btn-spinner"></span>
             Uninstall
           </button>
 
-          <a class="btn btn-primary" ng-if="getGitHubPagesUrl(selectedAddon) && !canInstall(selectedAddon) && !isInstalled(selectedAddon)" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
+          <a class="btn btn-primary" ng-show="getGitHubPagesUrl(selectedAddon) && !installing && !canInstall(selectedAddon) && !isInstalled(selectedAddon)" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
               <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.5h14V4a1 1 0 0 0-1-1H2zm13 2.5H1V12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5z"/>
             </svg>
             Documentation
           </a>
-          <a class="btn btn-secondary" ng-if="getGitHubPagesUrl(selectedAddon) && (canInstall(selectedAddon) || isInstalled(selectedAddon))" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
+          <a class="btn btn-secondary" ng-show="getGitHubPagesUrl(selectedAddon) && (installing || canInstall(selectedAddon) || isInstalled(selectedAddon))" href="{{getGitHubPagesUrl(selectedAddon)}}" target="_blank">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
               <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.5h14V4a1 1 0 0 0-1-1H2zm13 2.5H1V12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5z"/>
@@ -371,10 +374,10 @@
       </div>
 
       <!-- Compatibility Strip -->
-      <div class="compat-strip" ng-if="selectedAddon.compatibility">
-        <div class="compat-item" ng-if="selectedAddon.compatibility.brxm">
+      <div class="compat-strip" ng-if="selectedAddon.compatibility || (selectedAddon.versions && selectedAddon.versions.length > 0)">
+        <div class="compat-item" ng-if="getBrxmRange(selectedAddon)">
           <label>brXM Range</label>
-          <div class="value">{{selectedAddon.compatibility.brxm.min}} — {{selectedAddon.compatibility.brxm.max}}</div>
+          <div class="value">{{getBrxmRange(selectedAddon)}}</div>
         </div>
         <div class="compat-item">
           <label>Your Project</label>
@@ -382,6 +385,10 @@
             {{projectContext.brxmVersion}} {{getCompatibilityStatus(selectedAddon).status === 'compatible' ? '✓' : (getCompatibilityStatus(selectedAddon).status === 'incompatible' ? '✗' : '')}}
           </div>
           <div class="value" ng-if="!hasProjectContext()" style="color: #9ca3af;">Not detected</div>
+        </div>
+        <div class="compat-item" ng-if="getRecommendedVersion(selectedAddon)">
+          <label>Compatible Version</label>
+          <div class="value compat-ok">v{{getRecommendedVersion(selectedAddon)}}</div>
         </div>
         <div class="compat-item" ng-if="selectedAddon.compatibility.java">
           <label>Java</label>
@@ -404,9 +411,9 @@
         <div class="detail-section">
           <h4>Details</h4>
           <div class="info-grid">
-            <div class="info-card" ng-if="selectedAddon.compatibility && selectedAddon.compatibility.brxm">
+            <div class="info-card" ng-if="getBrxmRange(selectedAddon)">
               <label>brXM Compatibility</label>
-              <div class="value">{{selectedAddon.compatibility.brxm.min}} — {{selectedAddon.compatibility.brxm.max}}</div>
+              <div class="value">{{getBrxmRange(selectedAddon)}}</div>
             </div>
             <div class="info-card" ng-if="selectedAddon.compatibility && selectedAddon.compatibility.java">
               <label>Java Version</label>
@@ -424,14 +431,14 @@
         </div>
 
         <!-- Installation -->
-        <div class="detail-section" ng-if="selectedAddon.artifacts && selectedAddon.artifacts.length > 0">
+        <div class="detail-section" ng-if="getDisplayArtifacts(selectedAddon).length > 0">
           <h4>Installation</h4>
 
           <!-- Version Compare (if installed) -->
           <div class="version-compare" ng-if="isInstalled(selectedAddon)">
             <span class="installed">Installed: v{{getInstalledVersion(selectedAddon)}}</span>
             <span class="arrow" ng-if="hasUpdate(selectedAddon)">→</span>
-            <span class="latest" ng-if="hasUpdate(selectedAddon)">Latest: v{{selectedAddon.version}}</span>
+            <span class="latest" ng-if="hasUpdate(selectedAddon)">Latest: v{{getDisplayVersion(selectedAddon)}}</span>
             <span class="latest" ng-if="!hasUpdate(selectedAddon)" style="color: #166534;">Up to date</span>
           </div>
 
@@ -449,7 +456,7 @@
                   <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
-    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || getDisplayVersion(selectedAddon)}}</span><span class="hl-tag">&lt;/version&gt;</span>
 <span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
 </span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
@@ -471,7 +478,7 @@
                   <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
-    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || getDisplayVersion(selectedAddon)}}</span><span class="hl-tag">&lt;/version&gt;</span>
 <span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
 </span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
@@ -493,7 +500,7 @@
                   <pre><code><span class="hl-tag">&lt;dependency&gt;</span>
     <span class="hl-tag">&lt;groupId&gt;</span><span class="hl-value">{{artifact.maven.groupId}}</span><span class="hl-tag">&lt;/groupId&gt;</span>
     <span class="hl-tag">&lt;artifactId&gt;</span><span class="hl-value">{{artifact.maven.artifactId}}</span><span class="hl-tag">&lt;/artifactId&gt;</span>
-    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || selectedAddon.version}}</span><span class="hl-tag">&lt;/version&gt;</span>
+    <span class="hl-tag">&lt;version&gt;</span><span class="hl-value">{{artifact.maven.version || getDisplayVersion(selectedAddon)}}</span><span class="hl-tag">&lt;/version&gt;</span>
 <span ng-if="artifact.scope">    <span class="hl-tag">&lt;scope&gt;</span><span class="hl-value">{{artifact.scope}}</span><span class="hl-tag">&lt;/scope&gt;</span>
 </span><span class="hl-tag">&lt;/dependency&gt;</span></code></pre>
                 </div>
@@ -530,6 +537,26 @@
       <div class="confirm-dialog-footer">
         <button class="btn btn-secondary" ng-click="cancelUninstall()">Cancel</button>
         <button class="btn btn-danger" ng-click="proceedUninstall()">Uninstall</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" ng-if="showCompatWarning">
+    <div class="confirm-dialog">
+      <div class="confirm-dialog-header">
+        <h4>Install {{addonToInstall.name}}?</h4>
+      </div>
+      <div class="confirm-dialog-body">
+        <div class="confirm-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+          <span>This addon is not compatible with your brXM version ({{projectContext.brxmVersion}}). Installing may cause compilation errors or runtime issues. Consider upgrading your brXM installation first.</span>
+        </div>
+      </div>
+      <div class="confirm-dialog-footer">
+        <button class="btn btn-secondary" ng-click="cancelCompatWarning()">Cancel</button>
+        <button class="btn btn-warning" ng-click="proceedInstall()">Install anyway</button>
       </div>
     </div>
   </div>

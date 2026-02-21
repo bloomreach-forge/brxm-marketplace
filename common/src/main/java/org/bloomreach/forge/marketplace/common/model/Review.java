@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Review {
@@ -49,16 +50,15 @@ public class Review {
     }
 
     public enum ReviewStatus {
-        unreviewed,
-        @com.fasterxml.jackson.annotation.JsonProperty("in-review")
-        IN_REVIEW,
-        approved,
-        rejected
+        @JsonProperty("unreviewed") UNREVIEWED,
+        @JsonProperty("in-review") IN_REVIEW,
+        @JsonProperty("approved") APPROVED,
+        @JsonProperty("rejected") REJECTED
     }
 
     public enum ReviewLevel {
-        basic,
-        security,
-        full
+        @JsonProperty("basic") BASIC,
+        @JsonProperty("security") SECURITY,
+        @JsonProperty("full") FULL
     }
 }

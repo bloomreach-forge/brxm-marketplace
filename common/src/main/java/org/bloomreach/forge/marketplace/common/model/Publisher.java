@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Publisher {
@@ -49,10 +50,10 @@ public class Publisher {
     }
 
     public enum PublisherType {
-        bloomreach,
-        ps,
-        partner,
-        community,
-        internal
+        @JsonProperty("bloomreach") BLOOMREACH,
+        @JsonProperty("ps") PS,
+        @JsonProperty("partner") PARTNER,
+        @JsonProperty("community") COMMUNITY,
+        @JsonProperty("internal") INTERNAL
     }
 }

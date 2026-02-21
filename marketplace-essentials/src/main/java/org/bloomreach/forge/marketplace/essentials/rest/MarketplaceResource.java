@@ -172,7 +172,7 @@ public class MarketplaceResource {
         validateAddonId(id);
         String basedir = System.getProperty("project.basedir");
         InstallationResult result = operation.apply(basedir);
-        if (result.status() == InstallationResult.Status.failed) {
+        if (result.status() == InstallationResult.Status.FAILED) {
             throw new InstallationException(result);
         }
         return result;

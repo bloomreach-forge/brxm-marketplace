@@ -110,9 +110,16 @@ jobs:
           git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
           git checkout gh-pages
 
+          # Preserve manifest before wiping
+          [ -f addons-index.json ] && cp addons-index.json /tmp/addons-index.json || true
+
           # Replace site content
           git rm -rf . 2>/dev/null || true
           cp -r /tmp/site-docs/* .
+
+          # Restore manifest
+          [ -f /tmp/addons-index.json ] && cp /tmp/addons-index.json addons-index.json || true
+
           git add -A
           git diff --staged --quiet || git commit -m "releasing ${{ github.ref_name }}: regenerate docs"
           git push origin gh-pages

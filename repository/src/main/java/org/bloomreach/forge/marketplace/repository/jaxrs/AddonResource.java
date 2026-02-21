@@ -86,7 +86,7 @@ public class AddonResource {
             return Optional.empty();
         }
         try {
-            return Optional.of(Publisher.PublisherType.valueOf(value.toLowerCase()));
+            return Optional.of(Publisher.PublisherType.valueOf(value.toUpperCase()));
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }

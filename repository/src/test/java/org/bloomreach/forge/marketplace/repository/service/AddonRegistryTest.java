@@ -119,15 +119,15 @@ public class AddonRegistryTest {
     @Test
     void filter_byPublisherType_returnsMatchingAddons() {
         Addon bloomreachAddon = createAddon("br-addon", Category.SECURITY);
-        bloomreachAddon.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        bloomreachAddon.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
 
         Addon communityAddon = createAddon("comm-addon", Category.SECURITY);
-        communityAddon.getPublisher().setType(Publisher.PublisherType.community);
+        communityAddon.getPublisher().setType(Publisher.PublisherType.COMMUNITY);
 
         registry.register(bloomreachAddon);
         registry.register(communityAddon);
 
-        List<Addon> filtered = registry.filter(null, Publisher.PublisherType.bloomreach, null, null);
+        List<Addon> filtered = registry.filter(null, Publisher.PublisherType.BLOOMREACH, null, null);
 
         assertEquals(1, filtered.size());
         assertEquals("br-addon", filtered.get(0).getId());
@@ -180,15 +180,15 @@ public class AddonRegistryTest {
     @Test
     void filter_withMultipleCriteria_appliesAll() {
         Addon match = createAddon("match", Category.SECURITY);
-        match.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        match.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
         match.setPluginTier(PluginTier.FORGE_ADDON);
 
         Addon wrongCategory = createAddon("wrong-cat", Category.INTEGRATION);
-        wrongCategory.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        wrongCategory.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
         wrongCategory.setPluginTier(PluginTier.FORGE_ADDON);
 
         Addon wrongPublisher = createAddon("wrong-pub", Category.SECURITY);
-        wrongPublisher.getPublisher().setType(Publisher.PublisherType.community);
+        wrongPublisher.getPublisher().setType(Publisher.PublisherType.COMMUNITY);
         wrongPublisher.setPluginTier(PluginTier.FORGE_ADDON);
 
         registry.register(match);
@@ -197,7 +197,7 @@ public class AddonRegistryTest {
 
         List<Addon> filtered = registry.filter(
                 Category.SECURITY,
-                Publisher.PublisherType.bloomreach,
+                Publisher.PublisherType.BLOOMREACH,
                 PluginTier.FORGE_ADDON,
                 null
         );
@@ -440,6 +440,54 @@ public class AddonRegistryTest {
         assertEquals(1, result.size());
     }
 
+    // --- findCompatibleEpoch tests ---
+
+    @Test
+    void findCompatibleEpoch_returnsMatchingEpoch() {
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        AddonVersion v4 = epoch("4.0.2", "15.0.0", null, null);
+        v4.setInferredMax("17.0.0");
+        addon.setVersions(List.of(v4, epoch("5.0.1", "17.0.0", null, null)));
+        registry.register(addon);
+
+        var result = registry.findCompatibleEpoch("brut", "15.5.0");
+
+        assertTrue(result.isPresent());
+        assertEquals("4.0.2", result.get().getVersion());
+    }
+
+    @Test
+    void findCompatibleEpoch_returnsEmptyWhenNoBrxmVersionMatch() {
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        addon.setVersions(List.of(epoch("5.0.1", "17.0.0", null, null)));
+        registry.register(addon);
+
+        var result = registry.findCompatibleEpoch("brut", "14.0.0");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findCompatibleEpoch_returnsEmptyWhenNullBrxmVersion() {
+        Addon addon = createAddon("brut", Category.DEVELOPER_TOOLS);
+        addon.setVersions(List.of(epoch("5.0.1", "17.0.0", null, null)));
+        registry.register(addon);
+
+        assertTrue(registry.findCompatibleEpoch("brut", null).isEmpty());
+    }
+
+    @Test
+    void findCompatibleEpoch_returnsEmptyWhenAddonHasNoVersions() {
+        registry.register(createAddon("simple", Category.INTEGRATION));
+
+        assertTrue(registry.findCompatibleEpoch("simple", "16.0.0").isEmpty());
+    }
+
+    @Test
+    void findCompatibleEpoch_returnsEmptyWhenAddonNotFound() {
+        assertTrue(registry.findCompatibleEpoch("unknown", "16.0.0").isEmpty());
+    }
+
     private AddonVersion epoch(String version, String brxmMin, String brxmMax, String inferredMax) {
         Compatibility.VersionRange range = new Compatibility.VersionRange();
         range.setMin(brxmMin);
@@ -462,7 +510,7 @@ public class AddonRegistryTest {
 
         Publisher publisher = new Publisher();
         publisher.setName("Test Publisher");
-        publisher.setType(Publisher.PublisherType.community);
+        publisher.setType(Publisher.PublisherType.COMMUNITY);
         addon.setPublisher(publisher);
 
         return addon;

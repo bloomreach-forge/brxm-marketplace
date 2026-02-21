@@ -26,20 +26,8 @@ public class AddonNotFoundExceptionMapper implements ExceptionMapper<AddonNotFou
     @Override
     public Response toResponse(AddonNotFoundException exception) {
         return Response.status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse(exception.getMessage()))
+                .entity(new ErrorResponse(exception.getMessage(), "NOT_FOUND"))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
-    }
-
-    public static class ErrorResponse {
-        private final String message;
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
     }
 }
