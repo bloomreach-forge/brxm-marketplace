@@ -27,7 +27,7 @@
       <subsection name="Step 1: Define version property and dependency management in root pom.xml">
         <source><![CDATA[
 <properties>
-  <brxm-marketplace.version>1.0.3</brxm-marketplace.version>
+  <brxm-marketplace.version>1.0.6</brxm-marketplace.version>
 </properties>
 
 <dependencyManagement>

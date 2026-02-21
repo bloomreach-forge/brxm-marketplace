@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
 import org.bloomreach.forge.marketplace.essentials.model.PlacementIssue;
 import org.junit.jupiter.api.BeforeEach;
@@ -275,6 +276,92 @@ class MisconfigurationDetectorTest {
                 dependenciesByPom, Set.of("test-addon"), List.of(addon));
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void detect_noIssue_whenScopeMatchesEpochExpectation() {
+        // Master expects compile scope, epoch expects test scope — artifact installed with test scope
+        Addon addon = new Addon();
+        addon.setId("brut");
+        Artifact masterArtifact = createArtifactWithScope("org.bloomreach.forge", "brut-common",
+                Artifact.Target.SITE_COMPONENTS, Artifact.Scope.COMPILE);
+        addon.setArtifacts(List.of(masterArtifact));
+
+        Artifact epochArtifact = createArtifactWithScope("org.bloomreach.forge", "brut-common",
+                Artifact.Target.SITE_COMPONENTS, Artifact.Scope.TEST);
+        AddonVersion epoch = new AddonVersion();
+        epoch.setArtifacts(List.of(epochArtifact));
+        addon.setVersions(List.of(epoch));
+
+        Map<String, List<Dependency>> dependenciesByPom = Map.of(
+                "site/components/pom.xml",
+                List.of(new Dependency("org.bloomreach.forge", "brut-common", "4.0.2", "test"))
+        );
+
+        Map<String, List<PlacementIssue>> result = detector.detect(
+                dependenciesByPom, Set.of("brut"), List.of(addon));
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void detect_noIssue_whenPlacementMatchesEpochExpectation() {
+        // Master expects cms-dependencies, epoch expects site/components — artifact placed in site/components
+        Addon addon = new Addon();
+        addon.setId("multi-target-addon");
+        Artifact masterArtifact = createArtifact("org.test", "some-artifact", Artifact.Target.CMS);
+        addon.setArtifacts(List.of(masterArtifact));
+
+        Artifact epochArtifact = createArtifact("org.test", "some-artifact", Artifact.Target.SITE_COMPONENTS);
+        AddonVersion epoch = new AddonVersion();
+        epoch.setArtifacts(List.of(epochArtifact));
+        addon.setVersions(List.of(epoch));
+
+        Map<String, List<Dependency>> dependenciesByPom = Map.of(
+                "site/components/pom.xml",
+                List.of(new Dependency("org.test", "some-artifact", "2.0.0", null))
+        );
+
+        Map<String, List<PlacementIssue>> result = detector.detect(
+                dependenciesByPom, Set.of("multi-target-addon"), List.of(addon));
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void detect_reportsIssue_whenScopeMatchesNeitherMasterNorEpoch() {
+        // Master expects compile, epoch expects test — artifact installed with runtime (satisfies neither)
+        Addon addon = new Addon();
+        addon.setId("brut");
+        Artifact masterArtifact = createArtifactWithScope("org.bloomreach.forge", "brut-common",
+                Artifact.Target.SITE_COMPONENTS, Artifact.Scope.COMPILE);
+        addon.setArtifacts(List.of(masterArtifact));
+
+        Artifact epochArtifact = createArtifactWithScope("org.bloomreach.forge", "brut-common",
+                Artifact.Target.SITE_COMPONENTS, Artifact.Scope.TEST);
+        AddonVersion epoch = new AddonVersion();
+        epoch.setArtifacts(List.of(epochArtifact));
+        addon.setVersions(List.of(epoch));
+
+        Map<String, List<Dependency>> dependenciesByPom = Map.of(
+                "site/components/pom.xml",
+                List.of(new Dependency("org.bloomreach.forge", "brut-common", "4.0.2", "runtime"))
+        );
+
+        Map<String, List<PlacementIssue>> result = detector.detect(
+                dependenciesByPom, Set.of("brut"), List.of(addon));
+
+        assertEquals(1, result.size());
+        PlacementIssue issue = result.get("brut").get(0);
+        assertEquals("site/components/pom.xml", issue.actualPom());
+        assertEquals("runtime", issue.actualScope());
+    }
+
+    private Artifact createArtifactWithScope(String groupId, String artifactId,
+                                             Artifact.Target target, Artifact.Scope scope) {
+        Artifact artifact = createArtifact(groupId, artifactId, target);
+        artifact.setScope(scope);
+        return artifact;
     }
 
     private Addon createAddonWithScope(String id, String groupId, String artifactId,

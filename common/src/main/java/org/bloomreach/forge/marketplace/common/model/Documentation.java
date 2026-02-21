@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Documentation {
@@ -40,10 +41,10 @@ public class Documentation {
     }
 
     public enum DocumentationType {
-        readme,
-        site,
-        javadoc,
-        api,
-        tutorial
+        @JsonProperty("readme") README,
+        @JsonProperty("site") SITE,
+        @JsonProperty("javadoc") JAVADOC,
+        @JsonProperty("api") API,
+        @JsonProperty("tutorial") TUTORIAL
     }
 }

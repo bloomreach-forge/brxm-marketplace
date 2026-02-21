@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Category;
 import org.bloomreach.forge.marketplace.common.model.PluginTier;
 import org.bloomreach.forge.marketplace.common.model.Publisher;
@@ -55,6 +56,17 @@ public interface AddonRegistryService {
      */
     List<Addon> filter(Category category, Publisher.PublisherType publisherType,
                        PluginTier pluginTier, String brxmVersion);
+
+    /**
+     * Returns the first epoch from addon.versions[] that is compatible with the given brXM version.
+     * Returns empty if the addon has no epochs, no epoch matches, brxmVersion is null, or the addon
+     * is not found.
+     *
+     * @param addonId     the addon identifier
+     * @param brxmVersion the project's brXM version to match against
+     * @return the matching epoch, or empty
+     */
+    Optional<AddonVersion> findCompatibleEpoch(String addonId, String brxmVersion);
 
     /**
      * Returns the total number of registered addons.

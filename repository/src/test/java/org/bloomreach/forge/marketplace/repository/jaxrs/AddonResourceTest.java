@@ -70,10 +70,10 @@ public class AddonResourceTest {
     @Test
     void list_filtersByPublisherType() {
         Addon bloomreachAddon = createAddon("br-addon", Category.SECURITY);
-        bloomreachAddon.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        bloomreachAddon.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
 
         Addon communityAddon = createAddon("comm-addon", Category.SECURITY);
-        communityAddon.getPublisher().setType(Publisher.PublisherType.community);
+        communityAddon.getPublisher().setType(Publisher.PublisherType.COMMUNITY);
 
         registry.register(bloomreachAddon);
         registry.register(communityAddon);
@@ -118,13 +118,13 @@ public class AddonResourceTest {
     @Test
     void list_appliesMultipleFilters() {
         Addon match = createAddon("match", Category.SECURITY);
-        match.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        match.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
 
         Addon noMatch1 = createAddon("wrong-category", Category.INTEGRATION);
-        noMatch1.getPublisher().setType(Publisher.PublisherType.bloomreach);
+        noMatch1.getPublisher().setType(Publisher.PublisherType.BLOOMREACH);
 
         Addon noMatch2 = createAddon("wrong-publisher", Category.SECURITY);
-        noMatch2.getPublisher().setType(Publisher.PublisherType.community);
+        noMatch2.getPublisher().setType(Publisher.PublisherType.COMMUNITY);
 
         registry.register(match);
         registry.register(noMatch1);
@@ -182,7 +182,7 @@ public class AddonResourceTest {
 
         Publisher publisher = new Publisher();
         publisher.setName("Test Publisher");
-        publisher.setType(Publisher.PublisherType.community);
+        publisher.setType(Publisher.PublisherType.COMMUNITY);
         addon.setPublisher(publisher);
 
         return addon;

@@ -15,19 +15,4 @@
  */
 package org.bloomreach.forge.marketplace.essentials.rest;
 
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.ExceptionMapper;
-import jakarta.ws.rs.ext.Provider;
-
-@Provider
-public class AddonNotFoundExceptionMapper implements ExceptionMapper<AddonNotFoundException> {
-
-    @Override
-    public Response toResponse(AddonNotFoundException exception) {
-        return Response.status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse(exception.getMessage(), "NOT_FOUND"))
-                .type(MediaType.APPLICATION_JSON)
-                .build();
-    }
-}
+public record ErrorResponse(String error, String code) {}

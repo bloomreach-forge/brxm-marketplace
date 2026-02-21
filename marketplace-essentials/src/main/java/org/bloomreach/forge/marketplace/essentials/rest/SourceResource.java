@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -144,11 +143,8 @@ public class SourceResource {
             log.info("Refreshed source {}: {} success, {} failed, {} skipped",
                     name, result.successCount(), result.failureCount(), result.skippedCount());
 
-            return Response.ok(Map.of(
-                    "source", name,
-                    "success", result.successCount(),
-                    "failed", result.failureCount(),
-                    "skipped", result.skippedCount()
+            return Response.ok(new SourceRefreshResponse(
+                    name, result.successCount(), result.failureCount(), result.skippedCount()
             )).build();
         } catch (IllegalArgumentException e) {
             return errorResponse(Response.Status.NOT_FOUND, e.getMessage());
@@ -186,7 +182,9 @@ public class SourceResource {
 
     private Response errorResponse(Response.Status status, String message) {
         return Response.status(status)
-                .entity(Map.of("error", message))
+                .entity(new ErrorResponse(message, status.name()))
                 .build();
     }
+
+    record SourceRefreshResponse(String source, int success, int failed, int skipped) {}
 }

@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -175,6 +176,56 @@ class InstalledAddonMatcherTest {
         );
 
         Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
+
+        assertEquals(1, result.size());
+        assertEquals("5.1.0", result.get("brut"));
+    }
+
+    @Test
+    void findInstalledAddons_matchesAddon_whenDependencyMatchesEpochArtifact() {
+        // Addon master has brut-common, epoch 4.x has brut-legacy (different artifactId)
+        Addon addon = new Addon();
+        addon.setId("brut");
+
+        Artifact masterArtifact = new Artifact();
+        Artifact.MavenCoordinates masterMaven = new Artifact.MavenCoordinates();
+        masterMaven.setGroupId("org.bloomreach.forge");
+        masterMaven.setArtifactId("brut-common");
+        masterArtifact.setMaven(masterMaven);
+        addon.setArtifacts(List.of(masterArtifact));
+
+        Artifact epochArtifact = new Artifact();
+        Artifact.MavenCoordinates epochMaven = new Artifact.MavenCoordinates();
+        epochMaven.setGroupId("org.bloomreach.forge");
+        epochMaven.setArtifactId("brut-legacy");
+        epochArtifact.setMaven(epochMaven);
+        AddonVersion epoch = new AddonVersion();
+        epoch.setArtifacts(List.of(epochArtifact));
+        addon.setVersions(List.of(epoch));
+
+        List<Addon> knownAddons = List.of(addon);
+        List<Dependency> dependencies = List.of(
+                new Dependency("org.bloomreach.forge", "brut-legacy", "4.0.2", null)
+        );
+
+        Map<String, String> result = matcher.findInstalledAddons(knownAddons, dependencies);
+
+        assertEquals(1, result.size());
+        assertEquals("4.0.2", result.get("brut"));
+    }
+
+    @Test
+    void findInstalledAddons_handlesAddonWithNullEpochArtifacts() {
+        Addon addon = createAddon("brut", "org.bloomreach.forge", "brut-common");
+        AddonVersion epoch = new AddonVersion();
+        epoch.setArtifacts(null);
+        addon.setVersions(List.of(epoch));
+
+        List<Dependency> dependencies = List.of(
+                new Dependency("org.bloomreach.forge", "brut-common", "5.1.0", null)
+        );
+
+        Map<String, String> result = matcher.findInstalledAddons(List.of(addon), dependencies);
 
         assertEquals(1, result.size());
         assertEquals("5.1.0", result.get("brut"));

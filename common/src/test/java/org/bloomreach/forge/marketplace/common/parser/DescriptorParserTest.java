@@ -69,7 +69,7 @@ public class DescriptorParserTest {
 
         assertNotNull(addon.getPublisher());
         assertEquals("Test Publisher", addon.getPublisher().getName());
-        assertEquals(Publisher.PublisherType.community, addon.getPublisher().getType());
+        assertEquals(Publisher.PublisherType.COMMUNITY, addon.getPublisher().getType());
         assertEquals("https://example.com", addon.getPublisher().getUrl());
     }
 
@@ -128,7 +128,7 @@ public class DescriptorParserTest {
         Addon addon = parser.parse(is);
 
         assertNotNull(addon.getLifecycle());
-        assertEquals(Lifecycle.LifecycleStatus.active, addon.getLifecycle().getStatus());
+        assertEquals(Lifecycle.LifecycleStatus.ACTIVE, addon.getLifecycle().getStatus());
         assertNotNull(addon.getLifecycle().getMaintainers());
         assertEquals(1, addon.getLifecycle().getMaintainers().size());
         assertEquals("John Doe", addon.getLifecycle().getMaintainers().get(0));
@@ -140,8 +140,8 @@ public class DescriptorParserTest {
         Addon addon = parser.parse(is);
 
         assertNotNull(addon.getReview());
-        assertEquals(Review.ReviewStatus.approved, addon.getReview().getStatus());
-        assertEquals(Review.ReviewLevel.full, addon.getReview().getLevel());
+        assertEquals(Review.ReviewStatus.APPROVED, addon.getReview().getStatus());
+        assertEquals(Review.ReviewLevel.FULL, addon.getReview().getLevel());
         assertEquals("2025-01-15", addon.getReview().getReviewedAt());
     }
 
@@ -152,7 +152,7 @@ public class DescriptorParserTest {
 
         assertNotNull(addon.getDocumentation());
         assertEquals(1, addon.getDocumentation().size());
-        assertEquals(Documentation.DocumentationType.readme, addon.getDocumentation().get(0).getType());
+        assertEquals(Documentation.DocumentationType.README, addon.getDocumentation().get(0).getType());
         assertEquals("https://github.com/example/test-addon#readme", addon.getDocumentation().get(0).getUrl());
     }
 

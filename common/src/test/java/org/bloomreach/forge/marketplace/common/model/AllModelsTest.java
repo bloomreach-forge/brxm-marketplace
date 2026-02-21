@@ -26,16 +26,16 @@ class AllModelsTest {
     void review_status_getterSetter() {
         Review review = new Review();
         assertNull(review.getStatus());
-        review.setStatus(Review.ReviewStatus.approved);
-        assertEquals(Review.ReviewStatus.approved, review.getStatus());
+        review.setStatus(Review.ReviewStatus.APPROVED);
+        assertEquals(Review.ReviewStatus.APPROVED, review.getStatus());
     }
 
     @Test
     void review_level_getterSetter() {
         Review review = new Review();
         assertNull(review.getLevel());
-        review.setLevel(Review.ReviewLevel.full);
-        assertEquals(Review.ReviewLevel.full, review.getLevel());
+        review.setLevel(Review.ReviewLevel.FULL);
+        assertEquals(Review.ReviewLevel.FULL, review.getLevel());
     }
 
     @Test
@@ -49,18 +49,18 @@ class AllModelsTest {
     @Test
     void reviewStatus_allValues() {
         assertEquals(4, Review.ReviewStatus.values().length);
-        assertNotNull(Review.ReviewStatus.valueOf("unreviewed"));
+        assertNotNull(Review.ReviewStatus.valueOf("UNREVIEWED"));
         assertNotNull(Review.ReviewStatus.valueOf("IN_REVIEW"));
-        assertNotNull(Review.ReviewStatus.valueOf("approved"));
-        assertNotNull(Review.ReviewStatus.valueOf("rejected"));
+        assertNotNull(Review.ReviewStatus.valueOf("APPROVED"));
+        assertNotNull(Review.ReviewStatus.valueOf("REJECTED"));
     }
 
     @Test
     void reviewLevel_allValues() {
         assertEquals(3, Review.ReviewLevel.values().length);
-        assertNotNull(Review.ReviewLevel.valueOf("basic"));
-        assertNotNull(Review.ReviewLevel.valueOf("security"));
-        assertNotNull(Review.ReviewLevel.valueOf("full"));
+        assertNotNull(Review.ReviewLevel.valueOf("BASIC"));
+        assertNotNull(Review.ReviewLevel.valueOf("SECURITY"));
+        assertNotNull(Review.ReviewLevel.valueOf("FULL"));
     }
 
     // InstallCapabilities tests
@@ -85,8 +85,8 @@ class AllModelsTest {
     void documentation_type_getterSetter() {
         Documentation doc = new Documentation();
         assertNull(doc.getType());
-        doc.setType(Documentation.DocumentationType.readme);
-        assertEquals(Documentation.DocumentationType.readme, doc.getType());
+        doc.setType(Documentation.DocumentationType.README);
+        assertEquals(Documentation.DocumentationType.README, doc.getType());
     }
 
     @Test
@@ -100,11 +100,11 @@ class AllModelsTest {
     @Test
     void documentationType_allValues() {
         assertEquals(5, Documentation.DocumentationType.values().length);
-        assertNotNull(Documentation.DocumentationType.valueOf("readme"));
-        assertNotNull(Documentation.DocumentationType.valueOf("site"));
-        assertNotNull(Documentation.DocumentationType.valueOf("javadoc"));
-        assertNotNull(Documentation.DocumentationType.valueOf("api"));
-        assertNotNull(Documentation.DocumentationType.valueOf("tutorial"));
+        assertNotNull(Documentation.DocumentationType.valueOf("README"));
+        assertNotNull(Documentation.DocumentationType.valueOf("SITE"));
+        assertNotNull(Documentation.DocumentationType.valueOf("JAVADOC"));
+        assertNotNull(Documentation.DocumentationType.valueOf("API"));
+        assertNotNull(Documentation.DocumentationType.valueOf("TUTORIAL"));
     }
 
     // Repository tests
@@ -142,8 +142,8 @@ class AllModelsTest {
     void publisher_type_getterSetter() {
         Publisher publisher = new Publisher();
         assertNull(publisher.getType());
-        publisher.setType(Publisher.PublisherType.bloomreach);
-        assertEquals(Publisher.PublisherType.bloomreach, publisher.getType());
+        publisher.setType(Publisher.PublisherType.BLOOMREACH);
+        assertEquals(Publisher.PublisherType.BLOOMREACH, publisher.getType());
     }
 
     @Test
@@ -157,11 +157,11 @@ class AllModelsTest {
     @Test
     void publisherType_allValues() {
         assertEquals(5, Publisher.PublisherType.values().length);
-        assertNotNull(Publisher.PublisherType.valueOf("bloomreach"));
-        assertNotNull(Publisher.PublisherType.valueOf("ps"));
-        assertNotNull(Publisher.PublisherType.valueOf("partner"));
-        assertNotNull(Publisher.PublisherType.valueOf("community"));
-        assertNotNull(Publisher.PublisherType.valueOf("internal"));
+        assertNotNull(Publisher.PublisherType.valueOf("BLOOMREACH"));
+        assertNotNull(Publisher.PublisherType.valueOf("PS"));
+        assertNotNull(Publisher.PublisherType.valueOf("PARTNER"));
+        assertNotNull(Publisher.PublisherType.valueOf("COMMUNITY"));
+        assertNotNull(Publisher.PublisherType.valueOf("INTERNAL"));
     }
 
     // Compatibility tests

@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Category;
+import org.bloomreach.forge.marketplace.common.model.Compatibility;
 import org.bloomreach.forge.marketplace.common.model.PluginTier;
 import org.bloomreach.forge.marketplace.common.model.Publisher;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
@@ -206,6 +208,64 @@ public class EssentialsAddonService implements AddonRegistryService {
             return delegate.filter(category, publisherType, pluginTier, brxmVersion);
         }
         return filterLocal(category, publisherType, pluginTier);
+    }
+
+    @Override
+    public Optional<AddonVersion> findCompatibleEpoch(String addonId, String brxmVersion) {
+        AddonRegistryService delegate = getDelegate();
+        if (delegate != null) {
+            return delegate.findCompatibleEpoch(addonId, brxmVersion);
+        }
+        if (brxmVersion == null) {
+            return Optional.empty();
+        }
+        return findByIdLocal(addonId)
+                .filter(addon -> addon.getVersions() != null)
+                .flatMap(addon -> addon.getVersions().stream()
+                        .filter(epoch -> isEpochCompatibleLocal(epoch, brxmVersion))
+                        .findFirst());
+    }
+
+    private boolean isEpochCompatibleLocal(AddonVersion epoch, String brxmVersion) {
+        Compatibility compat = epoch.getCompatibility();
+        if (compat == null || compat.getBrxm() == null) {
+            return false;
+        }
+        Compatibility.VersionRange range = compat.getBrxm();
+        if (range.getMin() != null && compareVersionStrings(brxmVersion, range.getMin()) < 0) {
+            return false;
+        }
+        if (range.getMax() != null && compareVersionStrings(brxmVersion, range.getMax()) > 0) {
+            return false;
+        }
+        String inferredMax = epoch.getInferredMax();
+        if (inferredMax != null && compareVersionStrings(brxmVersion, inferredMax) >= 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private int compareVersionStrings(String v1, String v2) {
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+        int len = Math.max(parts1.length, parts2.length);
+        for (int i = 0; i < len; i++) {
+            int n1 = i < parts1.length ? parseVersionPart(parts1[i]) : 0;
+            int n2 = i < parts2.length ? parseVersionPart(parts2[i]) : 0;
+            if (n1 != n2) {
+                return Integer.compare(n1, n2);
+            }
+        }
+        return 0;
+    }
+
+    private int parseVersionPart(String part) {
+        String numeric = part.replaceAll("[^0-9].*", "");
+        try {
+            return numeric.isEmpty() ? 0 : Integer.parseInt(numeric);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     @Override

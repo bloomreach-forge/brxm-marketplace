@@ -141,6 +141,18 @@ public class AddonRegistry implements AddonRegistryService {
     }
 
     @Override
+    public Optional<AddonVersion> findCompatibleEpoch(String addonId, String brxmVersion) {
+        if (brxmVersion == null) {
+            return Optional.empty();
+        }
+        return findById(addonId)
+                .filter(addon -> addon.getVersions() != null)
+                .flatMap(addon -> addon.getVersions().stream()
+                        .filter(epoch -> isEpochCompatible(epoch, brxmVersion))
+                        .findFirst());
+    }
+
+    @Override
     public int size() {
         return addons.size();
     }

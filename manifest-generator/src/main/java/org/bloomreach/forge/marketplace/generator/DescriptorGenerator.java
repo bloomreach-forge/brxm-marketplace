@@ -286,7 +286,7 @@ public class DescriptorGenerator implements Callable<Integer> {
         if (publisher == null) {
             publisher = new Publisher();
             publisher.setName(repository.split("/")[0]);
-            publisher.setType(Publisher.PublisherType.community);
+            publisher.setType(Publisher.PublisherType.COMMUNITY);
         }
         addon.setPublisher(publisher);
 
@@ -315,7 +315,7 @@ public class DescriptorGenerator implements Callable<Integer> {
         } else {
             List<Documentation> docs = new ArrayList<>();
             Documentation readmeDoc = new Documentation();
-            readmeDoc.setType(Documentation.DocumentationType.readme);
+            readmeDoc.setType(Documentation.DocumentationType.README);
             String readmeFilename = readmePath.getFileName().toString();
             readmeDoc.setUrl(repoUrl + "/blob/" + branch + "/" + readmeFilename);
             docs.add(readmeDoc);

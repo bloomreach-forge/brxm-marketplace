@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
 
 import java.util.HashMap;
@@ -43,17 +44,26 @@ public class InstalledAddonMatcher {
     private Map<String, Addon> buildAddonIndex(List<Addon> knownAddons) {
         Map<String, Addon> index = new HashMap<>();
         for (Addon addon : knownAddons) {
-            List<Artifact> artifacts = addon.getArtifacts();
-            if (artifacts == null) {
-                continue;
-            }
-            for (Artifact artifact : artifacts) {
-                Artifact.MavenCoordinates maven = artifact.getMaven();
-                if (maven != null) {
-                    index.putIfAbsent(maven.getGroupId() + ":" + maven.getArtifactId(), addon);
+            indexArtifacts(addon.getArtifacts(), addon, index);
+            List<AddonVersion> versions = addon.getVersions();
+            if (versions != null) {
+                for (AddonVersion epoch : versions) {
+                    indexArtifacts(epoch.getArtifacts(), addon, index);
                 }
             }
         }
         return index;
+    }
+
+    private void indexArtifacts(List<Artifact> artifacts, Addon addon, Map<String, Addon> index) {
+        if (artifacts == null) {
+            return;
+        }
+        for (Artifact artifact : artifacts) {
+            Artifact.MavenCoordinates maven = artifact.getMaven();
+            if (maven != null) {
+                index.putIfAbsent(maven.getGroupId() + ":" + maven.getArtifactId(), addon);
+            }
+        }
     }
 }

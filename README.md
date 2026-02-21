@@ -66,7 +66,7 @@ The Marketplace plugin integrates addon discovery into the brXM Essentials dashb
 
 ```xml
 <properties>
-  <brxm-marketplace.version>1.0.4</brxm-marketplace.version>
+  <brxm-marketplace.version>1.0.6</brxm-marketplace.version>
 </properties>
 
 <dependencyManagement>

@@ -16,7 +16,9 @@
 package org.bloomreach.forge.marketplace.essentials.service;
 
 import org.bloomreach.forge.marketplace.common.model.Addon;
+import org.bloomreach.forge.marketplace.common.model.AddonVersion;
 import org.bloomreach.forge.marketplace.common.model.Artifact;
+import org.bloomreach.forge.marketplace.common.model.Compatibility;
 import org.bloomreach.forge.marketplace.common.service.AddonRegistryService;
 import org.bloomreach.forge.marketplace.essentials.model.InstallationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +74,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(2, result.changes().size());
 
         String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
@@ -95,7 +97,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(2, result.changes().size());
 
         String sitePom = Files.readString(tempDir.resolve("site/components/pom.xml"));
@@ -112,7 +114,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
 
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         assertTrue(rootPom.contains("<groupId>org.test</groupId>"));
@@ -125,7 +127,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("unknown", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("ADDON_NOT_FOUND", result.errors().get(0).code());
     }
 
@@ -136,7 +138,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", null);
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("PROJECT_BASEDIR_NOT_SET", result.errors().get(0).code());
     }
 
@@ -147,7 +149,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("TARGET_POM_NOT_FOUND", result.errors().get(0).code());
     }
 
@@ -169,7 +171,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("ALREADY_INSTALLED", result.errors().get(0).code());
     }
 
@@ -187,7 +189,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("PROPERTY_CONFLICT", result.errors().get(0).code());
     }
 
@@ -205,7 +207,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(1, result.changes().size());
         assertEquals("added_dependency", result.changes().get(0).action());
     }
@@ -219,7 +221,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("MISSING_TARGET", result.errors().get(0).code());
     }
 
@@ -232,7 +234,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("multi-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
 
         String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
         assertTrue(cmsPom.contains("cms-artifact"));
@@ -369,7 +371,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(1, result.changes().size());
         assertEquals("updated_property", result.changes().get(0).action());
         assertEquals("test-addon.version", result.changes().get(0).property());
@@ -389,7 +391,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("NOT_INSTALLED", result.errors().get(0).code());
     }
 
@@ -417,7 +419,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertTrue(result.changes().isEmpty());
     }
 
@@ -447,7 +449,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(2, result.changes().size());
 
         boolean hasRemovedDependency = result.changes().stream()
@@ -472,7 +474,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("unknown", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("ADDON_NOT_FOUND", result.errors().get(0).code());
     }
 
@@ -483,7 +485,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("test-addon", null);
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("PROJECT_BASEDIR_NOT_SET", result.errors().get(0).code());
     }
 
@@ -498,7 +500,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("NOT_INSTALLED", result.errors().get(0).code());
     }
 
@@ -538,7 +540,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(3, result.changes().size());
 
         String updatedCmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
@@ -589,7 +591,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = failingService.install("multi-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("IO_ERROR", result.errors().get(0).code());
     }
 
@@ -609,7 +611,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
     }
 
     @Test
@@ -638,7 +640,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("multi-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertTrue(result.changes().stream()
                 .anyMatch(c -> "removed_dependency".equals(c.action()) && c.coordinates().contains("cms-artifact")));
     }
@@ -667,7 +669,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertTrue(result.changes().stream()
                 .anyMatch(c -> "removed_dependency".equals(c.action())));
 
@@ -684,7 +686,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = InstallationResult.successWithWarnings(changes, warnings);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(1, result.changes().size());
         assertEquals(1, result.warnings().size());
         assertEquals("Some artifacts could not be removed", result.warnings().get(0));
@@ -698,7 +700,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = InstallationResult.success(changes);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertTrue(result.warnings().isEmpty());
     }
 
@@ -706,7 +708,7 @@ class AddonInstallationServiceTest {
     void installationResult_failure_hasEmptyWarnings() {
         InstallationResult result = InstallationResult.failure("ERROR", "Something failed");
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertTrue(result.warnings().isEmpty());
     }
 
@@ -738,7 +740,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.fixInstallation("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
 
         String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
         assertFalse(updatedRootPom.contains("test-artifact"));
@@ -794,7 +796,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.fixInstallation("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("NOT_MISCONFIGURED", result.errors().get(0).code());
     }
 
@@ -823,7 +825,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(1, result.changes().size());
         assertEquals("updated_property", result.changes().get(0).action());
         assertEquals("my.custom.version", result.changes().get(0).property());
@@ -856,7 +858,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("NOT_INSTALLED", result.errors().get(0).code());
     }
 
@@ -887,7 +889,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString(), true);
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
         assertEquals(1, result.changes().size());
         assertEquals("updated_property", result.changes().get(0).action());
         assertEquals("my.custom.version", result.changes().get(0).property());
@@ -906,7 +908,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.install("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
 
         String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
         assertTrue(cmsPom.contains("<scope>provided</scope>"));
@@ -938,7 +940,7 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.uninstall("test-addon", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.completed, result.status());
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
 
         String updatedRootPom = Files.readString(tempDir.resolve("pom.xml"));
         assertFalse(updatedRootPom.contains("my.custom.version"));
@@ -954,7 +956,82 @@ class AddonInstallationServiceTest {
 
         InstallationResult result = service.fixInstallation("unknown", tempDir.toString());
 
-        assertEquals(InstallationResult.Status.failed, result.status());
+        assertEquals(InstallationResult.Status.FAILED, result.status());
         assertEquals("ADDON_NOT_FOUND", result.errors().get(0).code());
+    }
+
+    // --- Epoch-aware installation tests ---
+
+    @Test
+    void install_usesEpochVersionAndArtifactsWhenBrxmMatches() throws IOException {
+        setupProjectStructure();
+
+        // Master addon targets CMS with v5.0.0; epoch targets SITE_COMPONENTS with v4.0.2
+        Addon addon = createAddon("brut", Artifact.Target.CMS);
+        addon.setVersion("5.0.0");
+        when(addonRegistry.findById("brut")).thenReturn(Optional.of(addon));
+
+        AddonVersion epoch = createEpoch("4.0.2", Artifact.Target.SITE_COMPONENTS, "org.bloomreach.forge.brut", "brut-common");
+        when(addonRegistry.findCompatibleEpoch("brut", "15.5.0")).thenReturn(Optional.of(epoch));
+        when(projectContextService.getProjectContext())
+                .thenReturn(ProjectContext.of("15.5.0", null, Map.of()));
+
+        InstallationResult result = service.install("brut", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
+
+        // Must have written to site/components/pom.xml (epoch artifact target), not cms
+        String sitePom = Files.readString(tempDir.resolve("site/components/pom.xml"));
+        assertTrue(sitePom.contains("brut-common"), "Epoch artifact should be installed to site POM");
+        assertFalse(sitePom.contains("test-artifact"), "Master CMS artifact must not be in site POM");
+
+        // Version property must use the epoch version
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertTrue(rootPom.contains("<brut.version>4.0.2</brut.version>"),
+                "Version property must reflect epoch version 4.0.2");
+    }
+
+    @Test
+    void install_fallsBackToMasterWhenNoEpochMatches() throws IOException {
+        setupProjectStructure();
+
+        Addon addon = createAddon("test-addon", Artifact.Target.CMS);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+        when(addonRegistry.findCompatibleEpoch("test-addon", "16.0.0")).thenReturn(Optional.empty());
+        when(projectContextService.getProjectContext())
+                .thenReturn(ProjectContext.of("16.0.0", null, Map.of()));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
+
+        // Master artifact (CMS target) should be installed
+        String cmsPom = Files.readString(tempDir.resolve("cms-dependencies/pom.xml"));
+        assertTrue(cmsPom.contains("test-artifact"));
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        assertTrue(rootPom.contains("<test-addon.version>1.0.0</test-addon.version>"));
+    }
+
+    private AddonVersion createEpoch(String version, Artifact.Target target,
+                                     String groupId, String artifactId) {
+        Compatibility.VersionRange range = new Compatibility.VersionRange();
+        range.setMin("15.0.0");
+        Compatibility compat = new Compatibility();
+        compat.setBrxm(range);
+
+        Artifact artifact = new Artifact();
+        artifact.setType(Artifact.ArtifactType.MAVEN_LIB);
+        artifact.setTarget(target);
+        Artifact.MavenCoordinates maven = new Artifact.MavenCoordinates();
+        maven.setGroupId(groupId);
+        maven.setArtifactId(artifactId);
+        artifact.setMaven(maven);
+
+        AddonVersion epoch = new AddonVersion();
+        epoch.setVersion(version);
+        epoch.setCompatibility(compat);
+        epoch.setArtifacts(List.of(artifact));
+        return epoch;
     }
 }

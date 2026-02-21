@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.common.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Artifact {
@@ -76,33 +77,33 @@ public class Artifact {
     }
 
     public enum ArtifactType {
-        @com.fasterxml.jackson.annotation.JsonProperty("maven-lib")
+        @JsonProperty("maven-lib")
         MAVEN_LIB,
-        @com.fasterxml.jackson.annotation.JsonProperty("hcm-module")
+        @JsonProperty("hcm-module")
         HCM_MODULE
     }
 
     public enum Target {
-        @com.fasterxml.jackson.annotation.JsonProperty("parent")
+        @JsonProperty("parent")
         PARENT,
-        @com.fasterxml.jackson.annotation.JsonProperty("cms")
+        @JsonProperty("cms")
         CMS,
-        @com.fasterxml.jackson.annotation.JsonProperty("site/components")
+        @JsonProperty("site/components")
         SITE_COMPONENTS,
-        @com.fasterxml.jackson.annotation.JsonProperty("site/webapp")
+        @JsonProperty("site/webapp")
         SITE_WEBAPP,
-        @com.fasterxml.jackson.annotation.JsonProperty("platform")
+        @JsonProperty("platform")
         PLATFORM
     }
 
     public enum Scope {
-        @com.fasterxml.jackson.annotation.JsonProperty("compile")
+        @JsonProperty("compile")
         COMPILE,
-        @com.fasterxml.jackson.annotation.JsonProperty("provided")
+        @JsonProperty("provided")
         PROVIDED,
-        @com.fasterxml.jackson.annotation.JsonProperty("runtime")
+        @JsonProperty("runtime")
         RUNTIME,
-        @com.fasterxml.jackson.annotation.JsonProperty("test")
+        @JsonProperty("test")
         TEST
     }
 

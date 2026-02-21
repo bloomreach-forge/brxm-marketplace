@@ -16,6 +16,7 @@
 package org.bloomreach.forge.marketplace.essentials.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -28,7 +29,8 @@ public record InstallationResult(
 ) {
 
     public enum Status {
-        completed, failed
+        @JsonProperty("completed") COMPLETED,
+        @JsonProperty("failed") FAILED
     }
 
     public record Change(
@@ -66,15 +68,15 @@ public record InstallationResult(
     ) {}
 
     public static InstallationResult success(List<Change> changes) {
-        return new InstallationResult(Status.completed, changes, List.of(), List.of());
+        return new InstallationResult(Status.COMPLETED, changes, List.of(), List.of());
     }
 
     public static InstallationResult successWithWarnings(List<Change> changes, List<String> warnings) {
-        return new InstallationResult(Status.completed, changes, List.of(), warnings);
+        return new InstallationResult(Status.COMPLETED, changes, List.of(), warnings);
     }
 
     public static InstallationResult failure(List<InstallationError> errors) {
-        return new InstallationResult(Status.failed, List.of(), errors, List.of());
+        return new InstallationResult(Status.FAILED, List.of(), errors, List.of());
     }
 
     public static InstallationResult failure(String code, String message) {
