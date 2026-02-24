@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-02-24
+
+### Fixed
+- Manifest generator now groups addon releases by `major.minor` instead of `major` when building
+  epoch entries. A minor version bump can introduce a brXM parent requirement change; previously
+  such releases were silently dropped in favour of the latest patch in the same major line.
+
+### Changed
+- Postman collection updated with all previously missing endpoints: Project Context, Addon
+  Operations (install, upgrade, uninstall, fix), and Source Management (list, create, delete,
+  refresh per source). URL objects simplified to `raw`-only format.
+- `coverage/` directory added to `.gitignore` to prevent Jest coverage reports from being
+  committed.
+
 ## [1.0.6] - 2026-02-21
 
 ### Added

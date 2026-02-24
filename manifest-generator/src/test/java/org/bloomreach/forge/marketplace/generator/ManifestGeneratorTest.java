@@ -306,6 +306,54 @@ class ManifestGeneratorTest {
     }
 
     @Test
+    void resolveEpochs_treatsMinorVersionsAsDistinctEpochs() throws Exception {
+        // 3.1.x targets brXM 15.x, 3.2.x bumps parent to brXM 16.x — same major, different epoch
+        String descriptorV31 = DESCRIPTOR_V4.replace("version: 4.0.2", "version: 3.1.5")
+                .replace("min: \"15.0.0\"", "min: \"15.0.0\"");
+        String descriptorV32 = DESCRIPTOR_V4.replace("version: 4.0.2", "version: 3.2.0")
+                .replace("min: \"15.0.0\"", "min: \"16.0.0\"");
+
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v3.1.5", "3.1.5", false, false),
+                new GitHubService.ReleaseInfo("v3.2.0", "3.2.0", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v3.1.5", "forge-addon.yaml"))
+                .thenReturn(Optional.of(descriptorV31));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v3.2.0", "forge-addon.yaml"))
+                .thenReturn(Optional.of(descriptorV32));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertEquals(2, epochs.size(), "3.1.x and 3.2.x must be separate epochs");
+        assertEquals("3.1.5", epochs.get(0).getVersion());
+        assertEquals("3.2.0", epochs.get(1).getVersion());
+    }
+
+    @Test
+    void resolveEpochs_mergesPatchReleasesWithinSameMinor() throws Exception {
+        // 3.1.0, 3.1.3, 3.1.5 all target the same brXM line — only 3.1.5 should survive
+        String descriptorV315 = DESCRIPTOR_V4.replace("version: 4.0.2", "version: 3.1.5");
+        when(gitHubService.listReleases("test-org", "brut")).thenReturn(List.of(
+                new GitHubService.ReleaseInfo("v3.1.0", "3.1.0", false, false),
+                new GitHubService.ReleaseInfo("v3.1.3", "3.1.3", false, false),
+                new GitHubService.ReleaseInfo("v3.1.5", "3.1.5", false, false)
+        ));
+        when(gitHubService.fetchFileContent("test-org", "brut", "v3.1.5", "forge-addon.yaml"))
+                .thenReturn(Optional.of(descriptorV315));
+
+        List<AddonVersion> epochs = generator.resolveEpochs(
+                gitHubService, "test-org", "brut", new ConsoleLogger(false));
+
+        assertEquals(1, epochs.size(), "all 3.1.x patches belong to one epoch");
+        assertEquals("3.1.5", epochs.get(0).getVersion());
+        verify(gitHubService, never())
+                .fetchFileContent("test-org", "brut", "v3.1.0", "forge-addon.yaml");
+        verify(gitHubService, never())
+                .fetchFileContent("test-org", "brut", "v3.1.3", "forge-addon.yaml");
+    }
+
+    @Test
     void execute_setsVersionsOnAddonWhenReleasesExist() throws Exception {
         when(gitHubService.listRepositories("test-org")).thenReturn(List.of(
                 new GitHubService.RepoInfo("brut", "test-org/brut", "main", "https://github.com/test-org/brut")

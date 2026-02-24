@@ -43,6 +43,7 @@ Thumbs.db
 # Node / Jest (frontend tests)
 node_modules/
 package-lock.json
+coverage/
 
 # Generated site (committed to master by release workflow)
 docs/

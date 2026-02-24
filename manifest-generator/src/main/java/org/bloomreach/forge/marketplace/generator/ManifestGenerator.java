@@ -184,9 +184,11 @@ public class ManifestGenerator implements Callable<Integer> {
     }
 
     /**
-     * Scans GitHub Releases for the repository, groups by major version, takes the latest patch
-     * per epoch, and returns a sorted list of {@link AddonVersion} entries with inferred ceilings.
-     * Returns an empty list on any error (silent fallback).
+     * Scans GitHub Releases for the repository, groups by major.minor version line, takes the
+     * latest patch per line, and returns a sorted list of {@link AddonVersion} entries with
+     * inferred ceilings. Minor version bumps are treated as distinct epochs because a minor
+     * release may upgrade the brXM parent requirement. Returns an empty list on any error
+     * (silent fallback).
      */
     List<AddonVersion> resolveEpochs(GitHubService github, String org, String repo, GeneratorLogger logger) {
         List<GitHubService.ReleaseInfo> releases;
@@ -200,23 +202,23 @@ public class ManifestGenerator implements Callable<Integer> {
             return List.of();
         }
 
-        // Group by major version, preserving insertion order (releases come from API newest-first)
-        Map<Integer, List<GitHubService.ReleaseInfo>> byMajor = new LinkedHashMap<>();
+        // Group by major.minor — a minor bump can change the brXM parent requirement
+        Map<String, List<GitHubService.ReleaseInfo>> byMinor = new LinkedHashMap<>();
         for (GitHubService.ReleaseInfo release : releases) {
-            int major = parseMajor(release.version());
-            if (major < 0) {
+            String minorKey = parseMajorMinor(release.version());
+            if (minorKey == null) {
                 continue;
             }
-            byMajor.computeIfAbsent(major, k -> new ArrayList<>()).add(release);
+            byMinor.computeIfAbsent(minorKey, k -> new ArrayList<>()).add(release);
         }
 
-        // Sort majors ascending and take the latest patch per group
-        List<Integer> sortedMajors = new ArrayList<>(byMajor.keySet());
-        Collections.sort(sortedMajors);
+        // Sort minor keys ascending by semver and take the latest patch per group
+        List<String> sortedMinors = new ArrayList<>(byMinor.keySet());
+        sortedMinors.sort((a, b) -> compareSemver(a, b));
 
         List<AddonVersion> epochs = new ArrayList<>();
-        for (int major : sortedMajors) {
-            List<GitHubService.ReleaseInfo> group = byMajor.get(major);
+        for (String minor : sortedMinors) {
+            List<GitHubService.ReleaseInfo> group = byMinor.get(minor);
             group.sort((a, b) -> compareSemver(b.version(), a.version())); // descending
             GitHubService.ReleaseInfo latest = group.get(0);
 
@@ -256,15 +258,20 @@ public class ManifestGenerator implements Callable<Integer> {
         return epochs;
     }
 
-    private static int parseMajor(String version) {
+    private static String parseMajorMinor(String version) {
         if (version == null || version.isBlank()) {
-            return -1;
+            return null;
         }
         String[] parts = version.split("\\.");
+        if (parts.length < 2) {
+            return null;
+        }
         try {
-            return Integer.parseInt(parts[0].replaceAll("[^0-9].*", ""));
+            int major = Integer.parseInt(parts[0].replaceAll("[^0-9].*", ""));
+            int minor = Integer.parseInt(parts[1].replaceAll("[^0-9].*", ""));
+            return major + "." + minor;
         } catch (NumberFormatException e) {
-            return -1;
+            return null;
         }
     }
 

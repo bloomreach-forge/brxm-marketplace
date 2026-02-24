@@ -24,6 +24,27 @@
 
     <section name="Release Notes">
 
+      <subsection name="Version 1.0.7">
+        <p><strong>Release Date:</strong> 2026-02-24</p>
+        <p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <h4>Fixed</h4>
+        <ul>
+          <li>Manifest generator now groups addon releases by <code>major.minor</code> instead of
+              <code>major</code> when building epoch entries. A minor version bump can introduce a
+              brXM parent requirement change; previously such releases were silently dropped in
+              favour of the latest patch in the same major line.</li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+          <li>Postman collection updated with all previously missing endpoints: Project Context,
+              Addon Operations (install, upgrade, uninstall, fix), and Source Management (list,
+              create, delete, per-source refresh).</li>
+          <li>Jest coverage output directory added to <code>.gitignore</code>.</li>
+        </ul>
+      </subsection>
+
       <subsection name="Version 1.0.6">
         <p><strong>Release Date:</strong> 2026-02-21</p>
         <p><strong>brXM Compatibility:</strong> 16.x</p>
