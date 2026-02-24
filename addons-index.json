@@ -1,11 +1,86 @@
 {
   "version" : "1.0",
-  "generatedAt" : "2026-02-24T06:54:52.908811809Z",
+  "generatedAt" : "2026-02-24T19:53:46.751285479Z",
   "source" : {
     "name" : "bloomreach-forge",
     "url" : "https://github.com/bloomreach-forge"
   },
   "addons" : [ {
+    "id" : "camel-hippoevt",
+    "name" : "Bloomreach Camel Event Bus Support",
+    "source" : "bloomreach-forge",
+    "version" : "5.3.0",
+    "description" : "Bloomreach Camel Event Bus Support",
+    "repository" : {
+      "url" : "https://github.com/bloomreach-forge/camel-events-support",
+      "branch" : "master"
+    },
+    "publisher" : {
+      "name" : "bloomreach-forge",
+      "type" : "community"
+    },
+    "category" : "integration",
+    "pluginTier" : "forge-addon",
+    "compatibility" : {
+      "brxm" : {
+        "min" : "16.7.0"
+      }
+    },
+    "artifacts" : [ {
+      "type" : "maven-lib",
+      "description" : "Apache Camel component and utilities for Hippo Repository event integration",
+      "target" : "site/components",
+      "scope" : "compile",
+      "maven" : {
+        "groupId" : "com.bloomreach.forge.camel-hippoevt",
+        "artifactId" : "camel-hippoevt"
+      }
+    } ],
+    "versions" : [ {
+      "version" : "5.2.0",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.3.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Apache Camel component and utilities for Hippo Repository event integration",
+        "target" : "site/components",
+        "scope" : "compile",
+        "maven" : {
+          "groupId" : "com.bloomreach.forge.camel-hippoevt",
+          "artifactId" : "camel-hippoevt"
+        }
+      } ],
+      "inferredMax" : "16.7.0"
+    }, {
+      "version" : "5.3.0",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.7.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Apache Camel component and utilities for Hippo Repository event integration",
+        "target" : "site/components",
+        "scope" : "compile",
+        "maven" : {
+          "groupId" : "com.bloomreach.forge.camel-hippoevt",
+          "artifactId" : "camel-hippoevt"
+        }
+      } ]
+    } ],
+    "documentation" : [ {
+      "type" : "site",
+      "url" : "https://bloomreach-forge.github.io/camel-events-support/"
+    } ],
+    "installation" : {
+      "target" : [ "site" ],
+      "verification" : "Configure a Camel route using the hippoevent: component to consume Hippo Repository events"
+    }
+  }, {
     "id" : "brut",
     "name" : "Bloomreach Unit Testing Library",
     "source" : "bloomreach-forge",
@@ -59,6 +134,42 @@
       "compatibility" : {
         "brxm" : {
           "min" : "15.0.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Core testing utilities and base classes",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-common"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "HST component testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-components"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "JAX-RS and Page Model API testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-resources"
+        }
+      } ],
+      "inferredMax" : "16.0.0"
+    }, {
+      "version" : "5.1.0",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.0.0"
         }
       },
       "artifacts" : [ {
