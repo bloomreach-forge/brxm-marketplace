@@ -92,6 +92,37 @@
     <section><a id="Release_Notes"></a>
 <h1>Release Notes</h1>
 
+      <section><a id="Version_1.0.7"></a>
+<h2>Version 1.0.7</h2>
+        
+<p><strong>Release Date:</strong> 2026-02-24</p>
+        
+<p><strong>brXM Compatibility:</strong> 16.x</p>
+
+        <section><section><a id="Fixed"></a>
+<h4>Fixed</h4>
+        
+<ul>
+          
+<li>Manifest generator now groups addon releases by <code>major.minor</code> instead of
+              <code>major</code> when building epoch entries. A minor version bump can introduce a
+              brXM parent requirement change; previously such releases were silently dropped in
+              favour of the latest patch in the same major line.</li>
+        </ul>
+
+        </section><section><a id="Improvements"></a>
+<h4>Improvements</h4>
+        
+<ul>
+          
+<li>Postman collection updated with all previously missing endpoints: Project Context,
+              Addon Operations (install, upgrade, uninstall, fix), and Source Management (list,
+              create, delete, per-source refresh).</li>
+          
+<li>Jest coverage output directory added to <code>.gitignore</code>.</li>
+        </ul>
+      </section></section></section>
+
       <section><a id="Version_1.0.6"></a>
 <h2>Version 1.0.6</h2>
         
@@ -132,7 +163,7 @@
               (e.g., <code>NOT_FOUND</code>, <code>ADDON_NOT_FOUND</code>)</li>
         </ul>
 
-        </section><section><a id="Fixed"></a>
+        </section><section><a id="Fixed_1"></a>
 <h4>Fixed</h4>
         
 <ul>
@@ -250,7 +281,7 @@
               via <code>disallow-doctype-decl</code></li>
         </ul>
 
-        </section><section><a id="Improvements"></a>
+        </section><section><a id="Improvements_1"></a>
 <h4>Improvements</h4>
         
 <ul>
@@ -286,7 +317,7 @@
         
 <p><strong>brXM Compatibility:</strong> 16.x</p>
 
-        <section><section><a id="Improvements_1"></a>
+        <section><section><a id="Improvements_2"></a>
 <h4>Improvements</h4>
         
 <ul>
@@ -329,7 +360,7 @@
 <li>Installation service handles multi-artifact addons</li>
         </ul>
 
-        </section><section><a id="Improvements_2"></a>
+        </section><section><a id="Improvements_3"></a>
 <h4>Improvements</h4>
         
 <ul>
@@ -350,7 +381,7 @@
         
 <p><strong>brXM Compatibility:</strong> 16.x</p>
 
-        <section><section><a id="Improvements_3"></a>
+        <section><section><a id="Improvements_4"></a>
 <h4>Improvements</h4>
         
 <ul>
