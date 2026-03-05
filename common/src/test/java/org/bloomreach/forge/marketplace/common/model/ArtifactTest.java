@@ -109,10 +109,9 @@ class ArtifactTest {
 
     @Test
     void target_allValues() {
-        assertEquals(6, Artifact.Target.values().length);
+        assertEquals(5, Artifact.Target.values().length);
         assertNotNull(Artifact.Target.valueOf("PARENT"));
         assertNotNull(Artifact.Target.valueOf("CMS"));
-        assertNotNull(Artifact.Target.valueOf("CMS_DEPENDENCIES"));
         assertNotNull(Artifact.Target.valueOf("SITE_COMPONENTS"));
         assertNotNull(Artifact.Target.valueOf("SITE_WEBAPP"));
         assertNotNull(Artifact.Target.valueOf("PLATFORM"));

@@ -393,12 +393,11 @@ public class DescriptorGenerator implements Callable<Integer> {
         return switch (target.toLowerCase().replace("_", "-")) {
             case "parent" -> Artifact.Target.PARENT;
             case "cms" -> Artifact.Target.CMS;
-            case "cms-dependencies" -> Artifact.Target.CMS_DEPENDENCIES;
             case "site/components" -> Artifact.Target.SITE_COMPONENTS;
             case "site/webapp" -> Artifact.Target.SITE_WEBAPP;
             case "platform" -> Artifact.Target.PLATFORM;
             default -> throw new IllegalArgumentException("Invalid target: " + target +
-                    ". Valid values: parent, cms, cms-dependencies, site/components, site/webapp, platform");
+                    ". Valid values: parent, cms, site/components, site/webapp, platform");
         };
     }
 

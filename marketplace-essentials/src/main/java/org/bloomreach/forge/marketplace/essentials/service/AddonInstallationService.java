@@ -67,7 +67,6 @@ public class AddonInstallationService {
 
     static final Map<Artifact.Target, String> TARGET_POM_PATHS = Map.of(
             Artifact.Target.CMS, "cms-dependencies/pom.xml",
-            Artifact.Target.CMS_DEPENDENCIES, "cms-dependencies/pom.xml",
             Artifact.Target.SITE_COMPONENTS, "site/components/pom.xml",
             Artifact.Target.SITE_WEBAPP, "site/webapp/pom.xml",
             Artifact.Target.PLATFORM, "pom.xml",

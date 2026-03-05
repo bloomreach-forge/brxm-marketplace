@@ -132,7 +132,7 @@
           },
           "target": {
             "type": "string",
-            "enum": ["parent", "cms", "cms-dependencies", "site/components", "site/webapp", "platform"],
+            "enum": ["parent", "cms", "site/components", "site/webapp", "platform"],
             "default": "parent",
             "description": "Target module where dependency should be added"
           },
