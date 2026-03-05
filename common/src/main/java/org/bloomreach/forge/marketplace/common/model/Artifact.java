@@ -88,6 +88,8 @@ public class Artifact {
         PARENT,
         @JsonProperty("cms")
         CMS,
+        @JsonProperty("cms-dependencies")
+        CMS_DEPENDENCIES,
         @JsonProperty("site/components")
         SITE_COMPONENTS,
         @JsonProperty("site/webapp")
