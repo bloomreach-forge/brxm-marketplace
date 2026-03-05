@@ -9,7 +9,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                       <meta http-equiv="Content-Language" content="" />
-      <title>Project Summary – Bloomreach Forge Marketplace</title>
+      <title>Installation – Bloomreach Forge Marketplace</title>
   <link rel="stylesheet" href="./css/forge-maven-skin-syntaxhighlighter-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/forge-maven-skin-3.2.1.min.css"/>
   <link rel="stylesheet" href="./css/site.css" />
@@ -59,7 +59,8 @@
     <ul class="nav nav-list">
             <li class="nav-header">Getting Started</li>
               <li>  <a href="index.html" title="Home">  <span class="none"></span>  Home</a>  </li>
-        <li>  <a href="install.html" title="Installation">  <span class="none"></span>  Installation</a>  </li>
+        <li class="active">  <a href="#"><span class="none"></span>Installation</a>
+  </li>
                   <li class="nav-header">For Addon Developers</li>
               <li>  <a href="addon-descriptor.html" title="Creating Descriptors">  <span class="none"></span>  Creating Descriptors</a>  </li>
         <li>  <a href="auto-generation.html" title="Auto-Generation">  <span class="none"></span>  Auto-Generation</a>  </li>
@@ -85,50 +86,98 @@
     </div>
   </div>
   <div id="bodyColumn"  class="span10" >
-    <section><a id="Project_Summary"></a>
-<h1>Project Summary</h1><section><a id="Project_Information"></a>
-<h2>Project Information</h2>
-<table class="table table-striped">
-<tr class="a">
-<th>Field</th>
-<th>Value</th></tr>
-<tr class="b">
-<td>Name</td>
-<td>Bloomreach Forge Marketplace Plugin</td></tr>
-<tr class="a">
-<td>Description</td>
-<td>Discover, browse, and install Forge add-ons from within brXM</td></tr>
-<tr class="b">
-<td>Homepage</td>
-<td><a class="externalLink" href="https://github.com/bloomreach-forge/brxm-marketplace">https://github.com/bloomreach-forge/brxm-marketplace</a></td></tr></table></section><section><a id="Project_Organization"></a>
-<h2>Project Organization</h2>
-<table class="table table-striped">
-<tr class="a">
-<th>Field</th>
-<th>Value</th></tr>
-<tr class="b">
-<td>Name</td>
-<td>Bloomreach</td></tr>
-<tr class="a">
-<td>URL</td>
-<td><a class="externalLink" href="https://www.bloomreach.com">https://www.bloomreach.com</a></td></tr></table></section><section><a id="Build_Information"></a>
-<h2>Build Information</h2>
-<table class="table table-striped">
-<tr class="a">
-<th>Field</th>
-<th>Value</th></tr>
-<tr class="b">
-<td>GroupId</td>
-<td>org.bloomreach.forge.marketplace</td></tr>
-<tr class="a">
-<td>ArtifactId</td>
-<td>brxm-marketplace</td></tr>
-<tr class="b">
-<td>Version</td>
-<td>1.0.8</td></tr>
-<tr class="a">
-<td>Type</td>
-<td>pom</td></tr></table></section></section>
+    
+  
+
+    <section><a id="Installation"></a>
+<h1>Installation</h1>
+
+      <section><a id="Step_1.3A_Define_version_property_and_dependency_management_in_root_pom.xml"></a>
+<h2>Step 1: Define version property and dependency management in root pom.xml</h2>
+        
+<pre><code>
+&lt;properties&gt;
+  &lt;brxm-marketplace.version&gt;1.0.7&lt;/brxm-marketplace.version&gt;
+&lt;/properties&gt;
+
+&lt;dependencyManagement&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+      &lt;artifactId&gt;brxm-marketplace-repository&lt;/artifactId&gt;
+      &lt;version&gt;${brxm-marketplace.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+      &lt;artifactId&gt;brxm-marketplace-essentials&lt;/artifactId&gt;
+      &lt;version&gt;${brxm-marketplace.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;
+        </code></pre>
+      </section>
+
+      <section><a id="Step_2.3A_Add_repository_module_to_cms-dependencies.2Fpom.xml"></a>
+<h2>Step 2: Add repository module to cms-dependencies/pom.xml</h2>
+        
+<pre><code>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+    &lt;artifactId&gt;brxm-marketplace-repository&lt;/artifactId&gt;
+&lt;/dependency&gt;
+        </code></pre>
+      </section>
+
+      <section><a id="Step_3.3A_Add_essentials_plugin_to_essentials.2Fpom.xml"></a>
+<h2>Step 3: Add essentials plugin to essentials/pom.xml</h2>
+        
+<pre><code>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.bloomreach.forge.marketplace&lt;/groupId&gt;
+    &lt;artifactId&gt;brxm-marketplace-essentials&lt;/artifactId&gt;
+&lt;/dependency&gt;
+        </code></pre>
+        
+<p>
+          No additional configuration is required. The Marketplace REST endpoints are
+          auto-registered by the Essentials plugin framework via <code>plugin-descriptor.json</code>.
+        </p>
+      </section>
+
+      <section><a id="Step_4.3A_Rebuild_and_restart"></a>
+<h2>Step 4: Rebuild and restart</h2>
+        
+<pre><code>
+mvn clean verify
+        </code></pre>
+        
+<p>
+          The Marketplace plugin will appear in the Essentials dashboard at
+          <code>http://localhost:8080/essentials</code>, ready to browse addons.
+        </p>
+      </section>
+
+      <section><a id="Configuration"></a>
+<h2>Configuration</h2>
+        
+<p>
+          The Marketplace works out of the box with the default Forge addon source. To add
+          additional sources (partners, internal), see <a href="custom-sources.html">Custom Sources</a>.
+        </p>
+        
+<p>
+          Configuration is stored in JCR at:
+        </p>
+        
+<pre><code>
+/hippo:configuration/hippo:modules/marketplace/hippo:moduleconfig
+        </code></pre>
+      </section>
+
+    </section>
+
+  
+
     </div>
     </div>
     </div>
