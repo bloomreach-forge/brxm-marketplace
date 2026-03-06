@@ -1,6 +1,6 @@
 {
   "version" : "1.0",
-  "generatedAt" : "2026-03-05T19:33:59.004878349Z",
+  "generatedAt" : "2026-03-06T06:42:36.006213936Z",
   "source" : {
     "name" : "bloomreach-forge",
     "url" : "https://github.com/bloomreach-forge"
@@ -79,6 +79,81 @@
     "installation" : {
       "target" : [ "site" ],
       "verification" : "Configure a Camel route using the hippoevent: component to consume Hippo Repository events"
+    }
+  }, {
+    "id" : "folderctxmenus",
+    "name" : "Bloomreach XM Extra Folder Context Menus",
+    "source" : "bloomreach-forge",
+    "version" : "7.2.3",
+    "description" : "Bloomreach XM Extra Folder Context Menus",
+    "repository" : {
+      "url" : "https://github.com/bloomreach-forge/folder-context-menus",
+      "branch" : "master"
+    },
+    "publisher" : {
+      "name" : "bloomreach-forge",
+      "type" : "community"
+    },
+    "category" : "content-management",
+    "pluginTier" : "forge-addon",
+    "compatibility" : {
+      "brxm" : {
+        "min" : "16.0.0"
+      }
+    },
+    "artifacts" : [ {
+      "type" : "maven-lib",
+      "description" : "Repository-tier workflow extension enabling folder copy and move operations",
+      "target" : "cms-dependencies",
+      "scope" : "compile",
+      "maven" : {
+        "groupId" : "org.onehippo.forge.folderctxmenus",
+        "artifactId" : "folderctxmenus-repository"
+      }
+    }, {
+      "type" : "maven-lib",
+      "description" : "CMS plugin providing copy and move context menu actions for repository folders",
+      "target" : "cms-dependencies",
+      "scope" : "compile",
+      "maven" : {
+        "groupId" : "org.onehippo.forge.folderctxmenus",
+        "artifactId" : "folderctxmenus-frontend"
+      }
+    } ],
+    "versions" : [ {
+      "version" : "7.2.3",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.0.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Repository-tier workflow extension enabling folder copy and move operations",
+        "target" : "cms-dependencies",
+        "scope" : "compile",
+        "maven" : {
+          "groupId" : "org.onehippo.forge.folderctxmenus",
+          "artifactId" : "folderctxmenus-repository"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "CMS plugin providing copy and move context menu actions for repository folders",
+        "target" : "cms-dependencies",
+        "scope" : "compile",
+        "maven" : {
+          "groupId" : "org.onehippo.forge.folderctxmenus",
+          "artifactId" : "folderctxmenus-frontend"
+        }
+      } ]
+    } ],
+    "documentation" : [ {
+      "type" : "site",
+      "url" : "https://bloomreach-forge.github.io/folder-context-menus/"
+    } ],
+    "installation" : {
+      "target" : [ "cms" ],
+      "verification" : "Copy and Move context menu items appear in the CMS document browser folder context menu"
     }
   }, {
     "id" : "brut",
