@@ -57,7 +57,7 @@ runs:
           DOWNLOAD_URL="https://github.com/bloomreach-forge/brxm-marketplace/releases/download/${GENERATOR_VERSION}/descriptor-generator.jar"
         fi
         echo "Downloading descriptor generator from: $DOWNLOAD_URL"
-        curl -sL "$DOWNLOAD_URL" -o /tmp/descriptor-generator.jar
+        curl -fsSL "$DOWNLOAD_URL" -o /tmp/descriptor-generator.jar
 
     - name: Generate descriptor
       shell: bash
