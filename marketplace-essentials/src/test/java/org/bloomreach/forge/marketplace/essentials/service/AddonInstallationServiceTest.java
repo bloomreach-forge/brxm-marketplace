@@ -279,6 +279,15 @@ class AddonInstallationServiceTest {
         Files.writeString(tempDir.resolve("site/components/pom.xml"), sitePom);
     }
 
+    private void setupProjectStructureWithDependencyManagement() throws IOException {
+        setupProjectStructure();
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("<dependencies>",
+                "<dependencyManagement>\n        <dependencies>\n        </dependencies>\n    </dependencyManagement>\n    <dependencies>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+    }
+
     private Addon createAddon(String id, Artifact.Target target) {
         Addon addon = new Addon();
         addon.setId(id);
@@ -989,6 +998,64 @@ class AddonInstallationServiceTest {
         String rootPom = Files.readString(tempDir.resolve("pom.xml"));
         assertTrue(rootPom.contains("<brut.version>4.0.2</brut.version>"),
                 "Version property must reflect epoch version 4.0.2");
+    }
+
+    @Test
+    void install_addsManagedDependency_whenTargetIsDependencyManagement() throws IOException {
+        setupProjectStructureWithDependencyManagement();
+
+        Addon addon = createAddon("test-addon", Artifact.Target.DEPENDENCY_MANAGEMENT);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.COMPLETED, result.status());
+        assertEquals(2, result.changes().size()); // property + managed dep
+
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        // dependency must be inside <dependencyManagement>
+        int depPos = rootPom.indexOf("test-artifact");
+        int dmClosingPos = rootPom.indexOf("</dependencyManagement>");
+        assertTrue(depPos < dmClosingPos, "Dependency must be inside <dependencyManagement>");
+        assertTrue(rootPom.contains("<version>${test-addon.version}</version>"));
+        assertTrue(rootPom.contains("<test-addon.version>1.0.0</test-addon.version>"));
+    }
+
+    @Test
+    void install_fails_whenDependencyManagementSectionMissing() throws IOException {
+        setupProjectStructure(); // root pom has no <dependencyManagement>
+
+        Addon addon = createAddon("test-addon", Artifact.Target.DEPENDENCY_MANAGEMENT);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.FAILED, result.status());
+        assertEquals("NO_DEPENDENCY_MANAGEMENT_SECTION", result.errors().get(0).code());
+    }
+
+    @Test
+    void install_failsWithAlreadyInstalled_whenManagedDepAlreadyPresent() throws IOException {
+        setupProjectStructureWithDependencyManagement();
+
+        // Pre-inject the managed dep
+        String rootPom = Files.readString(tempDir.resolve("pom.xml"));
+        rootPom = rootPom.replace("</dependencies>",
+                "    <dependency>\n" +
+                        "                <groupId>org.test</groupId>\n" +
+                        "                <artifactId>test-artifact</artifactId>\n" +
+                        "                <version>1.0.0</version>\n" +
+                        "            </dependency>\n" +
+                        "        </dependencies>");
+        Files.writeString(tempDir.resolve("pom.xml"), rootPom);
+
+        Addon addon = createAddon("test-addon", Artifact.Target.DEPENDENCY_MANAGEMENT);
+        when(addonRegistry.findById("test-addon")).thenReturn(Optional.of(addon));
+
+        InstallationResult result = service.install("test-addon", tempDir.toString());
+
+        assertEquals(InstallationResult.Status.FAILED, result.status());
+        assertEquals("ALREADY_INSTALLED", result.errors().get(0).code());
     }
 
     @Test

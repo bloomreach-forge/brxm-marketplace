@@ -104,7 +104,8 @@ public class DescriptorGenerator implements Callable<Integer> {
     private ObjectMapper createYamlMapper() {
         YAMLFactory yamlFactory = new YAMLFactory()
                 .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-                .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
+                .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES)
+                .enable(YAMLGenerator.Feature.ALWAYS_QUOTE_NUMBERS_AS_STRINGS);
         return new ObjectMapper(yamlFactory)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
@@ -397,8 +398,9 @@ public class DescriptorGenerator implements Callable<Integer> {
             case "site/components" -> Artifact.Target.SITE_COMPONENTS;
             case "site/webapp" -> Artifact.Target.SITE_WEBAPP;
             case "platform" -> Artifact.Target.PLATFORM;
+            case "dependency-management" -> Artifact.Target.DEPENDENCY_MANAGEMENT;
             default -> throw new IllegalArgumentException("Invalid target: " + target +
-                    ". Valid values: parent, cms, cms-dependencies, site/components, site/webapp, platform");
+                    ". Valid values: parent, cms, cms-dependencies, site/components, site/webapp, platform, dependency-management");
         };
     }
 

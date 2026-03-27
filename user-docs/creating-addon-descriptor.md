@@ -208,7 +208,9 @@ artifacts:
     description: "Site components library"
 ```
 
-**Available targets:** `parent`, `cms`, `site/components`, `site/webapp`, `platform`
+**Available targets:** `parent`, `cms`, `cms-dependencies`, `site/components`, `site/webapp`, `platform`, `dependency-management`
+
+> **`dependency-management`** — adds the artifact to `<dependencyManagement>` in the root `pom.xml` (version declared but not directly added as a compile dependency). Requires brXM Marketplace plugin **1.0.9+**.
 
 **Available scopes:** `compile` (default), `provided`, `runtime`, `test`
 

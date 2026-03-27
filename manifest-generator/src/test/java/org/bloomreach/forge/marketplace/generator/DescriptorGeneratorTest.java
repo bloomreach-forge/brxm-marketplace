@@ -438,6 +438,49 @@ class DescriptorGeneratorTest {
         assertTrue(output.contains("artifactId: custom-artifact"));
     }
 
+    @Test
+    void generate_numericStringExampleIsQuotedInOutput() throws Exception {
+        // Regression: MINIMIZE_QUOTES must not strip quotes from numeric-looking string values,
+        // or the schema validator rejects them as "integer found, string expected".
+        String config = """
+                category: security
+                pluginTier: forge-addon
+                compatibility:
+                  brxm:
+                    min: "16.0.0"
+                installation:
+                  target:
+                    - cms
+                  configuration:
+                    file: hst-config.properties
+                    properties:
+                      - name: accountId
+                        description: Discovery account ID
+                        required: true
+                        example: "6413"
+                """;
+        Files.writeString(configPath, config);
+
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <groupId>org.bloomreach.forge</groupId>
+                    <artifactId>my-addon</artifactId>
+                    <version>1.0.0</version>
+                    <description>Test addon description</description>
+                </project>
+                """;
+        Files.writeString(pomPath, pom);
+
+        int exitCode = runGenerator();
+
+        assertEquals(0, exitCode);
+        String output = Files.readString(outputPath);
+        // Must be serialized as a quoted string, not a bare integer
+        assertTrue(output.contains("example: \"6413\""),
+                "Numeric-string example must be YAML-quoted; got:\n" + output);
+    }
+
     private int runGenerator() {
         DescriptorGenerator generator = new DescriptorGenerator();
         return new CommandLine(generator).execute(

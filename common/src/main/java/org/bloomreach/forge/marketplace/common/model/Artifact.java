@@ -95,7 +95,9 @@ public class Artifact {
         @JsonProperty("site/webapp")
         SITE_WEBAPP,
         @JsonProperty("platform")
-        PLATFORM
+        PLATFORM,
+        @JsonProperty("dependency-management")
+        DEPENDENCY_MANAGEMENT
     }
 
     public enum Scope {

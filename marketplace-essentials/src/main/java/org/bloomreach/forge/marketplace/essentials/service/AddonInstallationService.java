@@ -71,7 +71,8 @@ public class AddonInstallationService {
             Artifact.Target.SITE_COMPONENTS, "site/components/pom.xml",
             Artifact.Target.SITE_WEBAPP, "site/webapp/pom.xml",
             Artifact.Target.PLATFORM, "pom.xml",
-            Artifact.Target.PARENT, "pom.xml"
+            Artifact.Target.PARENT, "pom.xml",
+            Artifact.Target.DEPENDENCY_MANAGEMENT, "pom.xml"
     );
 
     private static final String ROOT_POM = "pom.xml";
@@ -205,6 +206,7 @@ public class AddonInstallationService {
 
             String scope = artifact.getScope() != null
                     ? artifact.getScope().name().toLowerCase() : null;
+            boolean managed = target == Artifact.Target.DEPENDENCY_MANAGEMENT;
 
             dependencyChanges.add(new DependencyChange(
                     pomPath,
@@ -212,7 +214,8 @@ public class AddonInstallationService {
                     maven.getArtifactId(),
                     version,
                     versionProperty,
-                    scope
+                    scope,
+                    managed
             ));
         }
 
@@ -255,7 +258,10 @@ public class AddonInstallationService {
             }
 
             String content = pomContents.get(change.pomPath());
-            if (injector.hasDependency(content, change.groupId(), change.artifactId())) {
+            boolean alreadyPresent = change.managed()
+                    ? injector.hasManagedDependency(content, change.groupId(), change.artifactId())
+                    : injector.hasDependency(content, change.groupId(), change.artifactId());
+            if (alreadyPresent) {
                 hasExistingDependency = true;
                 if (!upgrade) {
                     errors.add(new InstallationError("ALREADY_INSTALLED",
@@ -275,7 +281,12 @@ public class AddonInstallationService {
                     "POM not found: " + basePath.relativize(change.pomPath())));
         }
 
-        if (!injector.hasDependenciesSection(content)) {
+        if (change.managed()) {
+            if (!injector.hasDependencyManagementSection(content)) {
+                return Optional.of(new InstallationError("NO_DEPENDENCY_MANAGEMENT_SECTION",
+                        "No <dependencyManagement> section in: " + basePath.relativize(change.pomPath())));
+            }
+        } else if (!injector.hasDependenciesSection(content)) {
             return Optional.of(new InstallationError("NO_DEPENDENCIES_SECTION",
                     "No <dependencies> section in: " + basePath.relativize(change.pomPath())));
         }
@@ -322,7 +333,10 @@ public class AddonInstallationService {
         for (DependencyChange depChange : plan.dependencyChanges()) {
             for (Map.Entry<String, String> entry : pomContentsByRelPath.entrySet()) {
                 String content = entry.getValue();
-                if (!injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
+                boolean present = depChange.managed()
+                        ? injector.hasManagedDependency(content, depChange.groupId(), depChange.artifactId())
+                        : injector.hasDependency(content, depChange.groupId(), depChange.artifactId());
+                if (!present) {
                     continue;
                 }
 
@@ -357,14 +371,18 @@ public class AddonInstallationService {
 
     private PlanChangeProcessor<DependencyChange> createInstallDependencyProcessor(Path basePath) {
         return (depChange, content, modifiedPoms) -> {
-            if (injector.hasDependency(content, depChange.groupId(), depChange.artifactId())) {
+            boolean alreadyPresent = depChange.managed()
+                    ? injector.hasManagedDependency(content, depChange.groupId(), depChange.artifactId())
+                    : injector.hasDependency(content, depChange.groupId(), depChange.artifactId());
+            if (alreadyPresent) {
                 return Optional.empty();
             }
 
             String version = depChange.versionProperty() != null
                     ? "${" + depChange.versionProperty() + "}" : depChange.version();
-            String modified = injector.addDependency(content, depChange.groupId(),
-                    depChange.artifactId(), version, depChange.scope());
+            String modified = depChange.managed()
+                    ? injector.addManagedDependency(content, depChange.groupId(), depChange.artifactId(), version)
+                    : injector.addDependency(content, depChange.groupId(), depChange.artifactId(), version, depChange.scope());
 
             if (modified != null) {
                 modifiedPoms.put(depChange.pomPath(), modified);

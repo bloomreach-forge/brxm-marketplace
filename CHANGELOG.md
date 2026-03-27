@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-03-27
+
+### Added
+- **`dependency-management` artifact target**: addons can now declare `target: dependency-management`
+  to have their Maven artifact inserted into `<dependencyManagement>` of the root `pom.xml` instead
+  of as a direct compile dependency. Useful for BOM-style addons or version alignment. Requires
+  Marketplace plugin **1.0.9+** — older installations will not recognize this target.
+
+### Fixed
+- Descriptor generator now always quotes version numbers as YAML strings
+  (`ALWAYS_QUOTE_NUMBERS_AS_STRINGS`), preventing bare-integer versions (e.g., `7`) from being
+  written without quotes in `forge-addon.yaml`.
+
 ## [1.0.7] - 2026-02-24
 
 ### Fixed

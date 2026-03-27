@@ -198,6 +198,45 @@ public class PomDependencyInjector {
         return findDependenciesInsertPoint(pomContent) >= 0;
     }
 
+    public boolean hasDependencyManagementSection(String pomContent) {
+        return findManagedDependenciesInsertPoint(pomContent) >= 0;
+    }
+
+    public boolean hasManagedDependency(String pomContent, String groupId, String artifactId) {
+        String section = extractDependencyManagementSection(pomContent);
+        return section != null && hasDependency(section, groupId, artifactId);
+    }
+
+    public String addManagedDependency(String pomContent, String groupId, String artifactId, String version) {
+        int insertPoint = findManagedDependenciesInsertPoint(pomContent);
+        if (insertPoint < 0) {
+            return null;
+        }
+
+        String indent = detectDependencyIndent(pomContent, insertPoint);
+        String innerIndent = indent + detectIndentUnit(pomContent);
+        String dependencyXml = formatDependency(groupId, artifactId, version, null, indent, innerIndent);
+
+        return insertBeforeClosingTag(pomContent, insertPoint, dependencyXml);
+    }
+
+    public String removeManagedDependency(String pomContent, String groupId, String artifactId) {
+        int start = pomContent.indexOf("<dependencyManagement>");
+        int dmEnd = pomContent.indexOf("</dependencyManagement>");
+        if (start < 0 || dmEnd < 0) {
+            return null;
+        }
+        int end = dmEnd + "</dependencyManagement>".length();
+
+        String dmSection = pomContent.substring(start, end);
+        String modifiedDm = removeDependency(dmSection, groupId, artifactId);
+        if (modifiedDm == null) {
+            return null;
+        }
+
+        return pomContent.substring(0, start) + modifiedDm + pomContent.substring(end);
+    }
+
     public boolean hasPropertiesSection(String pomContent) {
         return pomContent.contains("<properties>") && pomContent.contains("</properties>");
     }
@@ -240,6 +279,23 @@ public class PomDependencyInjector {
         }
 
         return lastClosing;
+    }
+
+    private int findManagedDependenciesInsertPoint(String pomContent) {
+        int dmClosing = pomContent.indexOf("</dependencyManagement>");
+        if (dmClosing < 0) {
+            return -1;
+        }
+        return pomContent.lastIndexOf("</dependencies>", dmClosing);
+    }
+
+    private String extractDependencyManagementSection(String pomContent) {
+        int start = pomContent.indexOf("<dependencyManagement>");
+        int end = pomContent.indexOf("</dependencyManagement>");
+        if (start < 0 || end < 0) {
+            return null;
+        }
+        return pomContent.substring(start, end + "</dependencyManagement>".length());
     }
 
     private int findPropertiesInsertPoint(String pomContent) {

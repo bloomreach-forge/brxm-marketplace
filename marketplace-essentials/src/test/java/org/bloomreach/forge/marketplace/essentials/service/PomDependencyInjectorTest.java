@@ -722,6 +722,235 @@ class PomDependencyInjectorTest {
         assertNull(injector.removeDuplicateDependencies(pom, "org.bloomreach.forge", "brut-common"));
     }
 
+    // --- dependencyManagement ---
+
+    @Test
+    void hasDependencyManagementSection_returnsTrue_whenPresent() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        assertTrue(injector.hasDependencyManagementSection(pom));
+    }
+
+    @Test
+    void hasDependencyManagementSection_returnsFalse_whenAbsent() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                    </dependencies>
+                </project>
+                """;
+
+        assertFalse(injector.hasDependencyManagementSection(pom));
+    }
+
+    @Test
+    void hasManagedDependency_returnsTrue_whenInDependencyManagement() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.bloomreach.forge</groupId>
+                                <artifactId>managed-artifact</artifactId>
+                                <version>1.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        assertTrue(injector.hasManagedDependency(pom, "org.bloomreach.forge", "managed-artifact"));
+    }
+
+    @Test
+    void hasManagedDependency_returnsFalse_whenOnlyInRegularDependencies() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                        </dependencies>
+                    </dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.bloomreach.forge</groupId>
+                            <artifactId>regular-artifact</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        assertFalse(injector.hasManagedDependency(pom, "org.bloomreach.forge", "regular-artifact"));
+    }
+
+    @Test
+    void addManagedDependency_insertsIntoDependencyManagement() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        String result = injector.addManagedDependency(pom, "org.bloomreach.forge.discovery", "brxm-discovery-cms", "${discovery.version}");
+
+        assertNotNull(result);
+        assertTrue(result.contains("<groupId>org.bloomreach.forge.discovery</groupId>"));
+        assertTrue(result.contains("<artifactId>brxm-discovery-cms</artifactId>"));
+        assertTrue(result.contains("<version>${discovery.version}</version>"));
+        // must be inside dependencyManagement
+        int depPos = result.indexOf("brxm-discovery-cms");
+        int dmClosingPos = result.indexOf("</dependencyManagement>");
+        assertTrue(depPos < dmClosingPos);
+    }
+
+    @Test
+    void addManagedDependency_preservesIndentation() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>existing</groupId>
+                                <artifactId>existing-dep</artifactId>
+                                <version>1.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        String result = injector.addManagedDependency(pom, "org.test", "new-dep", "2.0.0");
+
+        assertNotNull(result);
+        assertTrue(result.contains("        <dependency>"));
+        assertTrue(result.contains("            <groupId>org.test</groupId>"));
+    }
+
+    @Test
+    void addManagedDependency_returnsNull_whenNoDependencyManagementSection() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencies>
+                    </dependencies>
+                </project>
+                """;
+
+        assertNull(injector.addManagedDependency(pom, "org.test", "artifact", "1.0.0"));
+    }
+
+    @Test
+    void addManagedDependency_doesNotInjectIntoRegularDependencies() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                        </dependencies>
+                    </dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>existing</groupId>
+                            <artifactId>regular</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.addManagedDependency(pom, "org.test", "new-managed", "1.0.0");
+
+        assertNotNull(result);
+        // new entry appears before </dependencyManagement>, not after it
+        int newDepPos = result.indexOf("new-managed");
+        int dmClosingPos = result.indexOf("</dependencyManagement>");
+        assertTrue(newDepPos < dmClosingPos, "Managed dep must be inside <dependencyManagement>");
+    }
+
+    @Test
+    void removeManagedDependency_removesFromDependencyManagement() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.test</groupId>
+                                <artifactId>managed-dep</artifactId>
+                                <version>1.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        String result = injector.removeManagedDependency(pom, "org.test", "managed-dep");
+
+        assertNotNull(result);
+        assertFalse(result.contains("managed-dep"));
+        assertTrue(result.contains("<dependencyManagement>"));
+        assertTrue(result.contains("</dependencyManagement>"));
+    }
+
+    @Test
+    void removeManagedDependency_returnsNull_whenNotFound() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """;
+
+        assertNull(injector.removeManagedDependency(pom, "org.test", "non-existent"));
+    }
+
+    @Test
+    void removeManagedDependency_leavesRegularDependenciesUntouched() {
+        String pom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.test</groupId>
+                                <artifactId>managed-dep</artifactId>
+                                <version>1.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.test</groupId>
+                            <artifactId>regular-dep</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+
+        String result = injector.removeManagedDependency(pom, "org.test", "managed-dep");
+
+        assertNotNull(result);
+        assertFalse(result.contains("managed-dep"));
+        assertTrue(result.contains("regular-dep"), "Regular dependency must be preserved");
+    }
+
     @Test
     void removeDuplicateDependencies_preservesOtherDependencies() {
         String pom = """
