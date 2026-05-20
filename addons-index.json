@@ -1,6 +1,6 @@
 {
   "version" : "1.0",
-  "generatedAt" : "2026-05-19T09:33:53.889585168Z",
+  "generatedAt" : "2026-05-20T08:58:36.285706286Z",
   "source" : {
     "name" : "bloomreach-forge",
     "url" : "https://github.com/bloomreach-forge"
@@ -159,7 +159,7 @@
     "id" : "brut",
     "name" : "Bloomreach Unit Testing Library",
     "source" : "bloomreach-forge",
-    "version" : "6.0.0",
+    "version" : "6.1.0",
     "description" : "Bloomreach Unit Testing Library for BrXM Delivery Tier",
     "repository" : {
       "url" : "https://github.com/bloomreach-forge/brut",
@@ -386,6 +386,42 @@
       "inferredMax" : "16.7.0"
     }, {
       "version" : "6.0.0",
+      "compatibility" : {
+        "brxm" : {
+          "min" : "16.7.0"
+        }
+      },
+      "artifacts" : [ {
+        "type" : "maven-lib",
+        "description" : "Core testing utilities and base classes",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-common"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "HST component testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-components"
+        }
+      }, {
+        "type" : "maven-lib",
+        "description" : "JAX-RS and Page Model API testing support",
+        "target" : "site/components",
+        "scope" : "test",
+        "maven" : {
+          "groupId" : "org.bloomreach.forge.brut",
+          "artifactId" : "brut-resources"
+        }
+      } ],
+      "inferredMax" : "16.7.0"
+    }, {
+      "version" : "6.1.0",
       "compatibility" : {
         "brxm" : {
           "min" : "16.7.0"
