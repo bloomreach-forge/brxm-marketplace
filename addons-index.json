@@ -1,6 +1,6 @@
 {
   "version" : "1.0",
-  "generatedAt" : "2026-09-11T10:26:47.342101689Z",
+  "generatedAt" : "2026-09-12T09:56:11.217203496Z",
   "source" : {
     "name" : "bloomreach-forge",
     "url" : "https://github.com/bloomreach-forge"
@@ -121,33 +121,6 @@
       }
     } ],
     "versions" : [ {
-      "version" : "7.2.3",
-      "compatibility" : {
-        "brxm" : {
-          "min" : "16.0.0"
-        }
-      },
-      "artifacts" : [ {
-        "type" : "maven-lib",
-        "description" : "Repository-tier workflow extension enabling folder copy and move operations",
-        "target" : "cms-dependencies",
-        "scope" : "compile",
-        "maven" : {
-          "groupId" : "org.onehippo.forge.folderctxmenus",
-          "artifactId" : "folderctxmenus-repository"
-        }
-      }, {
-        "type" : "maven-lib",
-        "description" : "CMS plugin providing copy and move context menu actions for repository folders",
-        "target" : "cms-dependencies",
-        "scope" : "compile",
-        "maven" : {
-          "groupId" : "org.onehippo.forge.folderctxmenus",
-          "artifactId" : "folderctxmenus-frontend"
-        }
-      } ],
-      "inferredMax" : "16.0.0"
-    }, {
       "version" : "7.2.3",
       "compatibility" : {
         "brxm" : {
